@@ -182,7 +182,7 @@ body.theater-open { overflow:hidden; }
 /* the whole card opens the award's ranking; the player link stays clickable above it */
 .award { transition:background .15s; } .award:hover { background:var(--panel2); }
 .award .cover { position:absolute; inset:0; z-index:1; }
-.award .who { position:relative; z-index:2; }
+.award .who { position:relative; }  /* the whole card opens the award's ranking (.cover) */
 .award .rank-go { display:inline-block; margin-top:12px; font:700 10px var(--mono); letter-spacing:.12em; text-transform:uppercase;
   color:var(--faint); transition:color .15s; }
 .award:hover .rank-go { color:var(--accent); }
@@ -498,3 +498,5 @@ code { font-family:var(--mono); font-size:12px; color:#ffb38a; }
 /* İkili: since when who-killed-whom data exists */
 .demo-note { margin:-4px 0 14px; padding:9px 12px; border-left:3px solid var(--accent); background:var(--panel); color:var(--muted); font-size:13px; line-height:1.5; }
 .demo-note b { color:var(--text); margin-right:4px; }
+/* stats page: the period's top 3 (same podium as the award pages, a little tighter) */
+.podium.hp { margin:14px 0 8px; }

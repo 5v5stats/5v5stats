@@ -7,7 +7,9 @@
 {% block body %}
 {% set ranked = board|selectattr('qualified')|list %}
 {% set rest = board|rejectattr('qualified')|list %}
-{% set top = ranked[0] if ranked else None %}
+{# the period's best: highest average Skor (1.00 = server average) among players with enough matches #}
+{% set best3 = (ranked|sort(attribute='points', reverse=True))[:3] %}
+{% set top = best3[0] if best3 else None %}
 {% set plabel = {'all': 'Tüm zamanlar', '90d': 'Son 3 ay', '30d': 'Bu ay', '7d': 'Bu hafta'}[period] %}
 {% set minm = min_matches %}
 
@@ -20,6 +22,22 @@
     {% if sync_date %}<span title="{% if synced %}5v5stats'in son güncellemesi: {{ synced[:10]|day }} {{ synced[11:] }} (TR saati). {% endif %}Sonraki maçlar sadece yüklenen demolardan.">5v5stats verisi: <b>{{ sync_date|day }}</b> tarihine kadar</span>{% endif %}
   </div>
 </section>
+
+{% if best3 %}
+<div class="sec" style="margin-top:26px"><h2>{{ plabel }} en iyi 3</h2><small>// skor ortalamasına göre (1.00 = sunucu ortalaması) // en az {{ minm }} maç</small></div>
+<div class="podium hp">
+  {% for r in best3 %}
+  <a class="pod p{{ loop.index }}" href="{{ url_for('player_page', steamid=r.steamid64) }}">
+    <span class="medal">#{{ loop.index }}</span>
+    <span class="ring-at">{{ level_ring(r.rating, 34 if loop.first else 28) }}</span>
+    {{ avatar(people, r.steamid64, r.name) }}
+    <span class="nm">{{ r.name }}</span>
+    <span class="v">{{ '%.2f'|format(r.points) }}<small>skor</small></span>
+    <span class="d">{{ r.total_matches }} maç &middot; {{ '%.0f'|format(r.ADR) }} ADR &middot; {{ r.KPR|f2 }} KPR</span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
 
 {% if best_clips %}
 <div class="sec" style="margin-top:26px"><h2>{{ clip_title }}</h2>
@@ -90,7 +108,7 @@
   <div class="award"><a class="cover" href="{{ url_for('award_page', slug=a.slug, p=period if period != default_period else None) }}" aria-label="{{ a.title }} sıralaması"></a>
     <span class="lbl">Ödül {{ '%02d'|format(loop.index) }}</span><span class="no">#{{ '%02d'|format(loop.index) }}</span>
     <h3>{{ a.title }}</h3>
-    <a class="who" href="{{ url_for('player_page', steamid=a.sid) }}">{{ avatar(people, a.sid, a.name) }}{{ a.name }}</a>
+    <span class="who">{{ avatar(people, a.sid, a.name) }}{{ a.name }}</span>
     <div class="val">{{ a.value }}<small>{{ a.unit }}</small></div>
     <p>{{ a.desc }}</p><span class="rank-go">Sıralama &rarr;</span></div>
   {% endfor %}
