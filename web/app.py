@@ -105,11 +105,13 @@ def people(c):
     return {r["steamid"]: dict(r) for r in c.execute("SELECT * FROM people")}
 
 
-def top_clips(c, period, n=5):
-    """The period's best highlight clips by points (public matches; admins also see hidden ones)."""
+def top_clips(c, period, n=5, since=None):
+    """The period's best highlight clips by points (public matches; admins also see hidden ones).
+    since: a start date instead of the period's window."""
     cond, args = [], []
-    if period != "all":
+    if since is None and period != "all":
         since, _ = statsdb.window(c, period)
+    if since:
         cond.append("m.date >= ?")
         args.append(since)
     if not is_admin():
@@ -245,10 +247,17 @@ def stats_home():
     sync_date = statsdb.get_meta(c, "sync_date")
     newer = c.execute("SELECT COUNT(*) FROM games WHERE source = 'demo' AND date > ?",
                       (sync_date or "",)).fetchone()[0]
-    best = top_clips(c, period)
+    clip_title = {"7d": "Haftanın klipleri", "30d": "Ayın klipleri", "90d": "Son 3 ayın klipleri"}.get(period)
+    if period == "all":  # the front page: this month's clips (the last 30 days), else the best ever
+        best = top_clips(c, period, since=(datetime.date.today() - datetime.timedelta(days=30)).isoformat())
+        clip_title = "Bu ayın klipleri"
+        if not best:
+            best, clip_title = top_clips(c, period), "En iyi klipler"
+    else:
+        best = top_clips(c, period)
     cb = None if best else statsdb.comeback(c, period)  # the comeback story only when there are no clips
     ctx = dict(board=board, period=period, periods=PERIODS, ov=ov, people=people(c), win=win, newer=newer,
-               awards=awards(board), comeback=cb, best_clips=best, months=statsdb.activity_by_month(c),
+               awards=awards(board), comeback=cb, best_clips=best, clip_title=clip_title, months=statsdb.activity_by_month(c),
                weeks=statsdb.weekly_counts(c), seen=statsdb.last_seen(c), ref=statsdb.latest_date(c),
                month30=statsdb.overview(c, "30d")["matches"],
                synced=(day(time.strftime("%Y-%m-%d", time.localtime(synced / 1000))) + " "
