@@ -138,11 +138,34 @@ def new_rev():
     return uuid.uuid4().hex[:8]
 
 
+def same_match(con, data):
+    """An already uploaded match that is this one, whatever its demo file was called: same map, rounds and
+    score, at least 8 of the same players, each with the same kills and deaths. (The key is the demo's file
+    name, so a renamed copy of a demo, or the same match uploaded by someone else, would otherwise count twice.)"""
+    pl = data["players"]
+    score = sorted(t["score"] for t in data["teams"])
+    for m in con.execute("SELECT * FROM matches WHERE map = ? AND rounds = ?", (data["map"], data["rounds"])):
+        if sorted([m["score1"] or 0, m["score2"] or 0]) != score:
+            continue
+        try:
+            other = json.loads(m["data_json"])["players"]
+        except (ValueError, KeyError, TypeError):
+            continue
+        shared = set(pl) & set(other)
+        if len(shared) >= 8 and all(pl[s]["kills"] == other[s].get("kills") and pl[s]["deaths"] == other[s].get("deaths")
+                                    for s in shared):
+            return m
+    return None
+
+
 def prepare(con, data):
-    """Validate page data; returns (match key, existing match row or None, slug)."""
+    """Validate page data; returns (match key, existing match row or None, slug). An upload of a match that is
+    already on the site (same key, or the same game under another demo name) updates it: never a second copy."""
     check_data(data)
     key = str(data["key"])
-    existing = con.execute("SELECT * FROM matches WHERE match_key = ?", (key,)).fetchone()
+    existing = con.execute("SELECT * FROM matches WHERE match_key = ?", (key,)).fetchone() or same_match(con, data)
+    if existing:
+        key = data["key"] = existing["match_key"]
     return key, existing, (existing["slug"] if existing else uuid.uuid4().hex[:10])
 
 
