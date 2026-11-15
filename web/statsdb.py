@@ -38,6 +38,9 @@ CREATE INDEX IF NOT EXISTS game_players_sid ON game_players(steamid);
 CREATE TABLE IF NOT EXISTS baseline (steamid TEXT PRIMARY KEY, name TEXT, totals TEXT, map_stats TEXT);
 CREATE TABLE IF NOT EXISTS people (steamid TEXT PRIMARY KEY, name TEXT, avatar TEXT);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS merges (         -- alt accounts counted as one person (undo = delete the row)
+  alt TEXT PRIMARY KEY, main TEXT NOT NULL, created_at REAL, note TEXT
+);
 """
 
 MAP_NAMES = {"de_dust2": "Dust II", "de_inferno": "Inferno", "de_mirage": "Mirage", "de_nuke": "Nuke",
@@ -52,6 +55,40 @@ GP_UPSERT = """ ON CONFLICT(game_id, steamid) DO UPDATE SET name = excluded.name
 
 def init(con):
     con.executescript(SCHEMA)
+
+
+# ---------------------------------------------------------------- merged accounts ----
+# A merge says "steamid `alt` is the same person as `main`". Nothing in games / game_players / baseline is
+# changed: every per-player sum below maps alt -> main as it adds up, so removing the row undoes it fully.
+
+def merge_map(con):
+    """{alt steamid: main steamid}."""
+    return {r["alt"]: r["main"] for r in con.execute("SELECT alt, main FROM merges")}
+
+
+def ids_of(con, sid):
+    """The accounts that make up one person: [main, *alts]."""
+    return [sid] + [r["alt"] for r in con.execute("SELECT alt FROM merges WHERE main = ?", (sid,))]
+
+
+def merge_accounts(con, main, alt, note=""):
+    """Count `alt` as `main` from now on. Returns the main account actually used (if `main` was itself merged
+    into someone, that person). Accounts already merged into `alt` move to the new main too."""
+    m = merge_map(con)
+    main = m.get(main, main)
+    if alt == main:
+        raise ValueError("bu iki hesap zaten aynı kişi")
+    con.execute("UPDATE merges SET main = ? WHERE main = ?", (main, alt))
+    con.execute("""INSERT INTO merges(alt, main, created_at, note) VALUES (?,?,?,?) ON CONFLICT(alt) DO UPDATE
+                   SET main = excluded.main, created_at = excluded.created_at, note = excluded.note""",
+                (alt, main, time.time(), note))
+    con.commit()
+    return main
+
+
+def unmerge_account(con, alt):
+    con.execute("DELETE FROM merges WHERE alt = ?", (alt,))
+    con.commit()
 
 
 def get_meta(con, key, default=None):
@@ -222,20 +259,24 @@ def _estimate(row, base):
 
 
 def player_totals(con, period="all", now=None):
-    """{steamid: totals} for a period: 'all' (exact: 5v5stats totals + newer demos) or '30d' / '7d'."""
+    """{steamid: totals} for a period: 'all' (exact: 5v5stats totals + newer demos), '30d' / '7d' (exact:
+    5v5stats' published period totals + demos) or '90d' (5v5stats doesn't publish it: summed per match;
+    K/D/A, damage, HS and wins exact, detail counters estimated from each player's all-time rates)."""
     base = {r["steamid"]: json.loads(r["totals"]) for r in con.execute("SELECT * FROM baseline")}
     names = {r["steamid"]: r["name"] for r in con.execute("SELECT steamid, name FROM people")}
+    mm = merge_map(con)
+    who = lambda sid: mm.get(sid, sid)  # noqa: E731  merged accounts count as their main account
     out = {}
     if period == "all":
         for sid, t in base.items():
-            out[sid] = dict(t)
+            _add(out.setdefault(who(sid), {}), t)
         for r in con.execute("""SELECT gp.steamid, gp.counters FROM game_players gp JOIN games g ON g.id = gp.game_id
                                 WHERE g.source = 'demo'"""):
-            _add(out.setdefault(r["steamid"], {}), json.loads(r["counters"]))
+            _add(out.setdefault(who(r["steamid"]), {}), json.loads(r["counters"]))
         # players in 5v5stats scoreboards without a 5v5stats profile: their scoreboard numbers only
         for r in con.execute("""SELECT gp.*, g.rounds FROM game_players gp JOIN games g ON g.id = gp.game_id
                                 WHERE g.source = '5v5stats' AND gp.steamid NOT IN (SELECT steamid FROM baseline)"""):
-            _add(out.setdefault(r["steamid"], {}), _estimate(r, {}))
+            _add(out.setdefault(who(r["steamid"]), {}), _estimate(r, {}))
     else:
         # The same window as 5v5stats (the 7 / 30 days up to its newest match), using its exact published
         # totals, plus our demo matches from that window on (newer ones included, exact).
@@ -243,17 +284,17 @@ def player_totals(con, period="all", now=None):
         snap = (get_meta(con, "period_totals", {}) or {}).get(period)
         if snap:
             for sid, t in snap.items():
-                out[sid] = dict(t)
+                _add(out.setdefault(who(sid), {}), t)
             rows = con.execute("""SELECT gp.* FROM game_players gp JOIN games g ON g.id = gp.game_id
                                   WHERE g.source = 'demo' AND g.date >= ?""", (since,)).fetchall()
             for r in rows:
-                _add(out.setdefault(r["steamid"], {}), json.loads(r["counters"]))
+                _add(out.setdefault(who(r["steamid"]), {}), json.loads(r["counters"]))
         else:  # no 5v5stats data: per-match rows
             rows = con.execute("""SELECT gp.*, g.source, g.rounds FROM game_players gp JOIN games g ON g.id = gp.game_id
                                   WHERE g.date >= ?""", (since,)).fetchall()
             for r in rows:
                 c = json.loads(r["counters"]) if r["counters"] else _estimate(r, base.get(r["steamid"], {}))
-                _add(out.setdefault(r["steamid"], {}), c)
+                _add(out.setdefault(who(r["steamid"]), {}), c)
         out = {sid: t for sid, t in out.items() if t.get("total_matches", 0) >= 1}
     for sid, t in out.items():
         t["steamid64"], t["name"] = sid, names.get(sid, sid)
@@ -300,21 +341,28 @@ def weekly_counts(con, weeks=8):
 
 
 def last_seen(con):
-    return dict(con.execute("""SELECT gp.steamid, MAX(g.date) FROM game_players gp JOIN games g ON g.id = gp.game_id
-                               GROUP BY gp.steamid""").fetchall())
+    mm, out = merge_map(con), {}
+    for sid, d in con.execute("""SELECT gp.steamid, MAX(g.date) FROM game_players gp JOIN games g ON g.id = gp.game_id
+                                 GROUP BY gp.steamid""").fetchall():
+        k = mm.get(sid, sid)
+        out[k] = max(out.get(k, ""), d or "")
+    return out
 
 
 def relations(con, sid, min_games=10):
     """Teammates and opponents: best duo, most played with, nemesis, easiest opponent; and streaks."""
-    rows = con.execute("""SELECT g.id, g.date, gp.side, gp.won FROM game_players gp JOIN games g ON g.id = gp.game_id
-                          WHERE gp.steamid = ? ORDER BY g.date, COALESCE(g.ext_id, 0), g.id""", (sid,)).fetchall()
+    ids = ids_of(con, sid)
+    mm = merge_map(con)
+    q = ",".join("?" * len(ids))
+    rows = con.execute(f"""SELECT g.id, g.date, gp.side, gp.won FROM game_players gp JOIN games g ON g.id = gp.game_id
+                          WHERE gp.steamid IN ({q}) ORDER BY g.date, COALESCE(g.ext_id, 0), g.id""", ids).fetchall()
     side_of = {r["id"]: (r["side"], r["won"]) for r in rows}
     mates, opps = {}, {}
     for r in con.execute(f"""SELECT game_id, steamid, name, side FROM game_players WHERE game_id IN
-                             ({",".join("?" * len(side_of)) or "NULL"}) AND steamid != ?""", (*side_of, sid)):
+                             ({",".join("?" * len(side_of)) or "NULL"}) AND steamid NOT IN ({q})""", (*side_of, *ids)):
         mine, won = side_of[r["game_id"]]
-        d = (mates if r["side"] == mine else opps).setdefault(r["steamid"], {"sid": r["steamid"], "name": r["name"],
-                                                                              "w": 0, "l": 0})
+        other = mm.get(r["steamid"], r["steamid"])
+        d = (mates if r["side"] == mine else opps).setdefault(other, {"sid": other, "name": r["name"], "w": 0, "l": 0})
         d["name"] = r["name"]
         d["w" if won else "l"] += 1
     for d in list(mates.values()) + list(opps.values()):
@@ -348,13 +396,17 @@ def relations(con, sid, min_games=10):
 
 def player_maps(con):
     """{steamid: {map: {"matches": n, "adr": x}}} from the 5v5stats per-map stats plus our demo matches."""
-    out = {}
+    out, mm = {}, merge_map(con)
     for r in con.execute("SELECT steamid, map_stats FROM baseline"):
-        out[r["steamid"]] = {m["map"]: {"matches": m["matches"], "rounds": m["rounds"], "damage": m["damage"]}
-                             for m in json.loads(r["map_stats"] or "[]")}
+        mine = out.setdefault(mm.get(r["steamid"], r["steamid"]), {})
+        for m in json.loads(r["map_stats"] or "[]"):
+            t = mine.setdefault(m["map"], {"matches": 0, "rounds": 0, "damage": 0})
+            for k in t:
+                t[k] += m.get(k) or 0
     for r in con.execute("""SELECT gp.steamid, g.map, g.rounds, gp.adr FROM game_players gp
                             JOIN games g ON g.id = gp.game_id WHERE g.source = 'demo'"""):
-        m = out.setdefault(r["steamid"], {}).setdefault(r["map"], {"matches": 0, "rounds": 0, "damage": 0})
+        m = out.setdefault(mm.get(r["steamid"], r["steamid"]), {}).setdefault(r["map"], {"matches": 0, "rounds": 0,
+                                                                                         "damage": 0})
         m["matches"] += 1
         m["rounds"] += r["rounds"] or 0
         m["damage"] += (r["adr"] or 0) * (r["rounds"] or 0)
@@ -434,7 +486,7 @@ def latest_date(con):
 def window(con, period):
     """(first day, last 5v5stats day) of a period, as 5v5stats defines it: the 7 / 30 days ending at the
     newest match of its data. Newer demo matches (after the last day) are counted in the period too."""
-    days = {"30d": 30, "7d": 7}[period]
+    days = {"90d": 90, "30d": 30, "7d": 7}[period]
     until = get_meta(con, "sync_date") or latest_date(con)
     since = (datetime.date.fromisoformat(until) - datetime.timedelta(days=days - 1)).isoformat()
     return since, until
@@ -450,7 +502,8 @@ def period_where(con, period, alias=""):
 
 def leaderboard(con, period="all"):
     totals = player_totals(con, period)
-    priors = (get_meta(con, "priors", {}) or {}).get(period)
+    pri = get_meta(con, "priors", {}) or {}
+    priors = pri.get(period) or pri.get("all")
     return rating.leaderboard(list(totals.values()), period, prior=priors)
 
 
@@ -458,9 +511,12 @@ def overview(con, period="all"):
     cond, args = period_where(con, period)
     where = f"WHERE {cond}"
     g = con.execute(f"SELECT COUNT(*), COALESCE(SUM(rounds),0) FROM games {where}", args).fetchone()
-    k = con.execute(f"SELECT COALESCE(SUM(kills),0), COUNT(DISTINCT steamid) FROM game_players WHERE game_id IN "
-                    f"(SELECT id FROM games {where})", args).fetchone()
-    return {"matches": g[0], "rounds": g[1], "kills": k[0], "players": k[1]}
+    k = con.execute(f"SELECT COALESCE(SUM(kills),0) FROM game_players WHERE game_id IN (SELECT id FROM games {where})",
+                    args).fetchone()
+    mm = merge_map(con)
+    people = {mm.get(r[0], r[0]) for r in con.execute(
+        f"SELECT DISTINCT steamid FROM game_players WHERE game_id IN (SELECT id FROM games {where})", args)}
+    return {"matches": g[0], "rounds": g[1], "kills": k[0], "players": len(people)}
 
 
 def stamp():

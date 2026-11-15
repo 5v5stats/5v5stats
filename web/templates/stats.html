@@ -7,8 +7,8 @@
 {% set ranked = board|selectattr('qualified')|list %}
 {% set rest = board|rejectattr('qualified')|list %}
 {% set top = ranked[0] if ranked else None %}
-{% set plabel = {'all': 'Tüm zamanlar', '30d': 'Bu ay', '7d': 'Bu hafta'}[period] %}
-{% set minm = {'all': 30, '30d': 15, '7d': 3}[period] %}
+{% set plabel = {'all': 'Tüm zamanlar', '90d': 'Son 3 ay', '30d': 'Bu ay', '7d': 'Bu hafta'}[period] %}
+{% set minm = {'all': 30, '90d': 20, '30d': 15, '7d': 3}[period] %}
 
 <section class="hero">
   <div class="eyebrow">Sunucu istatistikleri // {% if win %}{{ win[0]|day }} &ndash; {{ win[1]|day }}{% if newer %} + {{ newer }} yeni demo maçı{% endif %}{% else %}tüm zamanlar{% endif %}</div>
@@ -57,7 +57,7 @@
     <div class="bars">{% for w in weeks %}<span class="{{ 'cur' if loop.last }}" style="height:{{ (w * 100 / wmax)|round }}%" title="{{ w }} maç"></span>{% endfor %}</div>
   </div>
   <div class="box mini motw hot">
-    <span class="lbl acc">{{ {'7d': 'Bu haftanın adamı', '30d': 'Bu ayın adamı', 'all': 'Tüm zamanların adamı'}[period] }}</span>
+    <span class="lbl acc">{{ {'7d': 'Bu haftanın adamı', '30d': 'Bu ayın adamı', '90d': 'Son 3 ayın adamı', 'all': 'Tüm zamanların adamı'}[period] }}</span>
     {% if top %}
     <a class="who" href="{{ url_for('player_page', steamid=top.steamid64) }}" style="text-decoration:none">{{ avatar(people, top.steamid64, top.name) }}<b>{{ top.name }}</b></a>
     <div class="dim small num" style="margin-top:8px">{{ '%.0f'|format(top.ADR) }} ADR &middot; {{ top.KPR|f2 }} KPR &middot; {{ top.total_matches }} maç</div>
@@ -66,7 +66,7 @@
 </div>
 
 {% if awards %}
-<div class="sec"><h2>{{ {'7d': 'Bu haftanın', '30d': 'Bu ayın', 'all': 'Tüm zamanların'}[period] }} ödülleri</h2><small>// {{ awards|length }} kategori</small></div>
+<div class="sec"><h2>{{ {'7d': 'Bu haftanın', '30d': 'Bu ayın', '90d': 'Son 3 ayın', 'all': 'Tüm zamanların'}[period] }} ödülleri</h2><small>// {{ awards|length }} kategori</small></div>
 <div class="awards">
   {% for a in awards %}
   <div class="award"><span class="lbl">Ödül {{ '%02d'|format(loop.index) }}</span><span class="no">#{{ '%02d'|format(loop.index) }}</span>

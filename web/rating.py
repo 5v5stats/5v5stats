@@ -26,7 +26,7 @@ Z_SOURCE = {"KPR": "KPR", "DPR": "DPR", "ADR": "ADR", "KAST": "KAST_PROXY", "KPM
             "MK": "MK_per_match", "HS": "HS_PCT", "ACC": "ACC_PCT", "CLUTCH": "CLUTCH_WR", "ENTRY": "ENTRY_WR"}
 ADJUST_ROUNDS = 200
 V_STRENGTH, ENTRY_STRENGTH = 5, 20
-MIN_MATCHES = {"all": 30, "30d": 15, "7d": 3}       # inferred from who is / isn't ranked on the site
+MIN_MATCHES = {"all": 30, "90d": 20, "30d": 15, "7d": 3}   # site's (all/30d/7d inferred); 90d is ours
 TIER_CUTS = [0.059, 0.173, 0.272, 0.41, 0.566, 0.716, 0.827, 0.923, 0.98]  # rank percentile -> tier 10..2, else 1
 
 # Our own display scale (not on 5v5stats): a FACEIT/HLTV-style rating where 1.00 is the server average and

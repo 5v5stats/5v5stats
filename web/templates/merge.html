@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Hesap birleştir // 5v5 Turkish Server{% endblock %}
+{% block body %}
+<section class="hero">
+  <div class="eyebrow">Oyuncular // hesap birleştirme</div>
+  <div class="display xl">Aynı kişi, <i>tek hesap.</i></div>
+  <p class="dim" style="max-width:640px">Birleştirilen hesabın tüm maçları ve istatistikleri ana hesaba eklenir: sıralama, ödüller,
+    Takım Kur, oyuncu sayfası ve maç listesi. Maçların kendisi değişmez; "Ayır" ile her şey eski haline döner.</p>
+</section>
+
+{% for m in get_flashed_messages() %}<div class="panel flash">{{ m }}</div>{% endfor %}
+
+{% if not allowed %}
+<div class="panel login" style="max-width:360px">
+  <h2>Şifre</h2>
+  <form method="post">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="action" value="login">
+    <p><input type="password" name="password" autofocus placeholder="Şifre"></p>
+    <button class="btn primary">Giriş</button>
+  </form>
+</div>
+{% else %}
+
+<div class="sec"><h2>Birleştir</h2><small>// ikinci hesabı ana hesaba ekle</small></div>
+<form method="post" class="panel mform" id="mform">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="action" value="merge">
+  <div class="pickers">
+    <div class="picker" data-field="main">
+      <div class="plabel">Ana hesap <span class="dim">// istatistikler burada toplanır</span></div>
+      <input type="hidden" name="main">
+      <div class="chosen" hidden></div>
+      <div class="search">
+        <input type="text" class="q" placeholder="İsim veya Steam ID ara..." autocomplete="off">
+        <div class="list" role="listbox"></div>
+      </div>
+    </div>
+    <div class="join" aria-hidden="true">&larr;</div>
+    <div class="picker" data-field="alt">
+      <div class="plabel">Eklenecek hesap <span class="dim">// ana hesaba katılır</span></div>
+      <input type="hidden" name="alt">
+      <div class="chosen" hidden></div>
+      <div class="search">
+        <input type="text" class="q" placeholder="İsim veya Steam ID ara..." autocomplete="off">
+        <div class="list" role="listbox"></div>
+      </div>
+    </div>
+  </div>
+  <div class="mfoot">
+    <input name="note" maxlength="120" placeholder="Not (isteğe bağlı), ör. smurf hesabı" class="note">
+    <div class="preview dim" id="preview">İki hesabı da seç.</div>
+    <button class="btn primary" id="go" disabled>Birleştir</button>
+  </div>
+</form>
+
+<div class="sec"><h2>Birleştirilmiş hesaplar</h2><small>// {{ merges|length }} hesap</small></div>
+{% if merges %}
+<div class="mlist">
+  {% for m in merges %}
+  <div class="panel mrow">
+    <a class="who" href="{{ url_for('player_page', steamid=m.main) }}">
+      {% if m.main_av %}<img class="pav" src="{{ m.main_av }}" alt="">{% else %}<span class="pav ini">{{ m.main_name[:1] }}</span>{% endif %}
+      <span><b>{{ m.main_name }}</b><small class="dim">ana hesap</small></span></a>
+    <span class="arrow">&larr;</span>
+    <span class="who">
+      {% if m.alt_av %}<img class="pav" src="{{ m.alt_av }}" alt="">{% else %}<span class="pav ini">{{ m.alt_name[:1] }}</span>{% endif %}
+      <span><b>{{ m.alt_name }}</b><small class="dim mono">{{ m.n }} maç &middot; {{ m.alt }}</small></span></span>
+    <span class="meta dim">{% if m.note %}{{ m.note }} &middot; {% endif %}{{ m.when }}</span>
+    <form method="post" style="margin:0"><input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="action" value="unmerge"><input type="hidden" name="alt" value="{{ m.alt }}">
+      <button class="btn" onclick="return confirm('{{ m.alt_name|e }} ayrılsın mı? İstatistikleri yine kendi hesabında sayılır.')">Ayır</button></form>
+  </div>
+  {% endfor %}
+</div>
+{% else %}<p class="dim">Henüz birleştirilmiş hesap yok.</p>{% endif %}
+
+<script>
+(() => {
+  const ACC = {{ accounts|tojson }};
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const av = (a, cls) => a.avatar ? `<img class="${cls}" src="${esc(a.avatar)}" alt="" loading="lazy">`
+                                  : `<span class="${cls} ini">${esc((a.name || '?')[0])}</span>`;
+  const fold = s => (s || '').toLocaleLowerCase('tr').normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const pickers = [...document.querySelectorAll('.picker')];
+  const val = p => p.querySelector('input[type=hidden]').value;
+  const other = p => pickers.find(x => x !== p);
+  const byId = Object.fromEntries(ACC.map(a => [a.sid, a]));
+
+  function render(p) {
+    const q = fold(p.querySelector('.q').value.trim());
+    const taken = val(other(p));
+    const hits = ACC.filter(a => !a.alt_of && a.sid !== taken &&
+                             (!q || fold(a.name).includes(q) || a.sid.includes(q))).slice(0, 40);
+    const list = p.querySelector('.list');
+    list.innerHTML = hits.length ? hits.map((a, i) => `
+      <div class="opt${i === 0 ? ' hot' : ''}" role="option" data-sid="${a.sid}">
+        ${av(a, 'oav')}
+        <span class="on"><b>${esc(a.name)}</b><small>${a.n} maç${a.last ? ' &middot; son ' + esc(a.last) : ''}</small></span>
+        <span class="sid">…${a.sid.slice(-6)}</span>
+      </div>`).join('') : '<div class="none dim">Bulunamadı</div>';
+  }
+
+  function choose(p, sid) {
+    const a = byId[sid];
+    p.querySelector('input[type=hidden]').value = sid;
+    const box = p.querySelector('.chosen');
+    box.innerHTML = `${av(a, 'cav')}
+      <span class="on"><b>${esc(a.name)}</b><small>${a.n} maç${a.last ? ' &middot; son maç ' + esc(a.last) : ''}</small>
+        <a class="sid" href="https://steamcommunity.com/profiles/${a.sid}" target="_blank" rel="noopener">${a.sid}</a></span>
+      <button type="button" class="x" title="Değiştir">&times;</button>`;
+    box.hidden = false;
+    p.querySelector('.search').hidden = true;
+    box.querySelector('.x').onclick = () => clear(p);
+    update();
+  }
+
+  function clear(p) {
+    p.querySelector('input[type=hidden]').value = '';
+    p.querySelector('.chosen').hidden = true;
+    const s = p.querySelector('.search');
+    s.hidden = false;
+    render(p);
+    s.querySelector('.q').focus();
+    update();
+  }
+
+  function update() {
+    const [m, a] = pickers.map(val);
+    const go = document.getElementById('go'), pv = document.getElementById('preview');
+    go.disabled = !(m && a);
+    if (m && a) {
+      const M = byId[m], A = byId[a];
+      pv.innerHTML = `<b>${esc(A.name)}</b> hesabının ${A.n} maçı <b>${esc(M.name)}</b> hesabına eklenecek &rarr; toplam <b>${M.n + A.n}</b> maç`;
+    } else pv.textContent = 'İki hesabı da seç.';
+    pickers.forEach(p => { if (!val(p)) render(p); });
+  }
+
+  pickers.forEach(p => {
+    const q = p.querySelector('.q'), list = p.querySelector('.list');
+    q.addEventListener('input', () => render(p));
+    q.addEventListener('keydown', e => {
+      const opts = [...list.querySelectorAll('.opt')];
+      let i = opts.findIndex(o => o.classList.contains('hot'));
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!opts.length) return;
+        opts[i]?.classList.remove('hot');
+        i = (i + (e.key === 'ArrowDown' ? 1 : -1) + opts.length) % opts.length;
+        opts[i].classList.add('hot');
+        opts[i].scrollIntoView({block: 'nearest'});
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (opts[i]) choose(p, opts[i].dataset.sid);
+      }
+    });
+    list.addEventListener('click', e => { const o = e.target.closest('.opt'); if (o) choose(p, o.dataset.sid); });
+    render(p);
+  });
+  document.getElementById('mform').addEventListener('submit', e => {
+    const [m, a] = pickers.map(val);
+    if (!(m && a) || !confirm(`${byId[a].name} → ${byId[m].name} birleştirilsin mi?`)) e.preventDefault();
+  });
+})();
+</script>
+{% endif %}
+<style>
+  .flash { padding:10px 14px; margin:12px 0; border-color:var(--accent); }
+  .login input, .mform .note, .picker .q { width:100%; box-sizing:border-box; background:#0f141c; color:var(--text);
+    border:1px solid var(--line); padding:10px 12px; font:13px inherit; }
+  .login input:focus, .mform .note:focus, .picker .q:focus { outline:1px solid var(--accent); border-color:var(--accent); }
+  .mform { padding:18px; }
+  .pickers { display:grid; grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr); gap:12px; align-items:start; }
+  .join { font-size:24px; color:var(--accent); text-align:center; padding-top:44px; }
+  .plabel { font:700 11px var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .plabel .dim { font-weight:400; letter-spacing:.04em; text-transform:none; }
+  .list { margin-top:6px; max-height:300px; overflow-y:auto; border:1px solid var(--line); background:#0c1118; }
+  .opt { display:flex; align-items:center; gap:10px; padding:7px 10px; cursor:pointer; border-bottom:1px solid #161d27; }
+  .opt:last-child { border-bottom:0; }
+  .opt:hover, .opt.hot { background:#1a2230; }
+  .opt.hot { box-shadow:inset 2px 0 0 var(--accent); }
+  .oav { width:32px; height:32px; object-fit:cover; border-radius:2px; flex:none; background:#222a36; }
+  .on { display:flex; flex-direction:column; min-width:0; flex:1; }
+  .on b { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }
+  .on small { color:var(--muted); font:11px var(--mono); }
+  .sid { color:var(--faint); font:11px var(--mono); text-decoration:none; }
+  .none { padding:12px; }
+  .chosen { display:flex; align-items:center; gap:14px; padding:12px; border:1px solid var(--accent);
+    background:linear-gradient(90deg, rgba(255,90,31,.12), transparent 70%); }
+  .chosen[hidden], .search[hidden] { display:none; }
+  .cav { width:56px; height:56px; object-fit:cover; border-radius:2px; flex:none; background:#222a36; font-size:20px; }
+  .chosen b { font:22px var(--display); text-transform:uppercase; font-weight:400; }
+  .chosen .x { background:none; border:1px solid var(--line); color:var(--muted); width:30px; height:30px; cursor:pointer;
+    font-size:18px; flex:none; }
+  .chosen .x:hover { color:var(--text); border-color:var(--text); }
+  .mfoot { display:flex; flex-wrap:wrap; gap:12px 16px; align-items:center; margin-top:16px; padding-top:16px;
+    border-top:1px solid var(--line); }
+  .mfoot .note { flex:0 1 280px; }
+  .preview { flex:1 1 240px; font-size:13px; }
+  .preview b { color:var(--text); }
+  .btn[disabled] { opacity:.4; cursor:not-allowed; }
+  .mlist .mrow { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; padding:12px 16px; margin-bottom:8px; }
+  .mrow .who { display:flex; align-items:center; gap:10px; color:inherit; text-decoration:none; min-width:0; }
+  .mrow .who span { display:flex; flex-direction:column; }
+  .mrow small { font:11px var(--mono); }
+  .pav { width:40px; height:40px; object-fit:cover; border-radius:2px; background:#222a36; flex:none; }
+  .mrow .arrow { color:var(--accent); font-size:18px; }
+  .mrow .meta { margin-left:auto; font-size:12px; }
+  @media (max-width: 720px) {
+    .pickers { grid-template-columns:1fr; }
+    .join { padding:0; transform:rotate(90deg); }
+    .mrow .meta { margin-left:0; width:100%; }
+  }
+</style>
+{% endblock %}

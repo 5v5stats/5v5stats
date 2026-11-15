@@ -97,7 +97,7 @@ def get_match(slug):
 
 # ---------------------------------------------------------------- public site ----
 
-PERIODS = {"7d": "Bu Hafta", "30d": "30 Gün", "all": "Tüm Zamanlar"}
+PERIODS = {"7d": "Bu Hafta", "30d": "30 Gün", "90d": "3 Ay", "all": "Tüm Zamanlar"}
 
 
 def people(c):
@@ -251,17 +251,28 @@ def home():
 @app.route("/players/<steamid>")
 def player_page(steamid):
     c = con()
+    main = statsdb.merge_map(c).get(steamid)
+    if main:  # merged account: show the person
+        c.close()
+        return redirect(url_for("player_page", steamid=main))
+    ids = statsdb.ids_of(c, steamid)
+    q = ",".join("?" * len(ids))
     board = statsdb.leaderboard(c, "all")
     me = next((r for r in board if r["steamid64"] == steamid), None)
     if me is None:
         c.close()
         abort(404)
-    hist = c.execute("""SELECT gp.*, g.id AS gid, g.source, g.ext_id, g.match_key, g.map, g.date, g.rounds, g.team_a,
+    hist = c.execute(f"""SELECT gp.*, g.id AS gid, g.source, g.ext_id, g.match_key, g.map, g.date, g.rounds, g.team_a,
                         g.score_a, g.team_b, g.score_b FROM game_players gp JOIN games g ON g.id = gp.game_id
-                        WHERE gp.steamid = ? ORDER BY g.date DESC, COALESCE(g.ext_id, 0) DESC, g.id DESC""",
-                     (steamid,)).fetchall()
-    base = c.execute("SELECT map_stats FROM baseline WHERE steamid = ?", (steamid,)).fetchone()
-    maps = {m["map"]: dict(m) for m in (json.loads(base["map_stats"]) if base else [])}
+                        WHERE gp.steamid IN ({q}) ORDER BY g.date DESC, COALESCE(g.ext_id, 0) DESC, g.id DESC""",
+                     ids).fetchall()
+    maps = {}
+    for b in c.execute(f"SELECT map_stats FROM baseline WHERE steamid IN ({q})", ids):
+        for m in json.loads(b["map_stats"] or "[]"):
+            t = maps.setdefault(m["map"], {"map": m["map"]})
+            for k, v in m.items():
+                if k != "map" and isinstance(v, (int, float)):
+                    t[k] = t.get(k, 0) + v
     for h in hist:  # demo games aren't in the 5v5stats map stats yet
         if h["source"] == "demo":
             m = maps.setdefault(h["map"], {"map": h["map"], "matches": 0, "rounds": 0, "kills": 0, "deaths": 0,
@@ -277,9 +288,9 @@ def player_page(steamid):
         m["adr"] = m["damage"] / m["rounds"] if m["rounds"] else 0
         m["kd"] = m["kills"] / m["deaths"] if m["deaths"] else 0
     clips = c.execute("""SELECT clips.*, matches.slug, matches.media_rev, matches.map AS mmap, matches.date AS mdate FROM clips
-                         JOIN matches ON matches.id = clips.match_id WHERE clips.steamid = ?""" +
+                         JOIN matches ON matches.id = clips.match_id WHERE clips.steamid IN (""" + q + ")" +
                       ("" if is_admin() else " AND matches.published = 1") + " ORDER BY clips.score DESC",
-                      (steamid,)).fetchall()
+                      ids).fetchall()
     ppl, links = people(c), highlight_links(c)
     rel = statsdb.relations(c, steamid)
     ref = statsdb.latest_date(c)
@@ -299,7 +310,9 @@ def player_page(steamid):
     enough = [m for m in maplist if m["matches"] >= 5]
     best = max(enough, key=lambda m: m["wins"] / m["matches"], default=None)
     worst = min(enough, key=lambda m: m["wins"] / m["matches"], default=None)
+    alts = [{"sid": a, "name": (ppl.get(a) or {}).get("name") or a} for a in ids[1:]]
     return render_template("player.html", p=me, hist=hist, maps=maplist, clips=clips, person=ppl.get(steamid, {}),
+                           alts=alts,
                            links=links, n_ranked=len(qualified), rel=rel, radar=radar, ref=ref, best=best,
                            worst=worst, people=ppl, form=list(hist[:10])[::-1])
 
@@ -338,12 +351,16 @@ def games_page():
         conds.append("g.map = ?")
         args.append(mapf)
     join = ""
+    mm = statsdb.merge_map(c)
+    pid, wid = mm.get(pid, pid), mm.get(wid, wid)
     if pid:
-        join = "JOIN game_players me ON me.game_id = g.id AND me.steamid = ?"
-        args.insert(0, pid)
+        pids = statsdb.ids_of(c, pid)
+        join = f"JOIN game_players me ON me.game_id = g.id AND me.steamid IN ({','.join('?' * len(pids))})"
+        args[0:0] = pids
     if wid:
-        join += " JOIN game_players other ON other.game_id = g.id AND other.steamid = ?"
-        args.insert(1, wid)
+        wids = statsdb.ids_of(c, wid)
+        join += f" JOIN game_players other ON other.game_id = g.id AND other.steamid IN ({','.join('?' * len(wids))})"
+        args[len(pids):len(pids)] = wids
     where = ("WHERE " + " AND ".join(conds)) if conds else ""
     cols = "g.*" + (", me.side AS my_side, me.won AS my_won, me.kills AS my_k, me.deaths AS my_d, me.assists AS my_a, "
                     "me.adr AS my_adr, me.hs_pct AS my_hs" if pid else "") + (", other.side AS w_side" if wid else "")
@@ -360,9 +377,14 @@ def games_page():
                                         if where else f"SELECT COUNT(*), SUM(me.won) {base} WHERE me.side = other.side",
                                         args).fetchone()
     maps = c.execute("SELECT map, COUNT(*) AS n FROM games GROUP BY map ORDER BY n DESC").fetchall()
-    players = c.execute("""SELECT p.steamid, p.name, COUNT(*) AS n FROM game_players gp JOIN people p ON p.steamid = gp.steamid
-                           GROUP BY p.steamid, p.name ORDER BY n DESC""").fetchall()
-    names = {r["steamid"]: r["name"] for r in players}
+    counts, names = {}, {}
+    for r in c.execute("""SELECT p.steamid, p.name, COUNT(*) AS n FROM game_players gp JOIN people p ON p.steamid = gp.steamid
+                          GROUP BY p.steamid, p.name"""):
+        k = mm.get(r["steamid"], r["steamid"])
+        counts[k] = counts.get(k, 0) + r["n"]
+        if r["steamid"] == k:
+            names[k] = r["name"]
+    players = sorted(({"steamid": k, "name": names.get(k, k), "n": n} for k, n in counts.items()), key=lambda p: -p["n"])
     links = highlight_links(c)
     c.close()
     return render_template("games.html", games=rows, maps=maps, mapf=mapf, page=page, pid=pid, wid=wid,
@@ -372,7 +394,11 @@ def games_page():
 
 def player_tiers(c):
     """{steamid: {"tier": 1-10 or None, "points": 1.00-scale score}} for the EDO card's level badge."""
-    return {r["steamid64"]: {"tier": r["rating"], "points": r["points"]} for r in statsdb.leaderboard(c, "all")}
+    out = {r["steamid64"]: {"tier": r["rating"], "points": r["points"]} for r in statsdb.leaderboard(c, "all")}
+    for alt, main in statsdb.merge_map(c).items():
+        if main in out:
+            out[alt] = out[main]
+    return out
 
 
 @app.route("/g/<int:gid>")
@@ -427,6 +453,71 @@ def media(slug, path):
     if storage.R2 and m["media_rev"]:
         return redirect(storage.url(slug, m["media_rev"], path))
     return send_from_directory(storage.local_dir(slug), path, conditional=True, max_age=3600)
+
+
+# ---------------------------------------------------------------- merged accounts ----
+# /birlestir: count a player's second account as the same person. Behind MERGE_PASSWORD (env var or
+# admin.env) or the admin login; every merge is listed there and can be undone ("Ayır").
+
+def merge_allowed():
+    return is_admin() or session.get("merge") is True
+
+
+@app.route("/birlestir", methods=["GET", "POST"])
+def merge_page():
+    c = con()
+    try:
+        if request.method == "POST":
+            if request.form.get("csrf") != session.get("csrf"):
+                abort(400, "Form expired, go back and try again.")
+            action = request.form.get("action")
+            if action == "login":
+                pw = os.environ.get("MERGE_PASSWORD", "")
+                if pw and secrets.compare_digest(request.form.get("password", ""), pw):
+                    session["merge"] = True
+                else:
+                    time.sleep(1)
+                    flash("Şifre yanlış.")
+                return redirect(url_for("merge_page"))
+            if not merge_allowed():
+                abort(403)
+            names = {r["steamid"]: r["name"] for r in c.execute("SELECT steamid, name FROM people")}
+            if action == "merge":
+                main, alt = request.form.get("main", ""), request.form.get("alt", "")
+                if main not in names or alt not in names:
+                    flash("İki hesabı da listeden seç.")
+                else:
+                    try:
+                        used = statsdb.merge_accounts(c, main, alt, request.form.get("note", "").strip()[:120])
+                        flash(f"{names[alt]} artık {names.get(used, used)} olarak sayılıyor.")
+                    except ValueError as e:
+                        flash(f"Birleştirilemedi: {e}.")
+            elif action == "unmerge":
+                alt = request.form.get("alt", "")
+                statsdb.unmerge_account(c, alt)
+                flash(f"{names.get(alt, alt)} ayrıldı; istatistikleri yine kendi hesabında.")
+            return redirect(url_for("merge_page"))
+        ctx = {"allowed": merge_allowed(), "accounts": [], "merges": []}
+        if ctx["allowed"]:
+            mm = statsdb.merge_map(c)
+            n = {r[0]: r[1] for r in c.execute("SELECT steamid, COUNT(*) FROM game_players GROUP BY steamid")}
+            rows = list(c.execute("SELECT steamid, name, avatar FROM people"))
+            ppl = {r["steamid"]: r["name"] for r in rows}
+            av = {r["steamid"]: r["avatar"] for r in rows if r["avatar"]}
+            last = {r[0]: r[1] for r in c.execute("""SELECT gp.steamid, MAX(g.date) FROM game_players gp
+                                                    JOIN games g ON g.id = gp.game_id GROUP BY gp.steamid""")}
+            ctx["accounts"] = sorted(({"sid": s, "name": nm or s, "n": n.get(s, 0), "alt_of": mm.get(s),
+                                       "avatar": av.get(s), "last": day(last[s]) if last.get(s) else None}
+                                      for s, nm in ppl.items()), key=lambda a: (-a["n"], (a["name"] or "").lower()))
+            ctx["avatars"] = av
+            ctx["merges"] = [{"alt": r["alt"], "main": r["main"], "alt_name": ppl.get(r["alt"], r["alt"]),
+                              "main_name": ppl.get(r["main"], r["main"]), "n": n.get(r["alt"], 0), "note": r["note"],
+                              "alt_av": av.get(r["alt"]), "main_av": av.get(r["main"]),
+                              "when": day(time.strftime("%Y-%m-%d", time.localtime(r["created_at"] or 0)))}
+                             for r in c.execute("SELECT * FROM merges ORDER BY main, created_at")]
+        return render_template("merge.html", **ctx)
+    finally:
+        c.close()
 
 
 # ---------------------------------------------------------------- uploads ----
