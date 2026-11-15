@@ -6,7 +6,7 @@
 {% endblock %}
 {% block body %}
 {% set plabel = {'all': 'Tüm zamanlar', '90d': 'Son 3 ay', '30d': 'Bu ay', '7d': 'Bu hafta'}[period] %}
-{% set pq = period if period != 'all' else None %}
+{% set pq = period if period != default_period else None %}
 
 <section class="hero">
   <div class="eyebrow"><a href="{{ url_for('stats_home', p=pq) }}" class="dim" style="text-decoration:none">&larr; İstatistik</a> // {{ plabel }} ödülleri</div>

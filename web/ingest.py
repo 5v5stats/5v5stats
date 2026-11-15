@@ -92,6 +92,14 @@ def check_data(data):
             for k in statsdb.rating.TOTALS:
                 c[k] = int(c.get(k, 0) or 0)  # numbers only
             c["name"] = str(c.get("name", ""))[:64]
+        if data.get("duels") is not None:  # older packages have none: the stored duels are kept
+            duels = data["duels"]
+            if not isinstance(duels, list) or len(duels) > 400:
+                raise BadPackage("duels must be a list")
+            data["duels"] = [{"k": str(d["k"]), "v": str(d["v"]), "n": int(d.get("n", 0)), "hs": int(d.get("hs", 0)),
+                              "op": int(d.get("op", 0))} for d in duels]
+            if not all(re.fullmatch(r"\d{1,20}", d["k"]) and re.fullmatch(r"\d{1,20}", d["v"]) for d in data["duels"]):
+                raise BadPackage("bad duel steamid")
     except (TypeError, AttributeError, ValueError) as e:
         raise BadPackage(f"match_data.json has an unexpected format ({e})")
 

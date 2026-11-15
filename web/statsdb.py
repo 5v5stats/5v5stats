@@ -38,6 +38,12 @@ CREATE INDEX IF NOT EXISTS game_players_sid ON game_players(steamid);
 CREATE TABLE IF NOT EXISTS baseline (steamid TEXT PRIMARY KEY, name TEXT, totals TEXT, map_stats TEXT);
 CREATE TABLE IF NOT EXISTS people (steamid TEXT PRIMARY KEY, name TEXT, avatar TEXT);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS duels (          -- demo games only: enemy kills between two players
+  game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  killer TEXT NOT NULL, victim TEXT NOT NULL, kills INTEGER, hs INTEGER, openings INTEGER,
+  PRIMARY KEY (game_id, killer, victim)
+);
+CREATE INDEX IF NOT EXISTS duels_killer ON duels(killer);
 CREATE TABLE IF NOT EXISTS merges (         -- alt accounts counted as one person (undo = delete the row)
   alt TEXT PRIMARY KEY, main TEXT NOT NULL, created_at REAL, note TEXT
 );
@@ -203,7 +209,8 @@ def add_demo(con, match_key, data):
         return None
     existing = con.execute("SELECT * FROM games WHERE match_key = ?", (match_key,)).fetchone()
     if existing and existing["source"] == "5v5stats":
-        return existing["id"]  # 5v5stats already counts it; nothing to add
+        set_duels(con, existing["id"], data.get("duels"))  # 5v5stats has the totals, but not who killed whom
+        return existing["id"]
     teams = data["teams"]
     a, b = teams[0], teams[1] if len(teams) > 1 else {"name": "", "score": 0, "players": []}
     side_of = {s: "a" for s in a["players"]} | {s: "b" for s in b["players"]}
@@ -227,8 +234,81 @@ def add_demo(con, match_key, data):
                      c["total_assists"], p.get("adr"), p.get("hs_pct"), json.dumps(c)))
         con.execute("INSERT INTO people(steamid, name) VALUES (?,?) ON CONFLICT(steamid) DO UPDATE SET name = excluded.name",
                     (sid, c["name"]))
+    set_duels(con, gid, data.get("duels"))
     merge_duplicates(con)
     return gid
+
+
+def set_duels(con, gid, duels):
+    """Replace a game's head-to-head kills (None = the package has none: keep what's stored)."""
+    if duels is None:
+        return
+    con.execute("DELETE FROM duels WHERE game_id = ?", (gid,))
+    con.executemany("INSERT INTO duels(game_id, killer, victim, kills, hs, openings) VALUES (?,?,?,?,?,?)",
+                    [(gid, d["k"], d["v"], d["n"], d["hs"], d["op"]) for d in duels if d["n"] > 0])
+
+
+def duo_players(con, min_games=5):
+    """Players for the duo page's pickers: [(steamid, name, games)], most games first (merged accounts as one)."""
+    mm = merge_map(con)
+    n = {}
+    for r in con.execute("SELECT steamid, COUNT(*) AS c FROM game_players GROUP BY steamid"):
+        k = mm.get(r["steamid"], r["steamid"])
+        n[k] = n.get(k, 0) + r["c"]
+    names = {r["steamid"]: r["name"] for r in con.execute("SELECT steamid, name FROM people")}
+    return sorted(((s, names.get(s) or s, c) for s, c in n.items() if c >= min_games), key=lambda x: -x[2])
+
+
+def duo(con, a, b):
+    """Two players: games as teammates and as opponents (all games), and head-to-head kills (our demo games)."""
+    ia, ib = ids_of(con, a), ids_of(con, b)
+    sa, sb = set(ia), set(ib)
+    q = ",".join("?" * (len(ia) + len(ib)))
+    games = {}
+    for r in con.execute(f"""SELECT gp.game_id, gp.steamid, gp.side, gp.won, gp.kills, gp.deaths, gp.adr, g.date, g.map,
+                             g.score_a, g.score_b, g.source FROM game_players gp JOIN games g ON g.id = gp.game_id
+                             WHERE gp.steamid IN ({q})""", (*ia, *ib)):
+        g = games.setdefault(r["game_id"], {"id": r["game_id"], "date": r["date"], "map": r["map"],
+                                            "score": f'{r["score_a"]}-{r["score_b"]}', "source": r["source"]})
+        g["a" if r["steamid"] in sa else "b"] = r
+    both = sorted((g for g in games.values() if "a" in g and "b" in g), key=lambda g: (g["date"] or "", g["id"]),
+                  reverse=True)
+
+    def side(rows, who):
+        n = len(rows)
+        k = sum(g[who]["kills"] or 0 for g in rows)
+        d = sum(g[who]["deaths"] or 0 for g in rows)
+        adr = [g[who]["adr"] for g in rows if g[who]["adr"] is not None]
+        return {"kills": k, "deaths": d, "kd": k / d if d else float(k), "kpm": k / n if n else 0,
+                "adr": sum(adr) / len(adr) if adr else None}
+
+    out = {}
+    for mode, rows in (("with", [g for g in both if g["a"]["side"] == g["b"]["side"]]),
+                       ("vs", [g for g in both if g["a"]["side"] != g["b"]["side"]])):
+        aw = sum(1 for g in rows if g["a"]["won"])
+        bw = sum(1 for g in rows if g["b"]["won"])
+        out[mode] = {"n": len(rows), "a_wins": aw, "b_wins": bw, "draws": len(rows) - (aw if mode == "with" else aw + bw),
+                     "a": side(rows, "a"), "b": side(rows, "b")}
+    for g in both:
+        g["mode"] = "with" if g["a"]["side"] == g["b"]["side"] else "vs"
+    # head to head, from the duels table (only our demo games have it)
+    h = {"a": {"n": 0, "hs": 0, "op": 0}, "b": {"n": 0, "hs": 0, "op": 0}}
+    games_with_duels = set()
+    if both:
+        gq = ",".join("?" * len(both))
+        games_with_duels = {r["game_id"] for r in con.execute(
+            f"SELECT DISTINCT game_id FROM duels WHERE game_id IN ({gq})", [g["id"] for g in both])}
+        pa, pb = ",".join("?" * len(ia)), ",".join("?" * len(ib))
+        for r in con.execute(f"""SELECT killer, SUM(kills) AS n, SUM(hs) AS hs, SUM(openings) AS op FROM duels
+                                 WHERE (killer IN ({pa}) AND victim IN ({pb})) OR (killer IN ({pb}) AND victim IN ({pa}))
+                                 GROUP BY killer""", (*ia, *ib, *ib, *ia)):
+            x = h["a" if r["killer"] in sa else "b"]
+            x["n"] += r["n"] or 0
+            x["hs"] += r["hs"] or 0
+            x["op"] += r["op"] or 0
+    h["games"] = sum(1 for g in both if g["mode"] == "vs" and g["id"] in games_with_duels)
+    out.update(games=both, h2h=h, total=len(both))
+    return out
 
 
 def remove_demo(con, match_key):

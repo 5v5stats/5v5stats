@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar %}
+{% block title %}{% if d %}{{ names[a] }} vs {{ names[b] }}{% else %}İkili karşılaştırma{% endif %} // 5v5 Turkish Server{% endblock %}
+{% block body %}
+{% macro pick(name, cur) -%}
+<select name="{{ name }}" aria-label="Oyuncu"><option value="">Oyuncu seç&hellip;</option>
+  {% for s, n, g in plist %}<option value="{{ s }}" {{ 'selected' if s == cur }}>{{ n }} ({{ g }} maç)</option>{% endfor %}</select>
+{%- endmacro %}
+{% macro better(x, y, fmt='%.2f', low=false) -%}
+  {%- if x is none -%}&ndash;{%- else -%}<span class="{{ 'best' if y is none or (x < y if low else x > y) }}">{{ fmt|format(x) }}</span>{%- endif -%}
+{%- endmacro %}
+
+<section class="hero">
+  <div class="eyebrow">Oyuncular // ikili karşılaştırma</div>
+  <div class="display xl">İkili <i>istatistik.</i></div>
+  <form class="duo-sel" action="{{ url_for('duo_page') }}">{{ pick('a', a) }}<span class="x">vs</span>{{ pick('b', b) }}<button>Karşılaştır</button></form>
+</section>
+
+{% if not d %}
+<p class="dim" style="margin:26px 0">{% if a and b and a == b %}İki farklı oyuncu seç.{% else %}İki oyuncu seç: birlikte ve karşı karşıya oynadıkları maçlar, birbirlerini kaç kez öldürdükleri.{% endif %}</p>
+{% else %}
+{% set ta, tb = tiers.get(a) or {}, tiers.get(b) or {} %}
+<div class="faceoff">
+  <a class="fo a" href="{{ url_for('player_page', steamid=a) }}">{{ avatar(people, a, names[a]) }}
+    <span style="min-width:0"><span class="nm">{{ names[a] }}</span><span class="sub">{{ level_ring(ta.tier, 26) }}{% if ta.points is not none and ta.points is defined %}{{ '%.2f'|format(ta.points) }}{% endif %}</span></span></a>
+  <span class="vs">VS</span>
+  <a class="fo b" href="{{ url_for('player_page', steamid=b) }}">{{ avatar(people, b, names[b]) }}
+    <span style="min-width:0"><span class="nm">{{ names[b] }}</span><span class="sub">{{ level_ring(tb.tier, 26) }}{% if tb.points is not none and tb.points is defined %}{{ '%.2f'|format(tb.points) }}{% endif %}</span></span></a>
+</div>
+<div class="meta-line"><span><b>{{ d.total }}</b> ortak maç</span><span><b>{{ d.with.n }}</b> aynı takımda</span><span><b>{{ d.vs.n }}</b> rakip</span></div>
+
+{% set h = d.h2h %}
+<div class="sec"><h2>Birbirlerini öldürme</h2><small>// {{ h.games }} demo maçından{% if d.vs.n > h.games %} &middot; {{ d.vs.n }} karşılaşmanın kalanı 5v5stats'tan, orada kim kimi öldürdü bilgisi yok{% endif %}</small></div>
+{% if h.games %}
+{% set tot = [h.a.n + h.b.n, 1]|max %}
+<div class="h2h">
+  <div class="big"><b class="a num">{{ h.a.n }}</b>
+    <div class="split"><i class="a" style="width:{{ '%.1f'|format(h.a.n * 100 / tot) }}%"></i><i class="b" style="width:{{ '%.1f'|format(h.b.n * 100 / tot) }}%"></i></div>
+    <b class="b num">{{ h.b.n }}</b></div>
+  <div class="cap">{% if h.a.n > h.b.n %}{{ names[a] }} önde{% elif h.b.n > h.a.n %}{{ names[b] }} önde{% else %}berabere{% endif %}</div>
+  <div class="rows">
+    <span class="l">{{ h.a.n }}</span><span class="m">kill</span><span>{{ h.b.n }}</span>
+    <span class="l">{{ h.a.hs }}</span><span class="m">kafadan</span><span>{{ h.b.hs }}</span>
+    <span class="l">{{ h.a.op }}</span><span class="m">açılış killi</span><span>{{ h.b.op }}</span>
+  </div>
+</div>
+{% else %}
+<p class="dim small" style="margin:10px 0 22px">Karşı karşıya oynadıkları demo maçı yok: kim kimi öldürdü sadece bizim demolarımızda var.</p>
+{% endif %}
+
+<div class="sec"><h2>Maçlar</h2><small>// tüm maçlar (5v5stats + demolar)</small></div>
+<div class="duo-modes">
+  {% for mode, title in [('with', 'Aynı takımda'), ('vs', 'Rakip olarak')] %}
+  {% set m = d[mode] %}
+  <div class="box"><span class="lbl">{{ m.n }} maç</span><h3>{{ title }}</h3>
+    {% if m.n %}
+      {% if mode == 'with' %}
+      <div class="wl num"><span class="{{ 'pos' if m.a_wins * 2 >= m.n else 'neg' }}">{{ '%.0f'|format(m.a_wins * 100 / m.n) }}%</span><small>{{ m.a_wins }}G - {{ m.n - m.a_wins - m.draws }}M{% if m.draws %} - {{ m.draws }}B{% endif %}</small></div>
+      {% else %}
+      <div class="wl num"><span style="color:#4da3ff">{{ m.a_wins }}</span> <span class="faint">-</span> <span class="acc">{{ m.b_wins }}</span><small>{% if m.draws %}{{ m.draws }} berabere &middot; {% endif %}kazanılan maç</small></div>
+      {% endif %}
+      <table>
+        <tr><td>{{ names[a] }}</td><td class="k"></td><td>{{ names[b] }}</td></tr>
+        <tr><td>{{ better(m.a.kd, m.b.kd) }}</td><td class="k">K/D</td><td>{{ better(m.b.kd, m.a.kd) }}</td></tr>
+        <tr><td>{{ better(m.a.kpm, m.b.kpm, '%.1f') }}</td><td class="k">Kill / maç</td><td>{{ better(m.b.kpm, m.a.kpm, '%.1f') }}</td></tr>
+        <tr><td>{{ better(m.a.adr, m.b.adr, '%.0f') }}</td><td class="k">ADR</td><td>{{ better(m.b.adr, m.a.adr, '%.0f') }}</td></tr>
+        <tr><td>{{ m.a.kills }}</td><td class="k">Toplam kill</td><td>{{ m.b.kills }}</td></tr>
+      </table>
+    {% else %}<p class="dim small">Hiç {{ 'birlikte' if mode == 'with' else 'karşı karşıya' }} oynamamışlar.</p>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{% if d.games %}
+<div class="sec"><h2>Son ortak maçlar</h2><small>// son {{ [d.games|length, 20]|min }}</small></div>
+<table class="duo-games">
+  <tr><th>Tarih</th><th>Harita</th><th></th><th>Skor</th><th>{{ names[a] }}</th><th>{{ names[b] }}</th></tr>
+  {% for g in d.games[:20] %}
+  <tr class="gr" onclick="location.href='{{ url_for('game_page', gid=g.id) }}'">
+    <td>{{ g.date|day }}</td><td>{{ map_label(g.map) }}</td>
+    <td><span class="tag {{ g.mode }}">{{ 'Takım' if g.mode == 'with' else 'Rakip' }}</span></td>
+    <td>{{ g.score }}</td>
+    <td class="{{ 'pos' if g.a.won else 'neg' }}">{{ g.a.kills }}-{{ g.a.deaths }}</td>
+    <td class="{{ 'pos' if g.b.won else 'neg' }}">{{ g.b.kills }}-{{ g.b.deaths }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endif %}
+{% endblock %}

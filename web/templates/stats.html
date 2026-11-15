@@ -17,7 +17,7 @@
   <div class="meta-line">
     <span><b>{{ ov.matches|bin }}</b> maç oynandı</span><span><b>{{ ov.players }}</b> aktif oyuncu</span>
     <span><b>{{ ov.rounds|bin }}</b> round</span><span><b>{{ ov.kills|bin }}</b> toplam kill</span>
-    {% if synced %}<span>5v5stats verisi: <b>{{ synced }}</b></span>{% endif %}
+    {% if sync_date %}<span title="{% if synced %}5v5stats'in son güncellemesi: {{ synced[:10]|day }} {{ synced[11:] }} (TR saati). {% endif %}Sonraki maçlar sadece yüklenen demolardan.">5v5stats verisi: <b>{{ sync_date|day }}</b> tarihine kadar</span>{% endif %}
   </div>
 </section>
 
@@ -87,7 +87,7 @@
 <div class="sec"><h2>{{ {'7d': 'Bu haftanın', '30d': 'Bu ayın', '90d': 'Son 3 ayın', 'all': 'Tüm zamanların'}[period] }} ödülleri</h2><small>// {{ awards|length }} kategori</small></div>
 <div class="awards">
   {% for a in awards %}
-  <div class="award"><a class="cover" href="{{ url_for('award_page', slug=a.slug, p=period if period != 'all' else None) }}" aria-label="{{ a.title }} sıralaması"></a>
+  <div class="award"><a class="cover" href="{{ url_for('award_page', slug=a.slug, p=period if period != default_period else None) }}" aria-label="{{ a.title }} sıralaması"></a>
     <span class="lbl">Ödül {{ '%02d'|format(loop.index) }}</span><span class="no">#{{ '%02d'|format(loop.index) }}</span>
     <h3>{{ a.title }}</h3>
     <a class="who" href="{{ url_for('player_page', steamid=a.sid) }}">{{ avatar(people, a.sid, a.name) }}{{ a.name }}</a>

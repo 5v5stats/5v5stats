@@ -2,12 +2,13 @@
 {% block title %}Takım Kur // 5v5 Turkish Server{% endblock %}
 {% block head %}
 <style>
-.bal { display:grid; grid-template-columns:minmax(0, 1fr) 420px; gap:16px; align-items:start; }
+main.wrap { max-width:1480px; }  /* this page uses the extra width for the player list */
+.bal { display:grid; grid-template-columns:minmax(0, 1fr) 380px; gap:16px; align-items:start; }
 .pool { padding:0; }
 .pool .bar { display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
 .pool .bar input { margin-left:auto; background:var(--bg2); border:1px solid var(--line2); color:var(--text); padding:7px 10px; font:12px var(--mono); width:180px; }
 .pool .bar .btn { padding:7px 12px; }
-.plist { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); max-height:620px; overflow:auto; }
+.plist { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); max-height:min(760px, 75vh); overflow:auto; }
 .pc { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--line); border-right:1px solid var(--line);
       cursor:pointer; user-select:none; background:var(--panel); }
 .pc:hover { background:var(--panel2); }
@@ -46,7 +47,7 @@
 .balbar i { position:absolute; left:0; top:0; bottom:0; background:var(--win); }
 .balbar em { position:absolute; left:50%; top:-3px; bottom:-3px; width:2px; background:#fff; }
 .copied { color:var(--win); font:11px var(--mono); margin-left:8px; }
-@media (max-width: 900px) { .bal { grid-template-columns:1fr; } }
+@media (max-width: 1000px) { .bal { grid-template-columns:1fr; } }
 @media (max-width: 560px) { .plist { grid-template-columns:1fr; } }
 </style>
 {% endblock %}

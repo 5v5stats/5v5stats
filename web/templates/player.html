@@ -72,7 +72,10 @@
   <div class="faint small" style="margin-top:10px">Çubuk yüksekliği maç başına ADR</div>
 </div>
 
-<div class="sec"><h2>Takım arkadaşları</h2><small>// tüm zamanlar</small></div>
+<div class="sec"><h2>Takım arkadaşları</h2><small>// tüm zamanlar</small>
+  <form class="duo-pick" action="{{ url_for('duo_page') }}"><input type="hidden" name="a" value="{{ p.steamid64 }}">
+    <select name="b" onchange="this.form.submit()" aria-label="Karşılaştır"><option value="">İkili karşılaştır&hellip;</option>
+      {% for s, n, g in duo_list if s != p.steamid64 %}<option value="{{ s }}">{{ n }} ({{ g }} maç)</option>{% endfor %}</select></form></div>
 <div class="box streak">
   <span class="lbl">Güncel seri</span>
   <b class="{{ 'pos' if rel.streak > 0 else 'neg' }}">{{ rel.streak|abs }} maçtır {{ 'kazanıyor' if rel.streak > 0 else 'kaybediyor' }}</b>
@@ -83,7 +86,8 @@
   {% set d = rel[key] %}
   <div class="box"><span class="lbl">{{ label }}</span>
     {% if d %}<a href="{{ url_for('player_page', steamid=d.sid) }}"><b>{{ d.name }}</b></a>
-      <span class="num small"><span class="{{ 'pos' if d.pct >= 0.5 else 'neg' }}">{{ d.pct|pct }}</span> &nbsp;{{ d.w }}G-{{ d.l }}M</span>
+      <span class="num small"><span class="{{ 'pos' if d.pct >= 0.5 else 'neg' }}">{{ d.pct|pct }}</span> &nbsp;{{ d.w }}G-{{ d.l }}M
+        &nbsp;<a class="duo-go" href="{{ url_for('duo_page', a=p.steamid64, b=d.sid) }}">İkili &rarr;</a></span>
     {% else %}<b class="faint">&ndash;</b>{% endif %}
     <p>{{ note }}</p></div>
   {% endfor %}

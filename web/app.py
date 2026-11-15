@@ -38,7 +38,9 @@ from itsdangerous import BadSignature, URLSafeTimedSerializer  # noqa: E402
 SECRETS = config.ensure_secrets()
 app = Flask(__name__, template_folder=os.path.join(HERE, "templates"), static_folder=os.path.join(HERE, "static"))
 app.secret_key = SECRETS["SECRET_KEY"]
-app.jinja_env.globals.update(cos=math.cos, sin=math.sin, media_url=storage.url,
+TR_TZ = datetime.timezone(datetime.timedelta(hours=3))  # Turkey (no DST); Vercel runs on UTC
+DEFAULT_PERIOD = "30d"  # the site opens on the last 30 days; ?p=all for all time
+app.jinja_env.globals.update(default_period=DEFAULT_PERIOD, cos=math.cos, sin=math.sin, media_url=storage.url,
                              level_ring=lambda t, size=28: Markup(matchpage.level_ring(t, size)))
 TICKETS = URLSafeTimedSerializer(SECRETS["SECRET_KEY"], salt="upload")
 db.init()  # tables (CREATE ... IF NOT EXISTS); cheap, and a fresh hosted database needs it before the first page
@@ -256,9 +258,9 @@ def award_page(slug):
     if not found:
         abort(404)
     slug, title, key, unit, fmt, desc, detail = found[0]
-    period = request.args.get("p", "all")
+    period = request.args.get("p", DEFAULT_PERIOD)
     if period not in PERIODS:
-        period = "all"
+        period = DEFAULT_PERIOD
     c = con()
     board = statsdb.leaderboard(c, period)
     q = sorted((r for r in board if r["qualified"]), key=lambda r: r.get(key) or 0, reverse=True)
@@ -277,9 +279,9 @@ def award_page(slug):
 
 @app.route("/")
 def stats_home():
-    period = request.args.get("p", "all")
+    period = request.args.get("p", DEFAULT_PERIOD)
     if period not in PERIODS:
-        period = "all"
+        period = DEFAULT_PERIOD
     c = con()
     board = statsdb.leaderboard(c, period)
     ov = statsdb.overview(c, period)
@@ -288,7 +290,7 @@ def stats_home():
     sync_date = statsdb.get_meta(c, "sync_date")
     newer = c.execute("SELECT COUNT(*) FROM games WHERE source = 'demo' AND date > ?",
                       (sync_date or "",)).fetchone()[0]
-    clip_title = {"7d": "Haftanın klipleri", "30d": "Ayın klipleri", "90d": "Son 3 ayın klipleri"}.get(period)
+    clip_title = {"7d": "Haftanın klipleri", "30d": "Bu ayın klipleri", "90d": "Son 3 ayın klipleri"}.get(period)
     if period == "all":  # the front page: this month's clips (the last 30 days), else the best ever
         best = top_clips(c, period, since=(datetime.date.today() - datetime.timedelta(days=30)).isoformat())
         clip_title = "Bu ayın klipleri"
@@ -301,8 +303,9 @@ def stats_home():
                awards=awards(board), comeback=cb, best_clips=best, clip_title=clip_title, months=statsdb.activity_by_month(c),
                weeks=statsdb.weekly_counts(c), seen=statsdb.last_seen(c), ref=statsdb.latest_date(c),
                month30=statsdb.overview(c, "30d")["matches"],
-               synced=(day(time.strftime("%Y-%m-%d", time.localtime(synced / 1000))) + " "
-                       + time.strftime("%H:%M", time.localtime(synced / 1000))) if synced else None)
+               sync_date=sync_date,  # newest 5v5stats match we have; later games are our demos only
+               synced=(datetime.datetime.fromtimestamp(synced / 1000, TR_TZ).strftime("%Y-%m-%d %H:%M")
+                       if synced else None))
     c.close()
     return render_template("stats.html", **ctx)
 
@@ -360,6 +363,7 @@ def player_page(steamid):
                       ids).fetchall()
     ppl, links = people(c), highlight_links(c)
     rel = statsdb.relations(c, steamid)
+    duo_list = statsdb.duo_players(c)
     ref = statsdb.latest_date(c)
     c.close()
     qualified = [r for r in board if r["qualified"]]
@@ -381,7 +385,23 @@ def player_page(steamid):
     return render_template("player.html", p=me, hist=hist, maps=maplist, clips=clips, person=ppl.get(steamid, {}),
                            alts=alts,
                            links=links, n_ranked=len(qualified), rel=rel, radar=radar, ref=ref, best=best,
-                           worst=worst, people=ppl, form=list(hist[:10])[::-1])
+                           worst=worst, people=ppl, form=list(hist[:10])[::-1], duo_list=duo_list)
+
+
+@app.route("/ikili")
+def duo_page():
+    """Two players side by side: as teammates, as opponents, and who killed whom (demo games)."""
+    c = con()
+    mm = statsdb.merge_map(c)
+    a = mm.get(request.args.get("a", ""), request.args.get("a", ""))
+    b = mm.get(request.args.get("b", ""), request.args.get("b", ""))
+    plist = statsdb.duo_players(c)
+    names = {s: n for s, n, _ in plist}
+    ppl = people(c)
+    tiers = player_tiers(c)
+    d = statsdb.duo(c, a, b) if a and b and a != b and a in names and b in names else None
+    c.close()
+    return render_template("duo.html", a=a, b=b, d=d, plist=plist, names=names, people=ppl, tiers=tiers)
 
 
 @app.route("/balancer")

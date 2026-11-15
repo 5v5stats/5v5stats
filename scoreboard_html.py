@@ -110,6 +110,7 @@ def collect(demo_path, folder=None):
         "pics": avatars.copy_into(active, folder) if folder else {},
         # MatchZy-style totals per player, so the website can add this match to the 5v5stats ratings
         "counters": counters.counters(demo_path),
+        "duels": counters.duels(demo_path),  # who killed whom, for the website's duo pages
         "played_at": played_at(demo_path),
     }
 

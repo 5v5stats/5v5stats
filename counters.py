@@ -103,6 +103,33 @@ def counters(demo_path):
     return out
 
 
+def duels(demo_path):
+    """Head-to-head between enemies: [{"k": killer, "v": victim, "n": kills, "hs": headshots, "op": opening kills}]."""
+    from demoparser2 import DemoParser
+    res = stats.analyse(demo_path)
+    players, rounds = res["players"], res["rounds"]
+    deaths = DemoParser(demo_path).parse_event("player_death").sort_values("tick")
+    for col in ("user_steamid", "attacker_steamid"):
+        deaths[col] = deaths[col].astype(str)
+    c = collections.defaultdict(collections.Counter)
+    for r in rounds:
+        side_of = {s: players[s]["side_by_round"].get(r["no"]) for s in players}
+        rd = deaths[(deaths["tick"] > r["start"]) & (deaths["tick"] <= r["end"])]
+        first = True
+        for _, d in rd.iterrows():
+            v, a = d["user_steamid"], d["attacker_steamid"]
+            if not side_of.get(v):
+                continue
+            opening, first = first, False
+            if a == v or not side_of.get(a) or side_of[a] == side_of[v]:
+                continue  # suicide, world or team kill
+            x = c[(a, v)]
+            x["n"] += 1
+            x["hs"] += int(bool(d.get("headshot")))
+            x["op"] += int(opening)
+    return [{"k": a, "v": v, **{k: int(x[k]) for k in ("n", "hs", "op")}} for (a, v), x in c.items()]
+
+
 if __name__ == "__main__":
     import json
     import sys
