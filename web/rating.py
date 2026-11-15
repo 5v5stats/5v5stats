@@ -26,7 +26,8 @@ Z_SOURCE = {"KPR": "KPR", "DPR": "DPR", "ADR": "ADR", "KAST": "KAST_PROXY", "KPM
             "MK": "MK_per_match", "HS": "HS_PCT", "ACC": "ACC_PCT", "CLUTCH": "CLUTCH_WR", "ENTRY": "ENTRY_WR"}
 ADJUST_ROUNDS = 200
 V_STRENGTH, ENTRY_STRENGTH = 5, 20
-MIN_MATCHES = {"all": 30, "90d": 20, "30d": 15, "7d": 3}   # site's (all/30d/7d inferred); 90d is ours
+SITE_MIN_MATCHES = {"all": 30, "90d": 20, "30d": 15, "7d": 3}  # 5v5stats' own rules (inferred), for validate()
+MIN_MATCHES = {**SITE_MIN_MATCHES, "30d": 7}   # ours: the last 30 days ranks everyone with 7+ matches
 TIER_CUTS = [0.059, 0.173, 0.272, 0.41, 0.566, 0.716, 0.827, 0.923, 0.98]  # rank percentile -> tier 10..2, else 1
 
 # Our own display scale (not on 5v5stats): a FACEIT/HLTV-style rating where 1.00 is the server average and
@@ -160,7 +161,7 @@ def leaderboard(players, period="all", min_matches=None, prior=None):
 
 def validate(site_period_players, period):
     """Recompute a period's leaderboard from the site's raw totals; return the largest differences."""
-    mine = {r["steamid64"]: r for r in leaderboard(site_period_players, period,
+    mine = {r["steamid64"]: r for r in leaderboard(site_period_players, period, min_matches=SITE_MIN_MATCHES.get(period, 3),
                                                     prior=implied_priors(site_period_players))}
     worst = {}
     for p in site_period_players:

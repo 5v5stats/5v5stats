@@ -9,7 +9,7 @@
 {% set rest = board|rejectattr('qualified')|list %}
 {% set top = ranked[0] if ranked else None %}
 {% set plabel = {'all': 'Tüm zamanlar', '90d': 'Son 3 ay', '30d': 'Bu ay', '7d': 'Bu hafta'}[period] %}
-{% set minm = {'all': 30, '90d': 20, '30d': 15, '7d': 3}[period] %}
+{% set minm = min_matches %}
 
 <section class="hero">
   <div class="eyebrow">Sunucu istatistikleri // {% if win %}{{ win[0]|day }} &ndash; {{ win[1]|day }}{% else %}tüm zamanlar{% endif %}</div>

@@ -318,7 +318,7 @@ def stats_home():
         best = top_clips(c, period)
     cb = None if best else statsdb.comeback(c, period)  # the comeback story only when there are no clips
     ctx = dict(board=board, period=period, periods=PERIODS, ov=ov, people=people(c), win=win, newer=newer,
-               awards=awards(board), comeback=cb, best_clips=best, clip_title=clip_title, months=statsdb.activity_by_month(c),
+               awards=awards(board), min_matches=rating.MIN_MATCHES.get(period, 3), comeback=cb, best_clips=best, clip_title=clip_title, months=statsdb.activity_by_month(c),
                weeks=statsdb.weekly_counts(c), seen=statsdb.last_seen(c), ref=statsdb.latest_date(c),
                month30=statsdb.overview(c, "30d")["matches"],
                sync_date=sync_date,  # newest 5v5stats match we have; later games are our demos only
