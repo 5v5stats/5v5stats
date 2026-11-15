@@ -27,7 +27,7 @@ Z_SOURCE = {"KPR": "KPR", "DPR": "DPR", "ADR": "ADR", "KAST": "KAST_PROXY", "KPM
 ADJUST_ROUNDS = 200
 V_STRENGTH, ENTRY_STRENGTH = 5, 20
 SITE_MIN_MATCHES = {"all": 30, "90d": 20, "30d": 15, "7d": 3}  # 5v5stats' own rules (inferred), for validate()
-MIN_MATCHES = {**SITE_MIN_MATCHES, "30d": 7}   # ours: the last 30 days ranks everyone with 7+ matches
+MIN_MATCHES = {**SITE_MIN_MATCHES, "30d": 9}   # ours: the last 30 days ranks everyone with 9+ matches
 TIER_CUTS = [0.059, 0.173, 0.272, 0.41, 0.566, 0.716, 0.827, 0.923, 0.98]  # rank percentile -> tier 10..2, else 1
 
 # Our own display scale (not on 5v5stats): a FACEIT/HLTV-style rating where 1.00 is the server average and

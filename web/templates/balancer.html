@@ -117,12 +117,12 @@ const badge = x => `<span class="rb ${band(x)}">${x.toFixed(2)}<u style="width:c
 function render() {
   const q = document.getElementById('q').value.trim().toLocaleLowerCase('tr');
   // order: most matches in the last 30 days first (added names at the end)
-  const groups = {recent: 'Son 30 günde düzenli oynayanlar (8+ maç)', few: 'Son 30 günde 8 maçtan az oynayanlar',
+  const groups = {recent: 'Son 30 günde düzenli oynayanlar (9+ maç)', few: 'Son 30 günde 9 maçtan az oynayanlar',
                   old: 'Son 30 günde oynamayanlar', custom: 'Eklenenler'};
   let html = '', cur = null;
   for (const p of POOL) {
     if (q && !p.name.toLocaleLowerCase('tr').includes(q) && !sel.has(p.sid)) continue;
-    const g = p.recent === 'custom' ? 'custom' : p.m30 >= 8 ? 'recent' : p.m30 > 0 ? 'few' : 'old';
+    const g = p.recent === 'custom' ? 'custom' : p.m30 >= 9 ? 'recent' : p.m30 > 0 ? 'few' : 'old';
     if (g !== cur) { html += `<div class="ghead${cur ? ' later' : ''}">${groups[g]}</div>`; cur = g; }
     const on = sel.has(p.sid), full = sel.size >= 10 && !on;
     const info = p.recent === 'custom' ? 'eklendi' : `${p.m30 ? p.m30 + ' maç / 30g' : 'toplam ' + p.matches + ' maç'}`;
