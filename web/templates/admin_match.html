@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ m.title or m.map }} - Admin{% endblock %}
+{% block body %}
+<p style="margin:0 0 8px"><a href="{{ url_for('admin') }}" class="dim">&larr; Admin</a></p>
+<h1>{{ m.title or m.map }} <span class="num" style="color:var(--win)">{{ m.score1 }}</span> : <span class="num">{{ m.score2 }}</span></h1>
+<div class="dim" style="margin-bottom:16px">{{ m.date }} &middot; {{ m.rounds }} rounds &middot; {{ m.team1 }} vs {{ m.team2 }}
+  &middot; {% if m.published %}<span class="pill pub">public</span>{% else %}<span class="pill">hidden</span>{% endif %}
+  &middot; uploaded {{ m.uploads }}&times;, last {{ m.updated_at|ago }} &middot; {{ m.size_bytes|mb }}</div>
+
+<div class="grid2">
+  <div class="panel">
+    <h2>Page</h2>
+    <form method="post" action="{{ url_for('edit_match', mid=m.id) }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <p><label>Title (optional, shown instead of the map name)</label><br>
+        <input type="text" name="title" value="{{ m.title or '' }}" placeholder="{{ m.map }}" style="width:100%"></p>
+      <p class="row"><label style="font-size:13px;color:var(--text)"><input type="checkbox" name="published" value="1" {{ 'checked' if m.published }}>
+        Public on the site</label></p>
+      <div class="row"><button class="btn primary">Save</button>
+        <a class="btn" href="{{ url_for('match_page', slug=m.slug) }}">View page</a></div>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Update</h2>
+    <p class="dim" style="margin-top:0">To change the clips or stats, re-render on the PC and upload again:</p>
+    <pre class="log" style="max-height:none">python C:\cs2render\upload.py {{ m.match_key }}</pre>
+    <p class="dim" style="font-size:12px;margin:10px 0 0">The link, title and public/hidden setting stay the same.</p>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Clips ({{ clips|length }})</h2>
+  {% if clips %}
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Player</th><th>Play</th><th>Round</th><th>Points</th></tr></thead>
+    <tbody>{% for c in clips %}
+    <tr><td><a href="{{ url_for('media', slug=m.slug, path=c.file) }}"><span class="thumb" {% if c.thumb %}style="background-image:url('{{ url_for('media', slug=m.slug, path=c.thumb) }}')"{% endif %}></span></a></td>
+      <td>{{ c.player }}</td><td>{{ c.label }}</td><td class="num">{{ c.round }}</td><td class="num">{{ c.score }}</td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}<p class="dim" style="margin:0">No clips were uploaded for this match.</p>{% endif %}
+</div>
+
+<div class="panel">
+  <h2>Players</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Team</th><th>Player</th><th>Rating</th><th>Swing</th><th>K</th><th>D</th><th>A</th><th>ADR</th><th>KAST</th><th>Steam ID</th></tr></thead>
+    <tbody>{% for p in players %}
+    <tr><td class="dim">{{ m.team1 if p.team == 0 else m.team2 }}</td><td><b>{{ p.name }}</b></td>
+      <td class="num">{{ '%.2f'|format(p.rating) }}</td><td class="num">{{ '%+.2f'|format(p.swing) }}%</td>
+      <td class="num">{{ p.kills }}</td><td class="num">{{ p.deaths }}</td><td class="num">{{ p.assists }}</td>
+      <td class="num">{{ '%.1f'|format(p.adr) }}</td><td class="num">{{ '%.0f'|format(p.kast) }}%</td>
+      <td class="dim num">{{ p.steamid }}</td></tr>
+    {% endfor %}</tbody></table></div>
+</div>
+
+<div class="panel" style="border-color:#3a1a1a">
+  <h2>Delete</h2>
+  <form method="post" action="{{ url_for('delete_match', mid=m.id) }}"
+        onsubmit="return confirm('Delete this match from the site? Its page, clips and stats are removed from the website. Your files on the rendering PC are not touched.')">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button class="btn danger">Delete match from the site</button>
+    <span class="dim" style="font-size:12px">&nbsp;Removes its page, clips and stats from the website only.</span>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Takım Kur // 5v5 Turkish Server{% endblock %}
+{% block head %}
+<style>
+.bal { display:grid; grid-template-columns:minmax(0, 1fr) 420px; gap:16px; align-items:start; }
+.pool { padding:0; }
+.pool .bar { display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+.pool .bar input { margin-left:auto; background:var(--bg2); border:1px solid var(--line2); color:var(--text); padding:7px 10px; font:12px var(--mono); width:180px; }
+.pool .bar .btn { padding:7px 12px; }
+.plist { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); max-height:620px; overflow:auto; }
+.pc { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--line); border-right:1px solid var(--line);
+      cursor:pointer; user-select:none; background:var(--panel); }
+.pc:hover { background:var(--panel2); }
+.pc.sel { background:linear-gradient(90deg, rgba(255,90,31,.18), rgba(255,90,31,.04)); box-shadow:inset 3px 0 0 var(--accent); }
+.pc.full:not(.sel) { opacity:.45; cursor:not-allowed; }
+.pc img, .pc .ini { width:30px; height:30px; flex:none; object-fit:cover; }
+.pc .nm { flex:1; min-width:0; }
+.pc .nm b { display:block; font:600 13px var(--mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pc .nm span { font:10px var(--mono); color:var(--faint); }
+.pc .t { font:700 13px var(--mono); color:var(--muted); width:20px; text-align:right; }
+.pc .grp { grid-column:1 / -1; }
+.ghead { grid-column:1 / -1; font:700 10px var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--faint);
+         padding:10px 14px 6px; background:var(--bg2); border-bottom:1px solid var(--line); }
+.actions { display:flex; gap:10px; padding:14px 16px; border-top:1px solid var(--line); flex-wrap:wrap; }
+.side .box { padding:16px 18px; margin-bottom:14px; }
+.side select { width:100%; background:var(--bg2); border:1px solid var(--line2); color:var(--text); padding:11px 12px; font:14px var(--sans); margin:10px 0 8px; }
+.side .hint { font:11px var(--mono); color:var(--faint); line-height:1.6; }
+.teams { display:grid; grid-template-columns:1fr; gap:12px; }
+.team { border:1px solid var(--line); background:var(--panel); }
+.team h3 { display:flex; justify-content:space-between; align-items:baseline; margin:0; padding:12px 14px; border-bottom:1px solid var(--line);
+           font:22px var(--display); font-weight:400; text-transform:uppercase; }
+.team h3 small { font:11px var(--mono); color:var(--muted); }
+.team.a h3 { color:var(--win); } .team.b h3 { color:#7b9cff; }
+.trow { display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid var(--line); font:13px var(--mono); }
+.trow:last-child { border-bottom:0; }
+.trow img, .trow .ini { width:26px; height:26px; object-fit:cover; flex:none; }
+.trow .n { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.trow .p { color:var(--muted); }
+.trow .adj { font-size:10px; margin-left:4px; }
+.verdict { padding:14px 16px; }
+.verdict b { font:30px var(--display); font-weight:400; }
+.balbar { height:8px; background:#7b9cff; margin:10px 0 6px; position:relative; }
+.balbar i { position:absolute; left:0; top:0; bottom:0; background:var(--win); }
+.balbar em { position:absolute; left:50%; top:-3px; bottom:-3px; width:2px; background:#fff; }
+.copied { color:var(--win); font:11px var(--mono); margin-left:8px; }
+@media (max-width: 900px) { .bal { grid-template-columns:1fr; } }
+@media (max-width: 560px) { .plist { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+{% block body %}
+<section class="hero">
+  <div class="eyebrow">Araçlar // Takım kur</div>
+  <div class="display xl">Eşit takımlar.<br>Hızlı.</div>
+  <div class="dim" style="max-width:640px">10 oyuncu seç. Güç skoru <span class="acc">tüm maç geçmişinden</span> gelir (1.00 = sunucu ortalaması,
+    kimse 0'ın altına düşmez), son 30 günün formu da bir miktar etki eder. Harita seçersen o haritadaki performans da hesaba katılır. 5+5'e bölünebilen 252 partisyonun tamamı
+    değerlendirilir; sadece toplamı değil, her seviyeyi (en iyi-en iyi, ikinci-ikinci vb.) en iyi eşleştiren bölünme seçilir.</div>
+  <div class="meta-line" style="margin-top:14px"><span>Havuz: <b>{{ pool|length }}</b> oyuncu (son 30 günde en çok oynayanlar üstte).</span>
+    <a class="acc" href="{{ url_for('stats_home') }}" style="text-decoration:none">&larr; Sıralamaya dön</a></div>
+</section>
+
+<div class="sec"><h2>10 kişi seç</h2><small>// en iyi bölünmeyi bul</small></div>
+<div class="bal">
+  <div class="box pool">
+    <div class="bar"><span class="lbl">Havuz // seçilen <b class="acc" id="cnt">0</b> / 10</span>
+      <input id="q" type="text" placeholder="Oyuncu ara" oninput="render()">
+      <button class="btn" onclick="clearSel()">Temizle</button></div>
+    <div class="plist" id="plist"></div>
+    <div class="actions">
+      <button class="btn primary" id="go" onclick="build()" disabled>Takımları oluştur</button>
+      <button class="btn" onclick="addName()">+ İsim ekle</button>
+    </div>
+  </div>
+  <div class="side">
+    <div class="box">
+      <span class="lbl acc">Harita seç</span>
+      <select id="map" onchange="if (last) build()">
+        <option value="">Harita farketmez</option>
+        {% for key, label in maps %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+      </select>
+      <div class="hint">Harita seçersen o haritadaki performans da hesaba katılır (en az 3 maç oynadıysa).</div>
+    </div>
+    <div id="result"><div class="box hint">Havuzdan 10 oyuncu seç ve <b style="color:var(--text)">Takımları oluştur</b>'a bas.
+      Sistem 5+5'e bölünebilen 252 partisyonu değerlendirir ve en iyi seviye eşleşmesini seçer.</div></div>
+  </div>
+</div>
+
+<script>
+const POOL = {{ pool|tojson }};
+const sel = new Set();
+let extra = 0, last = null, choice = 0;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const av = p => p.avatar ? `<img src="${esc(p.avatar)}" alt="" loading="lazy">` : `<span class="ini">${esc((p.name || '?')[0])}</span>`;
+const fmt = x => (x >= 0 ? '' : '-') + Math.abs(x).toFixed(2);
+// FACEIT bands: 1.80+ high impact, 1.30-1.79 good, 0.90-1.29 okay, below poor
+const band = x => x >= 1.8 ? 'hi' : x >= 1.3 ? 'good' : x >= 0.9 ? 'ok' : 'poor';
+const badge = x => `<span class="rb ${band(x)}">${x.toFixed(2)}<u style="width:calc(${Math.max(4, Math.min(100, x / 2.2 * 100)).toFixed(0)}% - 10px)"></u></span>`;
+
+function render() {
+  const q = document.getElementById('q').value.trim().toLocaleLowerCase('tr');
+  // order: most matches in the last 30 days first (added names at the end)
+  const groups = {recent: 'Son 30 günde en çok oynayanlar', old: 'Son 30 günde oynamayanlar', custom: 'Eklenenler'};
+  let html = '', cur = null;
+  for (const p of POOL) {
+    if (q && !p.name.toLocaleLowerCase('tr').includes(q) && !sel.has(p.sid)) continue;
+    const g = p.recent === 'custom' ? 'custom' : p.m30 > 0 ? 'recent' : 'old';
+    if (g !== cur) { cur = g; html += `<div class="ghead">${groups[g]}</div>`; }
+    const on = sel.has(p.sid), full = sel.size >= 10 && !on;
+    const info = p.recent === 'custom' ? 'eklendi' : `${p.m30 ? p.m30 + ' maç / 30g' : 'toplam ' + p.matches + ' maç'}`;
+    html += `<div class="pc ${on ? 'sel' : ''} ${full ? 'full' : ''}" onclick="toggle('${p.sid}')">${av(p)}
+      <span class="nm"><b>${esc(p.name)}</b><span>${info}${p.rating ? ' // seviye ' + p.rating : ''}</span></span>
+      ${badge(p.power)}</div>`;
+  }
+  document.getElementById('plist').innerHTML = html || '<div class="ghead">Oyuncu bulunamadı</div>';
+  document.getElementById('cnt').textContent = sel.size;
+  document.getElementById('go').disabled = sel.size !== 10;
+}
+function toggle(sid) {
+  if (sel.has(sid)) sel.delete(sid); else if (sel.size < 10) sel.add(sid);
+  render();
+}
+function clearSel() { sel.clear(); last = null; render(); document.getElementById('result').innerHTML = ''; }
+function addName() {
+  const name = (prompt('Oyuncu adı:') || '').trim();
+  if (!name) return;
+  const g = parseFloat((prompt('Güç tahmini (1.00 = ortalama, 1.50 = çok iyi, 0.60 = zayıf):', '1.00') || '1').replace(',', '.'));
+  const p = {sid: 'x' + (++extra), name, power: isNaN(g) || g < 0 ? 1 : g, rating: null, matches: 0, m30: 0, adr: 0, avatar: null, recent: 'custom', maps: {}};
+  POOL.push(p);
+  if (sel.size < 10) sel.add(p.sid);
+  render();
+}
+
+// power for the chosen map: a player's ADR there vs their overall ADR changes their power by up to ±15%
+// (weighted by how many matches they have on it). 5v5stats doesn't publish its exact map formula.
+function mapPower(p, map) {
+  const m = map && p.maps[map];
+  if (!m || m.matches < 3 || !p.adr) return {power: p.power, adj: 0};
+  const rel = Math.max(-0.3, Math.min(0.3, m.adr / p.adr - 1));
+  const power = p.power * (1 + rel * 0.5 * Math.min(1, m.matches / 10));
+  return {power, adj: power - p.power};
+}
+
+function splits(players) {
+  // all 252 ways to pick 5 of 10 (126 unique splits); score = total difference + level-by-level difference
+  const out = [], n = players.length, idx = [...Array(n).keys()];
+  const sum = a => a.reduce((s, p) => s + p.eff, 0);
+  for (let mask = 0; mask < 1 << n; mask++) {
+    if (popcount(mask) !== 5 || !(mask & 1)) continue;  // player 0 always in team A: each split once
+    const A = idx.filter(i => mask & (1 << i)).map(i => players[i]).sort((x, y) => y.eff - x.eff);
+    const B = idx.filter(i => !(mask & (1 << i))).map(i => players[i]).sort((x, y) => y.eff - x.eff);
+    const total = Math.abs(sum(A) - sum(B));
+    const levels = A.reduce((s, p, i) => s + Math.abs(p.eff - B[i].eff), 0);
+    out.push({A, B, total, levels, cost: total + levels, sa: sum(A), sb: sum(B)});
+  }
+  return out.sort((x, y) => x.cost - y.cost);
+}
+const popcount = m => { let c = 0; while (m) { c += m & 1; m >>= 1; } return c; };
+
+function build(next) {
+  if (sel.size !== 10) return;
+  const map = document.getElementById('map').value;
+  const players = POOL.filter(p => sel.has(p.sid)).map(p => ({...p, ...mapPower(p, map), eff: mapPower(p, map).power}));
+  last = splits(players);
+  choice = next ? (choice + 1) % Math.min(5, last.length) : 0;
+  show(last[choice], map);
+}
+function show(s, map) {
+  const team = (t, cls, title, total) => `<div class="team ${cls}"><h3>${title}<small>güç ${fmt(total)} &middot; ort. ${fmt(total / 5)}</small></h3>
+    ${t.map(p => `<div class="trow">${av(p)}<span class="n">${esc(p.name)}</span><span class="p">${badge(p.eff)}${p.adj ? `<span class="adj ${p.adj > 0 ? 'pos' : 'neg'}">${p.adj > 0 ? '+' : ''}${p.adj.toFixed(2)}</span>` : ''}</span></div>`).join('')}</div>`;
+  const diff = s.sa - s.sb, chance = 1 / (1 + Math.exp(-2 * diff));
+  const mapname = map ? document.querySelector(`#map option[value="${map}"]`).textContent : '';
+  document.getElementById('result').innerHTML = `
+    <div class="box verdict"><span class="lbl">Sonuç${mapname ? ' // ' + esc(mapname) : ''}${choice ? ' // alternatif ' + (choice + 1) : ''}</span><br>
+      <b>Fark ${Math.abs(diff).toFixed(2)}</b> <span class="dim small">güç</span>
+      <div class="balbar"><i style="width:${(chance * 100).toFixed(1)}%"></i><em></em></div>
+      <div class="small dim num">Tahmini kazanma şansı: Takım 1 %${Math.round(chance * 100)} &middot; Takım 2 %${100 - Math.round(chance * 100)}</div></div>
+    <div class="teams">${team(s.A, 'a', 'Takım 1', s.sa)}${team(s.B, 'b', 'Takım 2', s.sb)}</div>
+    <div class="actions" style="padding:12px 0"><button class="btn" onclick="build(true)">Başka bölünme</button>
+      <button class="btn" onclick="copyTeams()">Kopyala</button><span id="cp"></span></div>`;
+  window._shown = s;
+}
+function shareUrl() {
+  const ids = [...sel].filter(s => !s.startsWith('x'));
+  const map = document.getElementById('map').value;
+  return location.origin + location.pathname + '?sec=' + ids.join(',') + (map ? '&map=' + map : '');
+}
+function copyTeams() {
+  const s = window._shown; if (!s) return;
+  const txt = `Takım 1: ${s.A.map(p => p.name).join(', ')}\nTakım 2: ${s.B.map(p => p.name).join(', ')}\n${shareUrl()}`;
+  navigator.clipboard.writeText(txt).then(() => { document.getElementById('cp').innerHTML = '<span class="copied">Kopyalandı</span>'; });
+}
+// a shared link (?sec=steamid,steamid,...&map=de_dust2) picks those players and builds the teams
+(() => {
+  const qs = new URLSearchParams(location.search);
+  for (const sid of (qs.get('sec') || '').split(',')) if (sid && POOL.some(p => p.sid === sid) && sel.size < 10) sel.add(sid);
+  if (qs.get('map')) document.getElementById('map').value = qs.get('map');
+  render();
+  if (sel.size === 10) build();
+})();
+</script>
+{% endblock %}

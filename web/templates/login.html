@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Admin login{% endblock %}
+{% block body %}
+<div class="panel login">
+  <h2>Admin login</h2>
+  <form method="post">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <p><label for="pw">Password</label><br><input id="pw" type="password" name="password" autofocus style="width:100%"></p>
+    <button class="btn primary">Log in</button>
+  </form>
+  <p class="dim" style="font-size:12px;margin-bottom:0">The password is in <code>C:\cs2render\web\admin.env</code>.</p>
+</div>
+{% endblock %}

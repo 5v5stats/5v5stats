@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{% if pname %}{{ pname }} maçları{% else %}Maçlar{% endif %} // 5v5 Turkish Server{% endblock %}
+{% macro link(page=1, map=mapf, player=pid, other=wid) -%}
+{{ games_url(map, player, other, page) }}
+{%- endmacro %}
+{% block body %}
+<section class="hero">
+  <div class="eyebrow">Maçlar{% if pname %} // oyuncu{% endif %}</div>
+  <div class="display xl">
+    {% if pname and wname %}{{ pname }} <i>&amp;</i> {{ wname }}
+    {% elif pname %}<i>{{ pname|iyelik }}</i> maçları
+    {% elif mapf %}{{ map_label(mapf) }}: {{ total|bin }} maç
+    {% else %}{{ total|bin }} maçın tamamı{% endif %}</div>
+  {% if summary %}
+  <div class="meta-line">
+    <span><b>{{ summary.n|bin }}</b> maç{% if mapf %} ({{ map_label(mapf) }}){% endif %}</span>
+    <span><b class="pos">{{ summary.w }}G</b> - <b class="neg">{{ summary.n - summary.w }}M</b></span>
+    <span>Galibiyet <b>{{ (summary.w / summary.n)|pct if summary.n else '-' }}</b></span>
+    <span>K/Ö <b>{{ '%.2f'|format(summary.k / summary.d) if summary.d else '-' }}</b></span>
+    {% if wid and summary.same %}{% set same_n = summary.same[0] or 0 %}{% set same_w = summary.same[1] or 0 %}
+    <span>Aynı takımda <b>{{ same_n }}</b> maç ({{ same_w }}G)</span><span>Rakip <b>{{ summary.n - same_n }}</b> maç ({{ summary.w - same_w }}G)</span>{% endif %}
+    <a class="acc" href="{{ url_for('player_page', steamid=pid) }}" style="text-decoration:none">Profil &rarr;</a>
+  </div>
+  {% else %}
+  <div class="dim">Sunucuda oynanan maçların tamamı burada: 5v5stats ve kendi demolarımız. Detay için maç numarasına tıkla.</div>
+  {% endif %}
+</section>
+
+<div class="sec"><h2>Maç listesi</h2><small>// en yeni ilk</small></div>
+<form class="filters" method="get" action="{{ url_for('games_page') }}">
+  {% if mapf %}<input type="hidden" name="map" value="{{ mapf }}">{% endif %}
+  <span class="lbl">Oyuncu</span>
+  <select name="player" onchange="this.form.with && (this.form.with.value=''); this.form.submit()">
+    <option value="">Tüm oyuncular</option>
+    {% for p in players %}<option value="{{ p.steamid }}" {{ 'selected' if p.steamid == pid }}>{{ p.name }} ({{ p.n }})</option>{% endfor %}
+  </select>
+  {% if pid %}
+  <span class="lbl">ile</span>
+  <select name="with" onchange="this.form.submit()">
+    <option value="">&mdash; tek başına &mdash;</option>
+    {% for p in players if p.steamid != pid %}<option value="{{ p.steamid }}" {{ 'selected' if p.steamid == wid }}>{{ p.name }} ({{ p.n }})</option>{% endfor %}
+  </select>
+  <a class="btn small" href="{{ link(player=None, other=None) }}">Temizle</a>
+  {% endif %}
+  <noscript><button class="btn small">Filtrele</button></noscript>
+</form>
+<div class="chips">
+  <a href="{{ link(map=None) }}" class="{{ 'on' if not mapf }}">Tüm haritalar</a>
+  {% for m in maps %}<a href="{{ link(map=m.map) }}" class="{{ 'on' if m.map == mapf }}">{{ map_label(m.map) }}{% if not pid %} <span class="faint">{{ m.n }}</span>{% endif %}</a>{% endfor %}
+</div>
+<div class="box"><div class="tbl"><table class="lb gtable">
+  <thead><tr><th>Maç #</th><th>Harita</th><th>Takımlar</th><th class="r">Skor</th>
+    {% if pid %}<th class="r">K-Ö-A</th><th class="r">ADR</th><th class="r">Kafa%</th><th class="r">Sonuç</th>{% if wid %}<th class="r">{{ wname }}</th>{% endif %}{% endif %}
+    <th class="r">Round</th><th class="r">Tarih</th><th></th></tr></thead>
+  <tbody>
+  {% for g in games %}
+  <tr>
+    <td><a class="mid" href="{{ url_for('game_page', gid=g.id) }}">{{ '#%d'|format(g.ext_id) if g.ext_id else 'demo' }}</a></td>
+    <td style="font-family:var(--sans)">{{ map_label(g.map) }}</td>
+    <td class="teams">{% if pid %}{% set mine = g.team_a if g.my_side == 'a' else g.team_b %}{% set theirs = g.team_b if g.my_side == 'a' else g.team_a %}
+      <b>{{ mine }}</b><span class="vs">vs</span><span class="dim">{{ theirs }}</span>
+      {% else %}<b>{{ g.team_a }}</b><span class="vs">vs</span><span class="dim">{{ g.team_b }}</span>{% endif %}</td>
+    <td class="r nowrap">{% if pid %}{% set ms = g.score_a if g.my_side == 'a' else g.score_b %}{% set ts = g.score_b if g.my_side == 'a' else g.score_a %}
+      <span class="{{ 'pos' if g.my_won else 'neg' }}">{{ ms }}</span>-{{ ts }}
+      {% else %}<span class="pos">{{ g.score_a }}</span>-{{ g.score_b }}{% endif %}</td>
+    {% if pid %}
+    <td class="r nowrap">{{ g.my_k }}-{{ g.my_d }}-{{ g.my_a }}</td>
+    <td class="r">{{ '%.0f'|format(g.my_adr) if g.my_adr is not none else '-' }}</td>
+    <td class="r">{{ '%.0f%%'|format(g.my_hs) if g.my_hs is not none else '-' }}</td>
+    <td class="r"><span class="res {{ 'w' if g.my_won else 'l' }}">{{ 'G' if g.my_won else 'M' }}</span></td>
+    {% if wid %}<td class="r small">{{ 'aynı takım' if g.w_side == g.my_side else 'rakip' }}</td>{% endif %}
+    {% endif %}
+    <td class="r faint">{{ g.rounds }}</td>
+    <td class="r faint nowrap">{{ g.date|day }}</td>
+    <td class="r">{% if g.match_key and links.get(g.match_key) %}<a class="hlbtn" href="{{ url_for('match_page', slug=links[g.match_key]) }}">&#9654; Klipler</a>{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="12" class="dim">Bu filtreyle maç bulunamadı.</td></tr>
+  {% endfor %}
+  </tbody></table></div></div>
+{% if pages > 1 %}
+<div class="pager">
+  {% if page > 1 %}<a class="btn small" href="{{ link(page=page - 1) }}">&larr; Daha yeni</a>{% endif %}
+  <span class="dim">Sayfa {{ page }} / {{ pages }}</span>
+  {% if page < pages %}<a class="btn small" href="{{ link(page=page + 1) }}">Daha eski &rarr;</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

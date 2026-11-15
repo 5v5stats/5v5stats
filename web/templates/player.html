@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, tier %}
+{% block title %}{{ p.name }} // 5v5 Turkish Server{% endblock %}
+{% block body %}
+<section class="hero">
+  <a class="eyebrow back" href="{{ url_for('stats_home') }}" style="text-decoration:none">&larr; Sıralamaya dön</a>
+  <div class="phead">
+    {% if person.avatar %}<img class="bigav" src="{{ person.avatar|replace('_medium', '_full') }}" alt="">{% else %}<span class="bigav ini">{{ p.name[:1] }}</span>{% endif %}
+    {{ tier(p.rating, 'big') }}
+    <div>
+      <div class="display l" style="margin:0 0 8px">{{ p.name }}</div>
+      <div class="meta-line"><span><b>{{ p.total_matches }}</b> maç</span><span><b>{{ p.estimated_rounds|bin }}</b> round</span>
+        <span>Galibiyet <b>{{ p.WIN_PCT|pct }}</b></span>
+        {% if hist %}{% set ago = hist[0].date|ago_day(ref) %}<span>Son maç <b>{{ ago }}</b>{{ '' if ago == 'bugün' else ' önce' }}</span>{% endif %}
+        <span>{% if p.rank %}Sıra <b>#{{ p.rank }}</b> / {{ n_ranked }}{% else %}Henüz sıralamada değil (30 maçtan az){% endif %}</span>
+        <a class="dim" href="https://steamcommunity.com/profiles/{{ p.steamid64 }}" target="_blank" rel="noopener">Steam</a></div>
+    </div>
+  </div>
+</section>
+
+<div class="profile" style="margin-top:34px">
+  <div>
+    <div class="sec" style="margin-top:0"><h2>Profil</h2><small>// 6 eksenli analiz</small></div>
+    <div class="box radar">
+      <svg viewBox="-150 -140 300 280">
+        {% for lvl in [0.25, 0.5, 0.75, 1] %}
+        <polygon fill="none" stroke="#2b3442" stroke-width="1" points="{% for ax in radar %}{{ '%.1f,%.1f'|format(105 * lvl * cos((loop.index0 * 60 - 90) * 0.0174533), 105 * lvl * sin((loop.index0 * 60 - 90) * 0.0174533)) }} {% endfor %}"/>
+        {% endfor %}
+        {% for ax in radar %}<line x1="0" y1="0" x2="{{ '%.1f'|format(105 * cos((loop.index0 * 60 - 90) * 0.0174533)) }}" y2="{{ '%.1f'|format(105 * sin((loop.index0 * 60 - 90) * 0.0174533)) }}" stroke="#2b3442"/>{% endfor %}
+        <polygon fill="rgba(255,90,31,.35)" stroke="#ff5a1f" stroke-width="2" points="{% for ax in radar %}{{ '%.1f,%.1f'|format(105 * (0.12 + 0.88 * ax[1]) * cos((loop.index0 * 60 - 90) * 0.0174533), 105 * (0.12 + 0.88 * ax[1]) * sin((loop.index0 * 60 - 90) * 0.0174533)) }} {% endfor %}"/>
+        {% for ax in radar %}<text x="{{ '%.1f'|format(126 * cos((loop.index0 * 60 - 90) * 0.0174533)) }}" y="{{ '%.1f'|format(126 * sin((loop.index0 * 60 - 90) * 0.0174533) + 4) }}" text-anchor="middle" fill="#9aa4b2" font-family="JetBrains Mono, monospace" font-size="10">{{ ax[0] }}</text>{% endfor %}
+      </svg>
+    </div>
+  </div>
+  <div>
+    <div class="sec" style="margin-top:0"><h2>İstatistikler</h2><small>// tüm zamanlar toplamı</small></div>
+    <div class="statgrid">
+      <div><span class="lbl">KPR</span><b>{{ p.KPR|f2 }}</b><i>{{ p.total_kills|bin }} kill</i></div>
+      <div><span class="lbl">DPR</span><b>{{ p.DPR|f2 }}</b><i>{{ p.total_deaths|bin }} ölüm</i></div>
+      <div><span class="lbl">ADR</span><b>{{ '%.0f'|format(p.ADR) }}</b><i>{{ p.total_damage|bin }} toplam</i></div>
+      <div><span class="lbl">KAST</span><b>{{ p.KAST_PROXY|pct }}</b><i>K/A/Hayatta kalma oranı</i></div>
+      <div><span class="lbl">İsabet%</span><b>{{ p.ACC_PCT|pct(1) }}</b><i>{{ p.total_shots_on_tgt|bin }} / {{ p.total_shots_fired|bin }} atış</i></div>
+      <div><span class="lbl">Kafa%</span><b>{{ p.HS_PCT|pct }}</b><i>{{ p.total_hs_kills|bin }} kafa atışı</i></div>
+      <div><span class="lbl">Clutch%</span><b>{{ p.CLUTCH_WR|pct }}</b><i>1v1: {{ p.total_v1_wins|int }}/{{ p.total_v1_count|int }} &middot; 1v2: {{ p.total_v2_wins|int }}/{{ p.total_v2_count|int }}</i></div>
+      <div><span class="lbl">Giriş%</span><b>{{ p.ENTRY_WR|pct }}</b><i>{{ p.total_entry_wins|int }}/{{ p.total_entry_count|int }} düello</i></div>
+      <div><span class="lbl">MK/M</span><b>{{ p.MK_per_match|f2 }}</b><i>{{ p.total_multi|int }} 3K+ round</i></div>
+      <div><span class="lbl">KDA</span><b>{{ '%.2f'|format((p.total_kills + p.total_assists) / ([p.total_deaths, 1]|max)) }}</b><i>{{ p.total_kills|int }}/{{ p.total_deaths|int }}/{{ p.total_assists|int }}</i></div>
+      <div><span class="lbl">Galibiyet%</span><b>{{ p.WIN_PCT|pct }}</b><i>{{ p.wins|int }} G // {{ p.losses|int }} M</i></div>
+      <div><span class="lbl">Util</span><b>{{ '%.1f'|format(p.UDR_PER_ROUND) }}</b><i>round başına hasar &middot; {{ '%.2f'|format(p.FPR_PER_ROUND) }} flash</i></div>
+      <div><span class="lbl">Skor</span><b>{{ rbadge(p.points, 'big') }}</b><i>1.00 = sunucu ortalaması{% if p.rank %} &middot; sıra #{{ p.rank }}{% endif %}</i></div>
+    </div>
+  </div>
+</div>
+
+{% if clips %}
+<div class="sec"><h2>Klipler</h2><small>// {{ clips|length }} klip</small></div>
+<div class="clipsrow">{% for c in clips %}
+  <a href="{{ url_for('match_page', slug=c.slug) }}#clip{{ c.idx }}"><span class="thumb" {% if c.thumb %}style="background-image:url('{{ url_for('media', slug=c.slug, path=c.thumb) }}')"{% endif %}></span>
+    <b>{{ c.label }}</b><span class="dim small num">{{ c.mmap }} &middot; Round {{ c.round }} &middot; {{ c.score }} puan</span></a>
+{% endfor %}</div>
+{% endif %}
+
+<div class="sec"><h2>Form</h2><small>// maç sırasına göre</small></div>
+<div class="box form">
+  <div class="top2"><span><b style="color:var(--text)">Son {{ form|length }} maç</b> {% if form %}{{ form[0].date|day }} &ndash; {{ form[-1].date|day }}{% endif %}</span>
+    <span><b class="pos">{{ form|selectattr('won')|list|length }}G</b> / <b class="neg">{{ form|rejectattr('won')|list|length }}M</b></span></div>
+  {% set amax = [form|map(attribute='adr')|map('float')|max if form else 1, 1]|max %}
+  <div class="formbars">{% for h in form %}
+    <div class="{{ 'w' if h.won else 'l' }}"><em>{{ '%.0f'|format(h.adr or 0) }}</em><i style="height:{{ ((h.adr or 0) * 85 / amax)|round }}%" title="{{ h.date|day }} {{ map_label(h.map) }}: {{ h.kills }}-{{ h.deaths }}-{{ h.assists }}"></i><span>{{ 'G' if h.won else 'M' }}</span></div>
+  {% endfor %}</div>
+  <div class="faint small" style="margin-top:10px">Çubuk yüksekliği maç başına ADR</div>
+</div>
+
+<div class="sec"><h2>Takım arkadaşları</h2><small>// tüm zamanlar</small></div>
+<div class="box streak">
+  <span class="lbl">Güncel seri</span>
+  <b class="{{ 'pos' if rel.streak > 0 else 'neg' }}">{{ rel.streak|abs }} maçtır {{ 'kazanıyor' if rel.streak > 0 else 'kaybediyor' }}</b>
+  <span class="r"><span>En uzun galibiyet <b class="pos">{{ rel.longest_win }}</b></span><span>En uzun mağlubiyet <b class="neg">{{ rel.longest_loss }}</b></span></span>
+</div>
+<div class="mates">
+  {% for key, label, note in [('best_duo', 'En iyi ikili', 'Birlikte en yüksek galibiyet oranı'), ('most_with', 'En çok oynadığı', 'Birlikte en çok maç'), ('nemesis', 'Kabusu', 'Karşısında en düşük galibiyet oranı'), ('easiest', 'En rahat rakibi', 'Karşısında en yüksek galibiyet oranı')] %}
+  {% set d = rel[key] %}
+  <div class="box"><span class="lbl">{{ label }}</span>
+    {% if d %}<a href="{{ url_for('player_page', steamid=d.sid) }}"><b>{{ d.name }}</b></a>
+      <span class="num small"><span class="{{ 'pos' if d.pct >= 0.5 else 'neg' }}">{{ d.pct|pct }}</span> &nbsp;{{ d.w }}G-{{ d.l }}M</span>
+    {% else %}<b class="faint">&ndash;</b>{% endif %}
+    <p>{{ note }}</p></div>
+  {% endfor %}
+</div>
+
+<div class="sec"><h2>Harita dağılımı</h2><small>// maç sayısına göre</small></div>
+{% if best and worst %}
+<div class="bestworst">
+  <div class="box"><span class="lbl">En iyi haritası</span><b>{{ map_label(best.map) }}</b>
+    <span class="num small"><span class="pos">{{ (best.wins / best.matches)|pct }}</span> {{ best.wins }}G-{{ best.losses }}M &middot; {{ best.matches }} maç, {{ '%.0f'|format(best.adr) }} ADR</span></div>
+  <div class="box"><span class="lbl">En kötü haritası</span><b>{{ map_label(worst.map) }}</b>
+    <span class="num small"><span class="neg">{{ (worst.wins / worst.matches)|pct }}</span> {{ worst.wins }}G-{{ worst.losses }}M &middot; {{ worst.matches }} maç, {{ '%.0f'|format(worst.adr) }} ADR</span></div>
+</div>
+{% endif %}
+<div class="box"><div class="tbl"><table class="lb">
+  <thead><tr><th>Harita</th><th class="r">Maç</th><th class="r">G-M</th><th class="r">Galibiyet%</th><th class="r">K/Ö</th><th class="r">ADR</th></tr></thead>
+  <tbody>{% for m in maps %}
+  <tr><td style="font-family:var(--sans)">{{ map_label(m.map) }}</td><td class="r">{{ m.matches }}</td>
+    <td class="r"><span class="pos">{{ m.wins }}</span>-<span class="neg">{{ m.losses }}</span></td>
+    <td class="r">{{ (m.wins / m.matches)|pct if m.matches else '-' }}</td><td class="r">{{ m.kd|f2 }}</td><td class="r">{{ '%.1f'|format(m.adr) }}</td></tr>
+  {% endfor %}</tbody></table></div></div>
+
+<div class="sec"><h2>Maç geçmişi</h2><small>// en yeni ilk // {{ hist|length }} maç</small></div>
+<div class="box"><div class="tbl"><table class="lb gtable">
+  <thead><tr><th>Tarih</th><th>Maç #</th><th>Harita</th><th class="r">Skor</th><th class="r">K-Ö-A</th><th class="r">ADR</th><th class="r">Kafa%</th><th class="r">Sonuç</th><th></th></tr></thead>
+  <tbody>{% for h in hist %}
+  <tr><td class="faint nowrap">{{ h.date|day }}</td>
+    <td><a class="mid" href="{{ url_for('game_page', gid=h.gid) }}">{{ '#%d'|format(h.ext_id) if h.ext_id else 'demo' }}</a></td>
+    <td style="font-family:var(--sans)">{{ map_label(h.map) }}</td>
+    <td class="r nowrap">{{ h.score_a if h.side == 'a' else h.score_b }}-{{ h.score_b if h.side == 'a' else h.score_a }}</td>
+    <td class="r nowrap">{{ h.kills }}-{{ h.deaths }}-{{ h.assists }}</td>
+    <td class="r">{{ '%.0f'|format(h.adr) if h.adr is not none else '-' }}</td>
+    <td class="r">{{ '%.0f%%'|format(h.hs_pct) if h.hs_pct is not none else '-' }}</td>
+    <td class="r"><span class="res {{ 'w' if h.won else 'l' }}">{{ 'G' if h.won else 'M' }}</span></td>
+    <td class="r">{% if h.match_key and links.get(h.match_key) %}<a class="hlbtn" href="{{ url_for('match_page', slug=links[h.match_key]) }}">&#9654; Klipler</a>{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div></div>
+{% endblock %}

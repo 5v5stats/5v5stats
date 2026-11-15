@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block body %}
+<h1>Admin</h1>
+<div class="dim" style="margin-bottom:16px">Matches are rendered on your PC and uploaded here with their highlights and stats.
+  {{ matches|length }} match{{ 'es' if matches|length != 1 }}, {{ total|mb }} stored.</div>
+
+<div class="grid2">
+  <div class="panel">
+    <h2>Upload from the rendering PC</h2>
+    <p class="dim" style="margin-top:0">After a render, send the match here with one command:</p>
+    <pre class="log" style="max-height:none">python C:\cs2render\upload.py de_inferno_2026-11-05_02-31-19</pre>
+    <p class="dim" style="font-size:12px;margin:10px 0 0">Or render and upload in one go: <code>python render.py match.dem --upload</code>.
+      Stats only (no clips, no CS2): <code>python upload.py --demo match.dem</code>.
+      Add <code>--public</code> to make it public right away. Weekly 5v5stats update: <code>python import5v5\sync.py</code>. The same match uploaded again updates it (same link,
+      same public/hidden setting). Server: <code>{{ server }}</code>; the upload token is in <code>web\admin.env</code>.</p>
+  </div>
+  <div class="panel">
+    <h2>Upload a package by hand</h2>
+    <form method="post" action="{{ url_for('admin_upload') }}" enctype="multipart/form-data">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="row"><input type="file" name="package" accept=".zip" required>
+        <button class="btn primary">Upload</button></div>
+      <p class="dim" style="font-size:12px;margin:10px 0 0">A match package is the <code>.zip</code> made by
+        <code>python upload.py &lt;match&gt; --zip-only</code>: stats, clips, thumbnails and profile pictures.</p>
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Matches</h2>
+  {% if matches %}
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Match</th><th>Score</th><th>MVP</th><th>Clips</th><th>Size</th><th>Site</th><th></th></tr></thead>
+    <tbody>
+    {% for m in matches %}
+    <tr>
+      <td><span class="thumb" {% if m.thumb %}style="background-image:url('{{ url_for('media', slug=m.slug, path=m.thumb) }}')"{% endif %}></span></td>
+      <td><b>{{ m.title or m.map }}</b><br><span class="dim">{{ m.date }} &middot; updated {{ m.updated_at|ago }}</span></td>
+      <td class="nowrap num">{{ m.score1 }} : {{ m.score2 }}</td>
+      <td class="nowrap">{% if m.mvp_avatar %}<img class="av" src="{{ url_for('media', slug=m.slug, path=m.mvp_avatar) }}" alt=""> {% endif %}{{ m.mvp_name }}</td>
+      <td class="num">{{ m.clip_count }}</td>
+      <td class="nowrap num dim">{{ m.size_bytes|mb }}</td>
+      <td>{% if m.published %}<span class="pill pub">public</span>{% else %}<span class="pill">hidden</span>{% endif %}</td>
+      <td class="nowrap"><a class="btn small" href="{{ url_for('admin_match', mid=m.id) }}">Manage</a>
+        <a class="btn small" href="{{ url_for('match_page', slug=m.slug) }}">View</a></td>
+    </tr>
+    {% endfor %}
+    </tbody></table></div>
+  {% else %}<p class="dim" style="margin:0">No matches yet. Upload one from the rendering PC.</p>{% endif %}
+</div>
+
+<div class="panel">
+  <h2>Recent uploads</h2>
+  {% if uploads %}
+  <div class="tbl"><table>
+    <thead><tr><th>When</th><th>From</th><th>Match</th><th>Result</th><th>Size</th></tr></thead>
+    <tbody>{% for u in uploads %}
+    <tr><td class="nowrap dim">{{ u.created_at|ago }}</td><td>{{ u.via }}</td>
+      <td>{% if u.mid %}<a href="{{ url_for('admin_match', mid=u.mid) }}">{{ u.map }} {{ u.score1 }}:{{ u.score2 }}</a>{% else %}<span class="dim">-</span>{% endif %}</td>
+      <td><span class="pill {{ 'ok' if u.ok else 'failed' }}">{{ 'ok' if u.ok else 'rejected' }}</span> <span class="dim" style="font-size:12px">{{ u.message }}</span></td>
+      <td class="nowrap num dim">{{ u.size_bytes|mb }}</td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}<p class="dim" style="margin:0">No uploads yet.</p>{% endif %}
+</div>
+{% endblock %}

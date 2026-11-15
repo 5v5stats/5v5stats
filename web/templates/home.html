@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Klipler // 5v5 Turkish Server{% endblock %}
+{% block body %}
+<section class="hero">
+  <div class="eyebrow">Klipler</div>
+  <div class="display xl">Klipli {{ matches|length }} maç</div>
+  <div class="dim">Kendi demolarımızdan: her maçın en iyi anları ve tam istatistikleri.</div>
+</section>
+<div class="sec"><h2>Maçlar</h2><small>// en yeni ilk</small></div>
+{% if matches %}
+<div class="cards">
+  {% for m in matches %}
+  <a class="card" href="{{ url_for('match_page', slug=m.slug) }}">
+    <div class="img" {% if m.thumb %}style="background-image:url('{{ url_for('media', slug=m.slug, path=m.thumb) }}')"{% endif %}>
+      <div class="t"><span class="map">{{ m.title or m.map }}</span>
+        <span class="date">{{ m.date|day }}<br>{{ m.clip_count }} klip</span></div>
+    </div>
+    <div class="body">
+      <span class="score"><span class="w">{{ m.score1 }}</span>-{{ m.score2 }}<span class="teams">{{ m.team1 }} vs {{ m.team2 }}</span></span>
+      <span class="mvp">{% if m.mvp_avatar %}<img src="{{ url_for('media', slug=m.slug, path=m.mvp_avatar) }}" alt="">{% endif %}
+        <span>MVP<br><b>{{ m.mvp_name }}</b></span></span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">Henüz yayınlanmış maç yok.</p>
+{% endif %}
+{% endblock %}

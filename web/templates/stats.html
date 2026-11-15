@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, tier %}
+{% block periods %}
+<div class="periods">{% for key, label in periods.items() %}<a href="?p={{ key }}" class="{{ 'on' if key == period }}">{{ label }}</a>{% endfor %}</div>
+{% endblock %}
+{% block body %}
+{% set ranked = board|selectattr('qualified')|list %}
+{% set rest = board|rejectattr('qualified')|list %}
+{% set top = ranked[0] if ranked else None %}
+{% set plabel = {'all': 'Tüm zamanlar', '30d': 'Bu ay', '7d': 'Bu hafta'}[period] %}
+{% set minm = {'all': 30, '30d': 15, '7d': 3}[period] %}
+
+<section class="hero">
+  <div class="eyebrow">Sunucu istatistikleri // {% if win %}{{ win[0]|day }} &ndash; {{ win[1]|day }}{% if newer %} + {{ newer }} yeni demo maçı{% endif %}{% else %}tüm zamanlar{% endif %}</div>
+  <div class="display xl">{{ plabel }}{% if top %} <i>{{ top.name|iyelik }}.</i>{% endif %}</div>
+  <div class="meta-line">
+    <span><b>{{ ov.matches|bin }}</b> maç oynandı</span><span><b>{{ ov.players }}</b> aktif oyuncu</span>
+    <span><b>{{ ov.rounds|bin }}</b> round</span><span><b>{{ ov.kills|bin }}</b> toplam kill</span>
+    {% if synced %}<span>5v5stats verisi: <b>{{ synced }}</b></span>{% endif %}
+  </div>
+</section>
+
+{% if comeback %}
+{% set g, deficit, leads = comeback %}
+{% set n = leads|length - 1 %}
+{% set peak = [leads|max, -(leads|min), 1]|max %}
+<a class="box hot story" href="{{ url_for('game_page', gid=g.id) }}" style="text-decoration:none;display:block;margin-top:26px">
+  <div class="eyebrow">Geri dönüş {% if g.ext_id %}// maç #{{ g.ext_id }}{% endif %} // {{ map_label(g.map) }}</div>
+  <div class="display">{{ g.team_a }} {{ deficit }} round geriden döndü.</div>
+  <div class="row2">
+    <div><div class="big num">{{ g.score_a }}-{{ g.score_b }}</div>
+      <p>{{ g.team_b }} karşısında {{ deficit }} round geriye düştü, sonra maçı aldı.</p><p class="faint">{{ g.date|day }} &middot; {{ g.rounds }} round</p></div>
+    <svg viewBox="0 0 880 200" preserveAspectRatio="none" aria-label="{{ g.team_a }} round başına üstünlük">
+      <defs><linearGradient id="cbg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff5a1f" stop-opacity=".35"/><stop offset="1" stop-color="#ff5a1f" stop-opacity="0"/></linearGradient></defs>
+      <line x1="0" y1="100" x2="880" y2="100" stroke="#2b3442" stroke-width="1.5"/>
+      {% set pts = [] %}{% for v in leads %}{% set _ = pts.append('%.1f,%.1f'|format(loop.index0 * 880 / n, 100 - v * 88 / peak)) %}{% endfor %}
+      <polygon fill="url(#cbg)" points="0,100 {{ pts|join(' ') }} 880,100"/>
+      <polyline fill="none" stroke="#ff5a1f" stroke-width="3" stroke-linejoin="round" points="{{ pts|join(' ') }}"/>
+      <circle cx="880" cy="{{ '%.1f'|format(100 - leads[-1] * 88 / peak) }}" r="5" fill="#ff5a1f"/>
+    </svg>
+  </div>
+  <span class="open">Maçı aç &rarr;</span>
+</a>
+{% endif %}
+
+<div class="grid3" style="margin-top:14px">
+  <div class="box mini">
+    <span class="lbl">En aktif // {{ plabel|lower }}</span>
+    {% for r in (board|sort(attribute='total_matches', reverse=True))[:4] %}
+    <div class="rowp">{{ avatar(people, r.steamid64, r.name) }}<a href="{{ url_for('player_page', steamid=r.steamid64) }}" style="text-decoration:none">{{ r.name }}</a><span class="v">{{ r.total_matches }} maç</span></div>
+    {% endfor %}
+  </div>
+  <div class="box mini pulse">
+    <span class="lbl">Sunucu nabzı</span>
+    <b class="num">{{ month30 }}</b><span class="dim small">son 30 günde maç</span>
+    {% set wmax = [weeks|max, 1]|max %}
+    <div class="bars">{% for w in weeks %}<span class="{{ 'cur' if loop.last }}" style="height:{{ (w * 100 / wmax)|round }}%" title="{{ w }} maç"></span>{% endfor %}</div>
+  </div>
+  <div class="box mini motw hot">
+    <span class="lbl acc">{{ {'7d': 'Bu haftanın adamı', '30d': 'Bu ayın adamı', 'all': 'Tüm zamanların adamı'}[period] }}</span>
+    {% if top %}
+    <a class="who" href="{{ url_for('player_page', steamid=top.steamid64) }}" style="text-decoration:none">{{ avatar(people, top.steamid64, top.name) }}<b>{{ top.name }}</b></a>
+    <div class="dim small num" style="margin-top:8px">{{ '%.0f'|format(top.ADR) }} ADR &middot; {{ top.KPR|f2 }} KPR &middot; {{ top.total_matches }} maç</div>
+    {% endif %}
+  </div>
+</div>
+
+{% if awards %}
+<div class="sec"><h2>{{ {'7d': 'Bu haftanın', '30d': 'Bu ayın', 'all': 'Tüm zamanların'}[period] }} ödülleri</h2><small>// {{ awards|length }} kategori</small></div>
+<div class="awards">
+  {% for a in awards %}
+  <div class="award"><span class="lbl">Ödül {{ '%02d'|format(loop.index) }}</span><span class="no">#{{ '%02d'|format(loop.index) }}</span>
+    <h3>{{ a.title }}</h3>
+    <a class="who" href="{{ url_for('player_page', steamid=a.sid) }}">{{ avatar(people, a.sid, a.name) }}{{ a.name }}</a>
+    <div class="val">{{ a.value }}<small>{{ a.unit }}</small></div>
+    <p>{{ a.desc }}</p></div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="sec"><h2>Sunucu aktifliği</h2><small>// aylara göre</small></div>
+{% set mmax = [months|map(attribute='matches')|max, 1]|max %}
+{% set busiest = months|sort(attribute='matches')|last %}
+<div class="box activity">
+  <div class="top2"><span class="lbl">Son 12 ay</span>
+    <span>Toplam <b>{{ months|sum(attribute='matches')|bin }}</b> maç &nbsp; En yoğun <b class="acc">{{ busiest.month|month_tr }} {{ busiest.month[:4] }}</b> ({{ mmax }}) &nbsp; Son 30 gün <b>{{ month30 }}</b></span></div>
+  <div class="months">
+    {% for m in months %}<div class="{{ 'cur' if loop.last }}{{ ' peak' if m.matches == mmax }}"><em>{{ m.matches }}</em><i style="height:{{ (m.matches * 100 / mmax)|round }}%"></i><span>{{ m.month|month_tr }}</span></div>{% endfor %}
+  </div>
+</div>
+
+<div class="sec"><h2>Sıralama</h2><small>// güç puanına göre // en az {{ minm }} maç</small></div>
+<div class="box">
+  <div class="lbtools"><span class="lbl">Oyuncu ara</span><input id="q" type="text" placeholder="İsim yaz" oninput="filt(this.value)">
+    <span class="cnt"><span id="shown">{{ board|length }}</span> / {{ board|length }} oyuncu</span></div>
+  <div class="tbl"><table class="lb" id="lb">
+    <thead><tr><th>#</th><th>Oyuncu</th><th class="r acc">Puan</th><th class="r" title="1.00 = sunucu ortalaması. 1.80+ yüksek etki, 1.30-1.79 iyi, 0.90-1.29 idare eder, 0.89 ve altı zayıf">Skor</th>
+      <th class="r">KPR</th><th class="r">DPR</th><th class="r">ADR</th><th class="r" title="(KPR + asist/round + hayatta kalma) / 3">KAST</th>
+      <th class="r">İsabet%</th><th class="r">Kafa%</th><th class="r">Clutch%</th><th class="r">Giriş%</th><th class="r">MK/M</th>
+      <th class="r">Galibiyet%</th><th class="r">Maç</th><th class="r">Son</th></tr></thead>
+    <tbody>
+    {% for r in ranked %}
+    <tr data-n="{{ r.name|lower }}">
+      <td class="faint">{{ '%02d'|format(r.rank) }}</td>
+      <td class="pl"><a href="{{ url_for('player_page', steamid=r.steamid64) }}">{{ avatar(people, r.steamid64, r.name) }}<span>{{ r.name }}</span></a></td>
+      <td class="r">{{ tier(r.rating) }}</td>
+      <td class="r">{{ rbadge(r.points) }}</td>
+      <td class="r">{{ r.KPR|f2 }}</td><td class="r">{{ r.DPR|f2 }}</td><td class="r">{{ '%.0f'|format(r.ADR) }}</td>
+      <td class="r">{{ r.KAST_PROXY|pct }}</td><td class="r">{{ r.ACC_PCT|pct(1) }}</td><td class="r">{{ r.HS_PCT|pct }}</td>
+      <td class="r">{{ r.CLUTCH_WR|pct }}</td><td class="r">{{ r.ENTRY_WR|pct }}</td><td class="r">{{ r.MK_per_match|f2 }}</td>
+      <td class="r {{ 'pos' if r.WIN_PCT > 0.5 else 'neg' if r.WIN_PCT < 0.5 else '' }}">{{ r.WIN_PCT|pct }}</td>
+      <td class="r faint">{{ r.total_matches }}</td><td class="r faint">{{ seen.get(r.steamid64)|ago_day(ref) }}</td>
+    </tr>
+    {% endfor %}
+    {% if rest %}
+    <tr class="sep"><td colspan="16">Henüz sıralamada değil: {{ minm }} maçtan az</td></tr>
+    {% for r in rest %}
+    <tr class="unq" data-n="{{ r.name|lower }}">
+      <td></td><td class="pl"><a href="{{ url_for('player_page', steamid=r.steamid64) }}">{{ avatar(people, r.steamid64, r.name) }}<span>{{ r.name }}</span></a></td>
+      <td class="r">{{ tier(None) }}</td><td class="r">{{ rbadge(r.points) }}</td>
+      <td class="r">{{ r.KPR|f2 }}</td><td class="r">{{ r.DPR|f2 }}</td><td class="r">{{ '%.0f'|format(r.ADR) }}</td>
+      <td class="r">{{ r.KAST_PROXY|pct }}</td><td class="r">{{ r.ACC_PCT|pct(1) }}</td><td class="r">{{ r.HS_PCT|pct }}</td>
+      <td class="r">{{ r.CLUTCH_WR|pct }}</td><td class="r">{{ r.ENTRY_WR|pct }}</td><td class="r">{{ r.MK_per_match|f2 }}</td>
+      <td class="r">{{ r.WIN_PCT|pct }}</td><td class="r">{{ r.total_matches }}</td><td class="r">{{ seen.get(r.steamid64)|ago_day(ref) }}</td>
+    </tr>
+    {% endfor %}
+    {% endif %}
+    </tbody></table></div>
+</div>
+<script>
+function filt(q) {
+  q = q.trim().toLocaleLowerCase('tr'); let n = 0;
+  document.querySelectorAll('#lb tbody tr[data-n]').forEach(tr => { const ok = !q || tr.dataset.n.toLocaleLowerCase('tr').includes(q); tr.style.display = ok ? '' : 'none'; n += ok; });
+  document.getElementById('shown').textContent = n;
+}
+</script>
+{% endblock %}

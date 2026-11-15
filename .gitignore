@@ -1,0 +1,30 @@
+# secrets (admin.env is created on first start; copy publish.env.example to publish.env)
+*.env
+
+# python
+__pycache__/
+*.pyc
+
+# downloaded tools and binaries
+dl/
+hlae/
+hlae_2193/
+tools/*.exe
+
+# generated output, caches, local data
+output/
+site/
+shots/
+cache/
+backup/
+web/data/
+import5v5/raw/
+import5v5/live/
+import5v5/fetch.log
+tests/work.vcfg*
+
+# drafts
+hlae_issue_draft.md
+
+# "con" is a reserved Windows device name; git cannot read it
+con.py
