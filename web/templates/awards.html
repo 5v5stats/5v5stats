@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar %}
+{% block title %}Ödüller // 5v5 Turkish Server{% endblock %}
+{% block periods %}
+<div class="periods">{% for key, label in periods.items() %}<a href="?p={{ key }}" class="{{ 'on' if key == period }}">{{ label }}</a>{% endfor %}</div>
+{% endblock %}
+{% block body %}
+{% set plabel = {'all': 'Tüm zamanların', '90d': 'Son 3 ayın', '30d': 'Bu ayın', '7d': 'Bu haftanın'}[period] %}
+{% set pq = period if period != default_period else None %}
+<section class="hero">
+  <div class="eyebrow">Ödüller // {{ plabel|lower }} en iyileri</div>
+  <div class="display xl">{{ plabel }} <i>ödülleri.</i></div>
+  <div class="meta-line"><span><b>{{ cards|length }}</b> kategori</span><span><b>{{ ranked }}</b> sıralamadaki oyuncu</span>
+    {% if minm %}<span>en az <b>{{ minm }}</b> maç</span>{% endif %}</div>
+</section>
+
+{% if not ranked %}
+<p class="dim" style="margin:26px 0">Bu dönemde sıralamaya girecek kadar maç oynayan oyuncu yok.</p>
+{% else %}
+<div class="awgrid">
+  {% for a in cards %}
+  <a class="awc" href="{{ url_for('award_page', slug=a.slug, p=pq) }}">
+    <span class="no">#{{ '%02d'|format(loop.index) }}</span>
+    <h3>{{ a.title }}</h3><span class="d">{{ a.desc }}</span>
+    <ol>
+      {% for r in a.top %}
+      <li class="p{{ loop.index }}"><span class="m">{{ loop.index }}</span>{{ avatar(people, r.sid, r.name) }}
+        <span class="n"><b>{{ r.name }}</b><small>{{ r.detail }}</small></span>
+        <span class="v">{{ r.value }}<small>{{ a.unit }}</small></span></li>
+      {% endfor %}
+    </ol>
+    <span class="more">Tüm sıralama &rarr;</span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

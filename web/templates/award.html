@@ -9,7 +9,7 @@
 {% set pq = period if period != default_period else None %}
 
 <section class="hero">
-  <div class="eyebrow"><a href="{{ url_for('stats_home', p=pq) }}" class="dim" style="text-decoration:none">&larr; İstatistik</a> // {{ plabel }} ödülleri</div>
+  <div class="eyebrow"><a href="{{ url_for('awards_page', p=pq) }}" class="dim" style="text-decoration:none">&larr; Tüm ödüller</a> // {{ plabel }} ödülleri</div>
   <div class="display xl">{{ title }}</div>
   <div class="meta-line"><span>{{ desc }}</span><span><b>{{ rows|length }}</b> sıralamadaki oyuncu</span>
     {% if minm %}<span>en az <b>{{ minm }}</b> maç</span>{% endif %}</div>

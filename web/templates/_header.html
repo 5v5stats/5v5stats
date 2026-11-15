@@ -4,8 +4,12 @@
 <header class="hdr"><div class="hdr-in">
   <a class="logo" href="{{ url_for('stats_home') }}"><b>5V5 <i>TURKISH SERVER</i></b><span>Yerel istatistik &middot; klipler</span></a>
   <nav class="nav">
-    <a href="{{ url_for('stats_home') }}" class="{{ 'on' if request.endpoint in ['stats_home', 'player_page'] }}">İstatistik</a>
-    <a href="{{ url_for('duo_page') }}" class="{{ 'on' if request.endpoint == 'duo_page' }}">İkili</a>
+    {% set stat_sub = request.endpoint in ['awards_page', 'award_page', 'duo_page'] %}
+    <span class="navgrp">
+      <a href="{{ url_for('stats_home') }}" class="{{ 'on' if request.endpoint in ['stats_home', 'player_page'] }}{{ ' parent' if stat_sub }}">İstatistik</a>
+      <a href="{{ url_for('awards_page') }}" class="sub {{ 'on' if request.endpoint in ['awards_page', 'award_page'] }}">Ödüller</a>
+      <a href="{{ url_for('duo_page') }}" class="sub {{ 'on' if request.endpoint == 'duo_page' }}">İkili</a>
+    </span>
     <a href="{{ url_for('balancer') }}" class="{{ 'on' if request.endpoint == 'balancer' }}">Takım Kur</a>
     <a href="{{ url_for('games_page') }}" class="{{ 'on' if request.endpoint in ['games_page', 'game_page'] }}">Maçlar</a>
     <a href="{{ url_for('home') }}" class="{{ 'on' if request.endpoint in ['home', 'match_page'] }}">Klipler</a>
@@ -36,6 +40,12 @@
 .sitehdr .nav a { font:700 11px var(--mono); letter-spacing:.12em; text-transform:uppercase; text-decoration:none; padding:8px 12px;
   border:1px solid var(--line2); background:var(--panel); color:var(--text); }
 .sitehdr .nav a:hover { border-color:var(--faint); } .sitehdr .nav a.on { border-color:var(--accent); color:var(--accent); }
+.sitehdr .navgrp { display:inline-flex; align-items:stretch; }
+.sitehdr .navgrp a + a { margin-left:-1px; }
+.sitehdr .navgrp a.sub { font-size:10px; color:var(--muted); background:var(--bg2, #0f131a); padding:8px 10px; }
+.sitehdr .navgrp a.sub::before { content:"↳ "; color:var(--faint); }
+.sitehdr .navgrp a.sub.on { color:var(--accent); position:relative; z-index:1; }
+.sitehdr .navgrp a.parent { color:var(--accent); }
 .sitehdr .logout { margin:0; } .sitehdr .btn.link { background:none; border:0; color:var(--muted); cursor:pointer; font:13px inherit; }
 @media (max-width: 560px) { .sitehdr .hdr-in { gap:10px; } .sitehdr .logo { width:100%; } }
 </style>

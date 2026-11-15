@@ -269,6 +269,27 @@ def awards(board):
     return out
 
 
+@app.route("/oduller")
+def awards_page():
+    """All awards of a period, each with its top 3; a card opens the award's full ranking."""
+    period = request.args.get("p", DEFAULT_PERIOD)
+    if period not in PERIODS:
+        period = DEFAULT_PERIOD
+    c = con()
+    board = statsdb.leaderboard(c, period)
+    q = [r for r in board if r["qualified"]]
+    cards = []
+    for slug, title, key, unit, fmt, desc, detail in AWARDS:
+        top = sorted(q, key=lambda r: r.get(key) or 0, reverse=True)[:3]
+        cards.append({"slug": slug, "title": title, "unit": unit, "desc": desc,
+                      "top": [{"sid": r["steamid64"], "name": r["name"], "value": award_value(fmt, r.get(key)),
+                               "tier": r.get("rating"), "detail": detail(r)} for r in top]})
+    ctx = dict(cards=cards, period=period, periods=PERIODS, people=people(c), ranked=len(q),
+               minm=rating.MIN_MATCHES.get(period))
+    c.close()
+    return render_template("awards.html", **ctx)
+
+
 @app.route("/odul/<slug>")
 def award_page(slug):
     """One award's full ranking: every ranked player of the period sorted by the award's stat, top 3 on a podium."""
@@ -574,6 +595,7 @@ def game_page(gid):
             f'm.insertAdjacentHTML("beforeend",`<div class="srcnote">{label}. 5v5stats maç başına sadece K/Ö/A, '
             f'ADR ve kafa% verir; puan, swing ve KAST için demo gerekir.</div>`)}})</script>') if g["ext_id"] else ""
     page = matchpage.render(data, back=url_for("games_page"), back_label="Tüm maçlar", extra_head=note,
+                            map_bg=map_img(g["map"]),
                             site_nav=site_nav())
     return page.replace("<title>", f"<title>{label} - ", 1)
 
@@ -599,6 +621,7 @@ def match_page(slug):
                   f'"afterbegin",`<div class="adminbar">{state} &middot; <a href="/admin/match/{m["id"]}">'
                   f'Bu maçı yönet</a></div>`))</script>')
     page = matchpage.render(data, base=storage.base(slug, m["media_rev"]), back="/highlights", extra_head=banner,
+                            map_bg=map_img(m["map"]),
                             site_nav=site_nav(),
                             back_label="Klipler")
     if m["title"]:

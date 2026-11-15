@@ -37,6 +37,14 @@ main.wrap { padding-bottom:56px; min-height:70vh; }
 .nav a { font:700 11px var(--mono); letter-spacing:.12em; text-transform:uppercase; text-decoration:none; padding:8px 12px;
          border:1px solid var(--line2); background:var(--panel); color:var(--text); }
 .nav a:hover { border-color:var(--faint); } .nav a.on { border-color:var(--accent); color:var(--accent); }
+/* İstatistik with its sub-pages (Ödüller, İkili) joined to it as smaller tabs */
+.navgrp { display:inline-flex; align-items:stretch; }
+.navgrp a + a { margin-left:-1px; }
+.navgrp a.sub { font-size:10px; color:var(--muted); background:var(--bg2); padding:8px 10px; }
+.navgrp a.sub::before { content:"↳ "; color:var(--faint); }
+.navgrp a.sub:hover { color:var(--text); position:relative; z-index:1; }
+.navgrp a.sub.on { color:var(--accent); position:relative; z-index:1; }
+.navgrp a.parent { color:var(--accent); }
 .periods { display:flex; border:1px solid var(--line2); background:var(--panel); }
 .periods a { font:700 11px var(--mono); letter-spacing:.12em; text-transform:uppercase; text-decoration:none; padding:9px 14px; color:var(--text); }
 .periods a.on { background:var(--accent); color:#fff; }
@@ -256,6 +264,28 @@ td.mapcell { font-family:var(--sans); white-space:nowrap; }
   .faceoff { grid-template-columns:1fr; } .faceoff .vs { text-align:center; } .duo-modes { grid-template-columns:1fr; }
   .h2h .big b { font-size:44px; } .fo .nm { font-size:24px; }
 }
+
+/* awards overview (/oduller): one card per award, its top 3 */
+.awgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px; margin-top:22px; }
+.awc { position:relative; display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--line);
+  padding:16px 18px 14px; text-decoration:none; color:var(--text); transition:border-color .15s, transform .15s; }
+.awc:hover { border-color:var(--accent); transform:translateY(-2px); }
+.awc .no { position:absolute; right:14px; top:12px; font:10px var(--mono); color:var(--faint); }
+.awc h3 { font:22px var(--display); font-weight:400; text-transform:uppercase; margin:4px 0 2px; }
+.awc .d { font:10px var(--mono); color:var(--faint); letter-spacing:.1em; text-transform:uppercase; }
+.awc ol { list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.awc li { --c:#c3ccd8; display:grid; grid-template-columns:22px 34px minmax(0, 1fr) auto; align-items:center; gap:10px; }
+.awc li.p1 { --c:#f5c518; } .awc li.p3 { --c:#d0864a; }
+.awc li .m { font:16px var(--display); color:var(--c); }
+.awc li .av, .awc li .ini { width:34px; height:34px; border-radius:50%; object-fit:cover; display:inline-grid; place-items:center;
+  box-shadow:0 0 0 2px var(--c); background:var(--panel2); font-size:13px; }
+.awc li.p1 .av, .awc li.p1 .ini { box-shadow:0 0 0 2px var(--c), 0 0 14px -2px var(--c); }
+.awc li .n { min-width:0; } .awc li .n b { display:block; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.awc li .n small { display:block; font:10px var(--mono); color:var(--faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.awc li .v { font:22px var(--display); color:var(--c); text-align:right; } .awc li .v small { font:10px var(--mono); color:var(--muted); margin-left:3px; }
+.awc li.p1 .v { font-size:28px; }
+.awc .more { margin-top:12px; font:700 10px var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--faint); }
+.awc:hover .more { color:var(--accent); }
 
 /* award ranking page (/odul/<slug>) */
 .aw-tabs { display:flex; gap:6px; flex-wrap:wrap; margin:18px 0 6px; }

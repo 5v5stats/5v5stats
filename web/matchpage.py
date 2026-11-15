@@ -371,8 +371,9 @@ def summary(data):
             "clips": len(clips), "page": "scoreboard.html"}
 
 
-def render(data, base="", back="../index.html", extra_head="", back_label="Tüm maçlar", site_nav=""):
+def render(data, base="", back="../index.html", extra_head="", back_label="Tüm maçlar", site_nav="", map_bg=""):
     """HTML page for collect()'s data. `base` is prepended to media paths (clips, thumbnails, pictures).
+    `map_bg`: URL of the map's picture for the score header (website); else a frame from the match's clips.
     Stats a match doesn't have (None, e.g. rating/swing/KAST for 5v5stats matches) are left out."""
     pl, teams, clips, pics = data["players"], data["teams"], data["clips"], data["pics"]
     rank_key = "rating" if all(pl[s].get("rating") is not None for s in pl) else "adr"
@@ -451,9 +452,10 @@ def render(data, base="", back="../index.html", extra_head="", back_label="Tüm 
   <span class="meta">{avg}{halves}</span></div>
 {table(t["players"])}""")
 
-    # hero: a frame from the match as background, teams and score with each team's top player
+    # hero: the map's picture (website) or a frame from the match as background, teams and score
     bg = next((c["thumb2"] or c["thumb"] for c in clips if c.get("thumb2") or c.get("thumb")), "")
-    bg_style = f' style="background-image:url(\'{media(bg)}\')"' if bg else ""
+    bg_url = map_bg or (media(bg) if bg else "")
+    bg_style = f' style="background-image:url(\'{esc(bg_url)}\')"' if bg_url else ""
     vs = ""
     if len(teams) == 2 and all(t["players"] for t in teams):
         a, b = teams
