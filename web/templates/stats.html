@@ -148,6 +148,44 @@
 </div>
 
 <script>
+// click a column header to sort by it (again: reverse). Ranked players stay above the "not ranked yet" group.
+(() => {
+  const t = document.getElementById('lb');
+  if (!t) return;
+  const ths = [...t.tHead.rows[0].cells];
+  const ASC_FIRST = new Set([0, 5, 15]);  // #, DPR, Son: lower is better
+  const val = (tr, i) => {
+    const c = tr.cells[i];
+    if (!c) return null;
+    if (i === 1) return c.textContent.trim().toLocaleLowerCase('tr');
+    const s = c.textContent.trim();
+    if (s === 'bugün') return 0;
+    const m = s.replace(',', '.').match(/-?\d+(\.\d+)?/);
+    if (!m) return null;
+    const n = parseFloat(m[0]);
+    return /ay$/.test(s) ? n * 30 : n;
+  };
+  let col = 0, dir = 1;
+  ths.forEach((th, i) => {
+    th.classList.add('sortable');
+    th.addEventListener('click', () => {
+      dir = col === i ? -dir : (ASC_FIRST.has(i) || i === 1 ? 1 : -1);
+      col = i;
+      const body = t.tBodies[0], rows = [...body.rows], sep = rows.find(r => r.classList.contains('sep'));
+      const ranked = rows.filter(r => !r.classList.contains('unq') && r !== sep), rest = rows.filter(r => r.classList.contains('unq'));
+      const cmp = (a, b) => {
+        const x = val(a, i), y = val(b, i);
+        if (x === null && y === null) return 0;
+        if (x === null) return 1;
+        if (y === null) return -1;
+        return (typeof x === 'string' ? x.localeCompare(y, 'tr') : x - y) * dir;
+      };
+      body.append(...ranked.sort(cmp), ...(sep ? [sep] : []), ...rest.sort(cmp));
+      ths.forEach(h => h.classList.remove('asc', 'desc'));
+      th.classList.add(dir > 0 ? 'asc' : 'desc');
+    });
+  });
+})();
 function filt(q) {
   q = q.trim().toLocaleLowerCase('tr'); let n = 0;
   document.querySelectorAll('#lb tbody tr[data-n]').forEach(tr => { const ok = !q || tr.dataset.n.toLocaleLowerCase('tr').includes(q); tr.style.display = ok ? '' : 'none'; n += ok; });
