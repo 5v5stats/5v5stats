@@ -15,7 +15,6 @@
 
 <section class="hero">
   <div class="eyebrow">Sunucu istatistikleri // {% if win %}{{ win[0]|day }} &ndash; {{ win[1]|day }}{% else %}tüm zamanlar{% endif %}</div>
-  <div class="display xl">{{ {'all': 'Tüm zamanların', '90d': 'Son 3 ayın', '30d': 'Bu ayın', '7d': 'Bu haftanın'}[period] }} <i>istatistikleri.</i></div>
   <div class="meta-line">
     <span><b>{{ ov.matches|bin }}</b> maç oynandı</span><span><b>{{ ov.players }}</b> aktif oyuncu</span>
     <span><b>{{ ov.rounds|bin }}</b> round</span><span><b>{{ ov.kills|bin }}</b> toplam kill</span>

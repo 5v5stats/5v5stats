@@ -593,6 +593,31 @@ def leaderboard(con, period="all"):
     return rating.leaderboard(list(totals.values()), period, prior=priors)
 
 
+MAP_MIN_MATCHES = 5  # players with this many matches on a map set its average (1.00) and spread
+
+
+def map_points(con):
+    """{map label: {steamid: (Skor on that map, matches)}}, all time. Each map is rated on its own, with the
+    same formula as the leaderboard: 1.00 = the average of the players with MAP_MIN_MATCHES+ matches there.
+    Built from the per-match rows: demo matches exact; 5v5stats matches have exact K/D/A, damage, HS and
+    wins, their detail counters (clutches, entries, utility, accuracy) estimated from all-time rates."""
+    base = {r["steamid"]: json.loads(r["totals"]) for r in con.execute("SELECT steamid, totals FROM baseline")}
+    mm = merge_map(con)
+    per = {}
+    for r in con.execute("""SELECT gp.*, g.map, g.rounds FROM game_players gp JOIN games g ON g.id = gp.game_id"""):
+        sid = mm.get(r["steamid"], r["steamid"])
+        c = json.loads(r["counters"]) if r["counters"] else _estimate(r, base.get(r["steamid"], {}))
+        t = per.setdefault(map_label(r["map"]), {}).setdefault(sid, {"steamid64": sid, "name": sid})
+        _add(t, c)
+    pri = (get_meta(con, "priors", {}) or {}).get("all")
+    out = {}
+    for mp, players in per.items():
+        rows = rating.leaderboard(list(players.values()), "all", min_matches=MAP_MIN_MATCHES, prior=pri)
+        if any(r["qualified"] for r in rows):
+            out[mp] = {r["steamid64"]: (r["points"], r.get("total_matches", 0)) for r in rows}
+    return out
+
+
 def overview(con, period="all"):
     cond, args = period_where(con, period)
     where = f"WHERE {cond}"

@@ -441,9 +441,13 @@ def player_page(steamid):
             m["damage"] += (h["adr"] or 0) * (h["rounds"] or 0)
             m["wins"] += h["won"]
             m["losses"] += 1 - h["won"]
+    mpts = statsdb.map_points(c)
     for m in maps.values():
         m["adr"] = m["damage"] / m["rounds"] if m["rounds"] else 0
         m["kd"] = m["kills"] / m["deaths"] if m["deaths"] else 0
+        # Skor on this map: only with a few matches there, else one lucky game would decide it
+        pts, n = mpts.get(statsdb.map_label(m["map"]), {}).get(steamid, (None, 0))
+        m["points"] = pts if n >= 3 else None
     clips = c.execute("""SELECT clips.*, matches.slug, matches.media_rev, matches.map AS mmap, matches.date AS mdate FROM clips
                          JOIN matches ON matches.id = clips.match_id WHERE clips.steamid IN (""" + q + ")" +
                       ("" if is_admin() else " AND matches.published = 1") + " ORDER BY clips.score DESC",

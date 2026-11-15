@@ -103,11 +103,15 @@
 </div>
 {% endif %}
 <div class="box"><div class="tbl"><table class="lb">
-  <thead><tr><th>Harita</th><th class="r">Maç</th><th class="r">G-M</th><th class="r">Galibiyet%</th><th class="r">K/Ö</th><th class="r">ADR</th></tr></thead>
+  <thead><tr><th>Harita</th><th class="r">Maç</th><th class="r">G-M</th><th class="r">Galibiyet%</th>
+    <th class="r acc" title="Bu haritadaki skor ortalaması: 1.00 = bu haritada en az 5 maç oynayanların ortalaması. En az 3 maç gerekir.">Skor</th>
+    <th class="r">K/Ö</th><th class="r">ADR</th></tr></thead>
   <tbody>{% for m in maps %}
   <tr><td class="mapcell">{{ map_thumb(m.map) }}{{ map_label(m.map) }}</td><td class="r">{{ m.matches }}</td>
     <td class="r"><span class="pos">{{ m.wins }}</span>-<span class="neg">{{ m.losses }}</span></td>
-    <td class="r">{{ (m.wins / m.matches)|pct if m.matches else '-' }}</td><td class="r">{{ m.kd|f2 }}</td><td class="r">{{ '%.1f'|format(m.adr) }}</td></tr>
+    <td class="r">{{ (m.wins / m.matches)|pct if m.matches else '-' }}</td>
+    <td class="r">{% if m.points is not none %}{{ rbadge(m.points) }}{% else %}<span class="faint">-</span>{% endif %}</td>
+    <td class="r">{{ m.kd|f2 }}</td><td class="r">{{ '%.1f'|format(m.adr) }}</td></tr>
   {% endfor %}</tbody></table></div></div>
 
 <div class="sec"><h2>Maç geçmişi</h2><small>// en yeni ilk // {{ hist|length }} maç</small></div>
