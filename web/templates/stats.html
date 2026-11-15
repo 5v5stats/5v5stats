@@ -12,8 +12,8 @@
 {% set minm = {'all': 30, '90d': 20, '30d': 15, '7d': 3}[period] %}
 
 <section class="hero">
-  <div class="eyebrow">Sunucu istatistikleri // {% if win %}{{ win[0]|day }} &ndash; {{ win[1]|day }}{% if newer %} + {{ newer }} yeni demo maçı{% endif %}{% else %}tüm zamanlar{% endif %}</div>
-  <div class="display xl">{{ plabel }}{% if top %} <i>{{ top.name|iyelik }}.</i>{% endif %}</div>
+  <div class="eyebrow">Sunucu istatistikleri // {% if win %}{{ win[0]|day }} &ndash; {{ win[1]|day }}{% else %}tüm zamanlar{% endif %}</div>
+  <div class="display xl">{{ plabel }}{% if top %} <a class="hero-who" href="{{ url_for('player_page', steamid=top.steamid64) }}">{{ avatar(people, top.steamid64, top.name, 'hav') }}<i>{{ top.name|iyelik }}.</i></a>{% endif %}</div>
   <div class="meta-line">
     <span><b>{{ ov.matches|bin }}</b> maç oynandı</span><span><b>{{ ov.players }}</b> aktif oyuncu</span>
     <span><b>{{ ov.rounds|bin }}</b> round</span><span><b>{{ ov.kills|bin }}</b> toplam kill</span>
@@ -97,17 +97,6 @@
 </div>
 {% endif %}
 
-<div class="sec"><h2>Sunucu aktifliği</h2><small>// aylara göre</small></div>
-{% set mmax = [months|map(attribute='matches')|max, 1]|max %}
-{% set busiest = months|sort(attribute='matches')|last %}
-<div class="box activity">
-  <div class="top2"><span class="lbl">Son 12 ay</span>
-    <span>Toplam <b>{{ months|sum(attribute='matches')|bin }}</b> maç &nbsp; En yoğun <b class="acc">{{ busiest.month|month_tr }} {{ busiest.month[:4] }}</b> ({{ mmax }}) &nbsp; Son 30 gün <b>{{ month30 }}</b></span></div>
-  <div class="months">
-    {% for m in months %}<div class="{{ 'cur' if loop.last }}{{ ' peak' if m.matches == mmax }}"><em>{{ m.matches }}</em><i style="height:{{ (m.matches * 100 / mmax)|round }}%"></i><span>{{ m.month|month_tr }}</span></div>{% endfor %}
-  </div>
-</div>
-
 <div class="sec"><h2>Sıralama</h2><small>// güç puanına göre // en az {{ minm }} maç</small></div>
 <div class="box">
   <div class="lbtools"><span class="lbl">Oyuncu ara</span><input id="q" type="text" placeholder="İsim yaz" oninput="filt(this.value)">
@@ -146,6 +135,18 @@
     {% endif %}
     </tbody></table></div>
 </div>
+
+<div class="sec"><h2>Sunucu aktifliği</h2><small>// aylara göre</small></div>
+{% set mmax = [months|map(attribute='matches')|max, 1]|max %}
+{% set busiest = months|sort(attribute='matches')|last %}
+<div class="box activity">
+  <div class="top2"><span class="lbl">Son 12 ay</span>
+    <span>Toplam <b>{{ months|sum(attribute='matches')|bin }}</b> maç &nbsp; En yoğun <b class="acc">{{ busiest.month|month_tr }} {{ busiest.month[:4] }}</b> ({{ mmax }}) &nbsp; Son 30 gün <b>{{ month30 }}</b></span></div>
+  <div class="months">
+    {% for m in months %}<div class="{{ 'cur' if loop.last }}{{ ' peak' if m.matches == mmax }}"><em>{{ m.matches }}</em><i style="height:{{ (m.matches * 100 / mmax)|round }}%"></i><span>{{ m.month|month_tr }}</span></div>{% endfor %}
+  </div>
+</div>
+
 <script>
 function filt(q) {
   q = q.trim().toLocaleLowerCase('tr'); let n = 0;

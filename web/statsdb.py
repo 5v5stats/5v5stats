@@ -339,9 +339,9 @@ def _estimate(row, base):
 
 
 def player_totals(con, period="all", now=None):
-    """{steamid: totals} for a period: 'all' (exact: 5v5stats totals + newer demos), '30d' / '7d' (exact:
-    5v5stats' published period totals + demos) or '90d' (5v5stats doesn't publish it: summed per match;
-    K/D/A, damage, HS and wins exact, detail counters estimated from each player's all-time rates)."""
+    """{steamid: totals} for a period: 'all' (exact: 5v5stats totals + newer demos), or the 7 / 30 / 90 days up
+    to today: summed per match (demo matches exact; 5v5stats matches: K/D/A, damage, HS and wins exact, detail
+    counters estimated from each player's all-time rates), or 5v5stats' exact period totals when its data ends today."""
     base = {r["steamid"]: json.loads(r["totals"]) for r in con.execute("SELECT * FROM baseline")}
     names = {r["steamid"]: r["name"] for r in con.execute("SELECT steamid, name FROM people")}
     mm = merge_map(con)
@@ -358,10 +358,10 @@ def player_totals(con, period="all", now=None):
                                 WHERE g.source = '5v5stats' AND gp.steamid NOT IN (SELECT steamid FROM baseline)"""):
             _add(out.setdefault(who(r["steamid"]), {}), _estimate(r, {}))
     else:
-        # The same window as 5v5stats (the 7 / 30 days up to its newest match), using its exact published
-        # totals, plus our demo matches from that window on (newer ones included, exact).
+        # The 7 / 30 / 90 days up to today. 5v5stats' exact published period totals are used only when its
+        # window is the same one (its data ends today); otherwise the period is summed match by match.
         since, until = window(con, period)
-        snap = (get_meta(con, "period_totals", {}) or {}).get(period)
+        snap = (get_meta(con, "period_totals", {}) or {}).get(period) if get_meta(con, "sync_date") == until else None
         if snap:
             for sid, t in snap.items():
                 _add(out.setdefault(who(sid), {}), t)
@@ -563,11 +563,17 @@ def latest_date(con):
     return r or datetime.date.today().isoformat()
 
 
+TR_TZ = datetime.timezone(datetime.timedelta(hours=3))  # the server's players are in Turkey (no DST)
+
+
+def today():
+    return datetime.datetime.now(TR_TZ).date().isoformat()
+
+
 def window(con, period):
-    """(first day, last 5v5stats day) of a period, as 5v5stats defines it: the 7 / 30 days ending at the
-    newest match of its data. Newer demo matches (after the last day) are counted in the period too."""
+    """(first day, last day) of a period: the 7 / 30 / 90 days up to today (Turkey time)."""
     days = {"90d": 90, "30d": 30, "7d": 7}[period]
-    until = get_meta(con, "sync_date") or latest_date(con)
+    until = today()
     since = (datetime.date.fromisoformat(until) - datetime.timedelta(days=days - 1)).isoformat()
     return since, until
 

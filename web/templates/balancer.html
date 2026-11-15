@@ -8,7 +8,8 @@ main.wrap { max-width:1480px; }  /* this page uses the extra width for the playe
 .pool .bar { display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
 .pool .bar input { margin-left:auto; background:var(--bg2); border:1px solid var(--line2); color:var(--text); padding:7px 10px; font:12px var(--mono); width:180px; }
 .pool .bar .btn { padding:7px 12px; }
-.plist { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); max-height:min(760px, 75vh); overflow:auto; }
+.plist { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); max-height:min(760px, 75vh); overflow:auto;
+         overscroll-behavior:contain; scrollbar-gutter:stable; }
 .pc { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--line); border-right:1px solid var(--line);
       cursor:pointer; user-select:none; background:var(--panel); }
 .pc:hover { background:var(--panel2); }
@@ -116,12 +117,12 @@ const badge = x => `<span class="rb ${band(x)}">${x.toFixed(2)}<u style="width:c
 function render() {
   const q = document.getElementById('q').value.trim().toLocaleLowerCase('tr');
   // order: most matches in the last 30 days first (added names at the end)
-  const groups = {recent: 'Son 30 günde düzenli oynayanlar (4+ maç)', few: 'Son 30 günde 4 maçtan az oynayanlar',
+  const groups = {recent: 'Son 30 günde düzenli oynayanlar (8+ maç)', few: 'Son 30 günde 8 maçtan az oynayanlar',
                   old: 'Son 30 günde oynamayanlar', custom: 'Eklenenler'};
   let html = '', cur = null;
   for (const p of POOL) {
     if (q && !p.name.toLocaleLowerCase('tr').includes(q) && !sel.has(p.sid)) continue;
-    const g = p.recent === 'custom' ? 'custom' : p.m30 >= 4 ? 'recent' : p.m30 > 0 ? 'few' : 'old';
+    const g = p.recent === 'custom' ? 'custom' : p.m30 >= 8 ? 'recent' : p.m30 > 0 ? 'few' : 'old';
     if (g !== cur) { html += `<div class="ghead${cur ? ' later' : ''}">${groups[g]}</div>`; cur = g; }
     const on = sel.has(p.sid), full = sel.size >= 10 && !on;
     const info = p.recent === 'custom' ? 'eklendi' : `${p.m30 ? p.m30 + ' maç / 30g' : 'toplam ' + p.matches + ' maç'}`;
