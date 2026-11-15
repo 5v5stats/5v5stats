@@ -39,7 +39,7 @@ main.wrap { padding-bottom:56px; min-height:70vh; }
 /* type */
 .eyebrow { font:700 11px var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--accent); }
 .display { font-family:var(--display); text-transform:uppercase; letter-spacing:.005em; line-height:.95; margin:6px 0 10px; font-weight:400; }
-.display.xl { font-size:clamp(40px, 7vw, 84px); } .display.l { font-size:clamp(32px, 5vw, 56px); } .display.m { font-size:30px; }
+.display.xl { font-size:clamp(28px, 4.2vw, 48px); } .display.l { font-size:clamp(28px, 3.6vw, 42px); } .display.m { font-size:30px; }
 .display i { font-style:normal; color:var(--accent); }
 .meta-line { font:12px var(--mono); color:var(--muted); display:flex; gap:20px; flex-wrap:wrap; }
 .meta-line b { color:var(--text); font-weight:700; }
@@ -48,7 +48,7 @@ main.wrap { padding-bottom:56px; min-height:70vh; }
 .sec h2 { font:24px var(--display); text-transform:uppercase; margin:0; font-weight:400; letter-spacing:.01em; white-space:nowrap; }
 .sec small { font:11px var(--mono); color:var(--faint); letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; }
 .sec::after { content:""; flex:1; height:1px; background:var(--line); }
-.hero { padding:40px 0 24px; border-bottom:1px solid var(--line); margin-bottom:8px; }
+.hero { padding:26px 0 18px; border-bottom:1px solid var(--line); margin-bottom:8px; }
 
 /* boxes */
 .box { background:var(--panel); border:1px solid var(--line); }
@@ -59,7 +59,7 @@ main.wrap { padding-bottom:56px; min-height:70vh; }
 
 /* comeback story */
 .story { padding:26px 28px; display:grid; grid-template-columns:minmax(0, 1fr); gap:6px; position:relative; overflow:hidden; }
-.story .display { font-size:clamp(28px, 4vw, 46px); margin:8px 0 18px; }
+.story .display { font-size:clamp(22px, 2.8vw, 32px); margin:6px 0 14px; }
 .story .row2 { display:grid; grid-template-columns:240px minmax(0, 1fr); gap:24px; align-items:end; }
 .story .big { font:44px var(--display); color:var(--accent); line-height:1; }
 .story p { color:var(--muted); font:12px var(--mono); margin:6px 0 0; }
