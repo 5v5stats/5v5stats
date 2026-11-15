@@ -41,6 +41,14 @@ scoreboard.txt                     <- the same as text, plus every player's swin
 | `--audio-audible` | Record sound even if there's no spare output (you'll hear CS2 while it renders) |
 | `python render.py --fix-audio-route` | Emergency fix: CS2 is silent after a crashed render; run it with CS2 open |
 
+### Title card
+
+Each clip opens with a FACEIT-style card on the left: the player's Steam picture, name, level badge (1-10,
+the website's levels), the play ("3K + 1V2 CLUTCH") and round, map and rating. It slides in at the start and
+fades out after about 3.5 seconds. Levels and ratings come from the website (`/api/levels` at `SERVER_URL` in
+`upload.env`, else the local site); if it isn't reachable the card has no level. Made by `titlecard.py`, which
+needs Pillow (`pip install pillow`); without it clips get the plain text title. `--no-titles` turns it off.
+
 ### How highlights are scored
 
 Every player's round gets **points**, and each point comes with a reason. `--list` shows them, for example:
@@ -68,7 +76,7 @@ than 5 clips instead of filler. `--min-score 45` brings back every 3K. All weigh
 
 If a highlight has more than 10 seconds of nothing between actions (for example 4 kills, then the 5th one
 50 seconds later), that stretch is **fast-forwarded** at 4–16x (aiming for about 5 seconds on screen),
-with a ">> 9x" tag in the corner. Use `--gaps cut` to cut those stretches out instead.
+without a speed label; its sound is muted. Use `--gaps cut` to cut those stretches out instead.
 
 You can also list highlights on their own with `python highlights.py <path to .dem>` (add `--all` to see
 every scored play).

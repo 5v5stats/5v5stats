@@ -360,13 +360,20 @@ def media_duration(path):
     return int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3)) if m else 0.0
 
 
+def media_height(path):
+    r = subprocess.run([FFMPEG, "-hide_banner", "-i", path], capture_output=True, text=True, creationflags=LOW_PRIORITY)
+    m = re.search(r"Video:.*?, (\d{2,5})x(\d{2,5})", r.stderr)
+    return int(m.group(2)) if m else 1080
+
+
 def has_audio(path):
     r = subprocess.run([FFMPEG, "-hide_banner", "-i", path], capture_output=True, text=True, creationflags=LOW_PRIORITY)
     return "Audio:" in r.stderr
 
 
-def finish_clip(parts, dst, title, fps, ff_windows=()):
-    """Join segment files, add the title card and fast-forward tags, write the final clip."""
+def finish_clip(parts, dst, title, fps, ff_windows=(), card=None):
+    """Join segment files, add the title (a FACEIT-style card image sliding in, or plain text), mute the
+    fast-forwarded stretches, write the final clip. card: (png path, video height) from titlecard.make_card."""
     lst = dst + ".txt"
     with open(lst, "w", encoding="utf-8") as f:
         for p in parts:
@@ -374,25 +381,31 @@ def finish_clip(parts, dst, title, fps, ff_windows=()):
     filters = []
     folder = os.path.dirname(dst)
     tf = os.path.basename(dst) + ".title.txt"  # relative to folder (ffmpeg runs there): no path escaping
-    if title:
+    if title and not card:
         with open(os.path.join(folder, tf), "w", encoding="utf-8") as f:
             f.write(title)
         filters.append(f"drawtext=fontfile='{title_font(title)}':textfile='{tf}':fontsize=h/22:fontcolor=white:"
                        f"box=1:boxcolor=black@0.55:boxborderw=18:x=(w-tw)/2:y=h*0.72:"
                        f"alpha='if(lt(t,3),1,if(lt(t,3.6),(3.6-t)/0.6,0))'")
-    for s, e, speed in ff_windows:
-        filters.append(f"drawtext=fontfile='{FONT}':text='>> {speed}x':fontsize=h/18:fontcolor=white:"
-                       f"box=1:boxcolor=black@0.55:boxborderw=14:x=w-tw-h*0.05:y=h*0.30:"
-                       f"enable='between(t,{s:.2f},{e:.2f})'")
+    # fast-forwarded stretches play without a speed label (their sound is muted below)
     vf = ",".join(filters) or "null"
     aopts = []
     if has_audio(parts[0]):
         mute = "+".join(f"between(t,{s:.2f},{e:.2f})" for s, e, _ in ff_windows)
         aopts = ["-af", f"volume=enable='{mute}':volume=0" if mute else "anull", "-c:a", "aac", "-b:a", "192k"]
-    ff("-f", "concat", "-safe", "0", "-i", lst, "-vf", vf, "-r", str(fps), *aopts,
-       *FINAL_ENCODE, "-movflags", "+faststart", dst, cwd=folder)
+    if card:
+        import titlecard
+        png, vh = card
+        graph = (f"[0:v]{vf}[base];[1:v]{titlecard.fade_filter()}[card];"
+                 f"[base][card]{titlecard.overlay_filter(0, vh)}[v]")
+        ff("-f", "concat", "-safe", "0", "-i", lst, "-loop", "1", "-framerate", str(fps), "-i", png,
+           "-filter_complex", graph, "-map", "[v]", "-map", "0:a?", "-r", str(fps), *aopts,
+           *FINAL_ENCODE, "-movflags", "+faststart", dst, cwd=folder)
+    else:
+        ff("-f", "concat", "-safe", "0", "-i", lst, "-vf", vf, "-r", str(fps), *aopts,
+           *FINAL_ENCODE, "-movflags", "+faststart", dst, cwd=folder)
     os.remove(lst)
-    if title:
+    if title and not card:
         os.remove(os.path.join(folder, tf))
 
 
@@ -514,7 +527,21 @@ def finish_clip_job(i, n, c, takes, final, a):
         offset += media_duration(take["path"])
         parts.append(take["path"])
     title = None if a.no_titles else f"{c['player']}  |  {c['label']}  |  Round {c['round']}"
-    finish_clip(parts, final, title, a.fps, ff_windows)
+    card = None
+    if title:
+        import titlecard
+        if titlecard.available():
+            try:  # FACEIT-style card: avatar, level, the play; plain text title if anything goes wrong
+                vh = a.height or media_height(parts[0])
+                png = final + ".card.png"
+                titlecard.make_card(png, c["player"], c.get("steamid", ""), c["label"], c["round"],
+                                    os.path.basename(os.path.dirname(final)), vh)
+                card = (os.path.basename(png), vh)
+            except Exception as e:
+                log(f"    note: title card failed ({e}); using a plain title")
+    finish_clip(parts, final, title, a.fps, ff_windows, card)
+    if card:
+        os.remove(final + ".card.png")
     for p in parts:
         os.remove(p)
     log(f"    saved [{i}/{n}] {final}")

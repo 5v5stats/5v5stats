@@ -559,6 +559,17 @@ def upload_result(m, created, notes):
                    url=f"{base}/m/{m['slug']}", admin_url=f"{base}/admin/match/{m['id']}")
 
 
+@app.route("/api/levels")
+def api_levels():
+    """{steamid: {"tier": 1-10 or None, "points": rating}} for the title cards render.py puts in clips
+    (the same levels and ratings the site shows; merged accounts get their person's)."""
+    c = con()
+    try:
+        return jsonify(player_tiers(c))
+    finally:
+        c.close()
+
+
 @app.route("/api/upload", methods=["POST"])
 def api_upload():
     """For upload.py: body = the package zip, header Authorization: Bearer <UPLOAD_TOKEN>.
