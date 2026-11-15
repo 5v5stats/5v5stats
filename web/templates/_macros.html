@@ -5,6 +5,6 @@
 {%- endmacro %}
 
 {% macro tier(t, cls='') -%}
-  {%- if t -%}<span class="tier t{{ t }} {{ cls }}" title="Puan seviyesi {{ t }} / 10">{{ t }}</span>
-  {%- else -%}<span class="tier none {{ cls }}" title="Henüz sıralamada değil (yeterli maç yok)">-</span>{%- endif -%}
+  <span class="tier {{ cls }}" title="{{ ('Seviye %d / 10' % t) if t else 'Henüz sıralamada değil (yeterli maç yok)' }}">
+  {{- level_ring(t, 52 if 'big' in cls else 30) -}}</span>
 {%- endmacro %}

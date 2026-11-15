@@ -14,9 +14,9 @@ import urllib.request
 ROOT = os.path.dirname(os.path.abspath(__file__))
 FONTS = r"C:\Windows\Fonts"
 ACCENT = (255, 85, 0)
-# same colours as the level badges on the website (web/static/site.css .tier.tN)
-LEVEL_COLORS = {10: "#ffb000", 9: "#c8d43a", 8: "#c8d43a", 7: "#8bd12f", 6: "#8bd12f", 5: "#3fb98a", 4: "#3fb98a",
-                3: "#d6a419", 2: "#e07b39", 1: "#e5484d"}
+# FACEIT's level colours (same as the website's level rings, web/matchpage.py LEVEL_COLORS)
+LEVEL_COLORS = {10: "#fe1f00", 9: "#ff6309", 8: "#ff6309", 7: "#ffc800", 6: "#ffc800", 5: "#ffc800", 4: "#ffc800",
+                3: "#1ce400", 2: "#1ce400", 1: "#eeeeee"}
 MAP_NAMES = {"de_dust2": "Dust II", "de_inferno": "Inferno", "de_mirage": "Mirage", "de_nuke": "Nuke",
              "de_anubis": "Anubis", "de_ancient": "Ancient", "de_vertigo": "Vertigo", "de_overpass": "Overpass",
              "de_train": "Train", "de_cache": "Cache"}

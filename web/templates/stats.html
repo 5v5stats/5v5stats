@@ -20,7 +20,22 @@
   </div>
 </section>
 
-{% if comeback %}
+{% if best_clips %}
+<div class="sec" style="margin-top:26px"><h2>{{ {'7d': 'Haftanın klipleri', '30d': 'Ayın klipleri', '90d': 'Son 3 ayın klipleri', 'all': 'En iyi klipler'}[period] }}</h2>
+  <small>// puana göre en iyi {{ best_clips|length }}</small><a class="more" href="{{ url_for('home') }}">Tüm klipler &rarr;</a></div>
+<div class="tclips n{{ best_clips|length }}">
+  {% for c in best_clips %}
+  <a class="tclip" href="{{ url_for('match_page', slug=c.slug) }}#izle{{ c.idx }}">
+    <span class="th"{% if c.thumb %} style="background-image:url('{{ media_url(c.slug, c.media_rev, c.thumb) }}')"{% endif %}>
+      <span class="rk num">#{{ loop.index }}</span><span class="pts num">{{ c.score }} puan</span><span class="play">&#9654;</span>
+    </span>
+    <span class="tx">{{ avatar(people, c.steamid, c.player) }}
+      <span class="t"><b>{{ c.player }}</b><span class="lbl">{{ c.label }}</span>
+        <small>{{ c.mmap }} &middot; {{ c.round }}. round &middot; {{ c.mdate|day }}</small></span></span>
+  </a>
+  {% endfor %}
+</div>
+{% elif comeback %}
 {% set g, deficit, leads = comeback %}
 {% set n = leads|length - 1 %}
 {% set peak = [leads|max, -(leads|min), 1]|max %}

@@ -19,11 +19,14 @@
 .pc .nm span { font:10px var(--mono); color:var(--faint); }
 .pc .t { font:700 13px var(--mono); color:var(--muted); width:20px; text-align:right; }
 .pc .grp { grid-column:1 / -1; }
+.ghead.later { margin-top:14px; border-top:1px solid var(--line); }
 .ghead { grid-column:1 / -1; font:700 10px var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--faint);
          padding:10px 14px 6px; background:var(--bg2); border-bottom:1px solid var(--line); }
 .actions { display:flex; gap:10px; padding:14px 16px; border-top:1px solid var(--line); flex-wrap:wrap; }
 .side .box { padding:16px 18px; margin-bottom:14px; }
-.side select { width:100%; background:var(--bg2); border:1px solid var(--line2); color:var(--text); padding:11px 12px; font:14px var(--sans); margin:10px 0 8px; }
+.mapbar { display:flex; align-items:center; gap:12px 16px; padding:10px 16px; margin-bottom:14px; flex-wrap:wrap; }
+.mapbar select { background:var(--bg2); border:1px solid var(--line2); color:var(--text); padding:8px 12px; font:14px var(--sans); min-width:200px; }
+.mapbar .hint { font:11px var(--mono); color:var(--faint); }
 .side .hint { font:11px var(--mono); color:var(--faint); line-height:1.6; }
 .teams { display:grid; grid-template-columns:1fr; gap:12px; }
 .team { border:1px solid var(--line); background:var(--panel); }
@@ -48,17 +51,40 @@
 </style>
 {% endblock %}
 {% block body %}
+<style>
+  .how { margin-top:10px; max-width:640px; color:var(--muted); font-size:13px; }
+  .how summary { cursor:pointer; color:var(--accent); font:700 11px var(--mono); letter-spacing:.12em; text-transform:uppercase;
+    list-style:none; display:inline-flex; align-items:center; gap:6px; }
+  .how summary::-webkit-details-marker { display:none; }
+  .how summary::before { content:"+"; font-size:14px; } .how[open] summary::before { content:"−"; }
+  .how ul { margin:8px 0 0; padding-left:18px; } .how li { margin:4px 0; }
+</style>
 <section class="hero">
   <div class="eyebrow">Araçlar // Takım kur</div>
   <div class="display xl">Eşit takımlar.<br>Hızlı.</div>
-  <div class="dim" style="max-width:640px">10 oyuncu seç. Güç skoru <span class="acc">tüm maç geçmişinden</span> gelir (1.00 = sunucu ortalaması,
-    kimse 0'ın altına düşmez), son 30 günün formu da bir miktar etki eder. Harita seçersen o haritadaki performans da hesaba katılır. 5+5'e bölünebilen 252 partisyonun tamamı
-    değerlendirilir; sadece toplamı değil, her seviyeyi (en iyi-en iyi, ikinci-ikinci vb.) en iyi eşleştiren bölünme seçilir.</div>
+  <div class="dim" style="max-width:640px">10 oyuncu seç, en dengeli iki takımı kuralım. Güç: <span class="acc">1.00 = sunucu ortalaması</span>.</div>
+  <details class="how">
+    <summary>Nasıl çalışır?</summary>
+    <ul>
+      <li>Güç skoru oyuncunun tüm maç geçmişinden gelir; son 30 günün formu da biraz etki eder. Kimse 0'ın altına düşmez.</li>
+      <li>Harita seçersen o haritadaki performans da hesaba katılır.</li>
+      <li>10 oyuncunun 5'e 5 bölünebileceği 252 yolun hepsi denenir. Sadece toplam güce değil, en iyiyle en iyinin,
+        ikinciyle ikincinin (ve devamı) ne kadar denk olduğuna da bakılır.</li>
+    </ul>
+  </details>
   <div class="meta-line" style="margin-top:14px"><span>Havuz: <b>{{ pool|length }}</b> oyuncu (son 30 günde en çok oynayanlar üstte).</span>
     <a class="acc" href="{{ url_for('stats_home') }}" style="text-decoration:none">&larr; Sıralamaya dön</a></div>
 </section>
 
 <div class="sec"><h2>10 kişi seç</h2><small>// en iyi bölünmeyi bul</small></div>
+<div class="mapbar box">
+  <label for="map" class="lbl acc">Harita</label>
+  <select id="map" onchange="if (last) build()">
+    <option value="">Harita farketmez</option>
+    {% for key, label in maps %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+  </select>
+  <span class="hint">Seçersen o haritadaki performans da hesaba katılır (en az 3 maç oynadıysa).</span>
+</div>
 <div class="bal">
   <div class="box pool">
     <div class="bar"><span class="lbl">Havuz // seçilen <b class="acc" id="cnt">0</b> / 10</span>
@@ -71,16 +97,7 @@
     </div>
   </div>
   <div class="side">
-    <div class="box">
-      <span class="lbl acc">Harita seç</span>
-      <select id="map" onchange="if (last) build()">
-        <option value="">Harita farketmez</option>
-        {% for key, label in maps %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
-      </select>
-      <div class="hint">Harita seçersen o haritadaki performans da hesaba katılır (en az 3 maç oynadıysa).</div>
-    </div>
-    <div id="result"><div class="box hint">Havuzdan 10 oyuncu seç ve <b style="color:var(--text)">Takımları oluştur</b>'a bas.
-      Sistem 5+5'e bölünebilen 252 partisyonu değerlendirir ve en iyi seviye eşleşmesini seçer.</div></div>
+    <div id="result"><div class="box hint">Havuzdan 10 oyuncu seç ve <b style="color:var(--text)">Takımları oluştur</b>'a bas.</div></div>
   </div>
 </div>
 
@@ -98,12 +115,13 @@ const badge = x => `<span class="rb ${band(x)}">${x.toFixed(2)}<u style="width:c
 function render() {
   const q = document.getElementById('q').value.trim().toLocaleLowerCase('tr');
   // order: most matches in the last 30 days first (added names at the end)
-  const groups = {recent: 'Son 30 günde en çok oynayanlar', old: 'Son 30 günde oynamayanlar', custom: 'Eklenenler'};
+  const groups = {recent: 'Son 30 günde düzenli oynayanlar (4+ maç)', few: 'Son 30 günde 4 maçtan az oynayanlar',
+                  old: 'Son 30 günde oynamayanlar', custom: 'Eklenenler'};
   let html = '', cur = null;
   for (const p of POOL) {
     if (q && !p.name.toLocaleLowerCase('tr').includes(q) && !sel.has(p.sid)) continue;
-    const g = p.recent === 'custom' ? 'custom' : p.m30 > 0 ? 'recent' : 'old';
-    if (g !== cur) { cur = g; html += `<div class="ghead">${groups[g]}</div>`; }
+    const g = p.recent === 'custom' ? 'custom' : p.m30 >= 4 ? 'recent' : p.m30 > 0 ? 'few' : 'old';
+    if (g !== cur) { html += `<div class="ghead${cur ? ' later' : ''}">${groups[g]}</div>`; cur = g; }
     const on = sel.has(p.sid), full = sel.size >= 10 && !on;
     const info = p.recent === 'custom' ? 'eklendi' : `${p.m30 ? p.m30 + ' maç / 30g' : 'toplam ' + p.matches + ' maç'}`;
     html += `<div class="pc ${on ? 'sel' : ''} ${full ? 'full' : ''}" onclick="toggle('${p.sid}')">${av(p)}

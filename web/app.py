@@ -38,7 +38,8 @@ from itsdangerous import BadSignature, URLSafeTimedSerializer  # noqa: E402
 SECRETS = config.ensure_secrets()
 app = Flask(__name__, template_folder=os.path.join(HERE, "templates"), static_folder=os.path.join(HERE, "static"))
 app.secret_key = SECRETS["SECRET_KEY"]
-app.jinja_env.globals.update(cos=math.cos, sin=math.sin, media_url=storage.url)
+app.jinja_env.globals.update(cos=math.cos, sin=math.sin, media_url=storage.url,
+                             level_ring=lambda t, size=28: Markup(matchpage.level_ring(t, size)))
 TICKETS = URLSafeTimedSerializer(SECRETS["SECRET_KEY"], salt="upload")
 db.init()  # tables (CREATE ... IF NOT EXISTS); cheap, and a fresh hosted database needs it before the first page
 app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 ** 3
@@ -102,6 +103,21 @@ PERIODS = {"7d": "Bu Hafta", "30d": "30 Gün", "90d": "3 Ay", "all": "Tüm Zaman
 
 def people(c):
     return {r["steamid"]: dict(r) for r in c.execute("SELECT * FROM people")}
+
+
+def top_clips(c, period, n=5):
+    """The period's best highlight clips by points (public matches; admins also see hidden ones)."""
+    cond, args = [], []
+    if period != "all":
+        since, _ = statsdb.window(c, period)
+        cond.append("m.date >= ?")
+        args.append(since)
+    if not is_admin():
+        cond.append("m.published = 1")
+    where = ("WHERE " + " AND ".join(cond)) if cond else ""
+    return c.execute(f"""SELECT cl.*, m.slug, m.media_rev, m.map AS mmap, m.date AS mdate FROM clips cl
+                         JOIN matches m ON m.id = cl.match_id {where} ORDER BY cl.score DESC, m.date DESC LIMIT ?""",
+                     args + [n]).fetchall()
 
 
 def highlight_links(c):
@@ -229,9 +245,10 @@ def stats_home():
     sync_date = statsdb.get_meta(c, "sync_date")
     newer = c.execute("SELECT COUNT(*) FROM games WHERE source = 'demo' AND date > ?",
                       (sync_date or "",)).fetchone()[0]
-    cb = statsdb.comeback(c, period)
+    best = top_clips(c, period)
+    cb = None if best else statsdb.comeback(c, period)  # the comeback story only when there are no clips
     ctx = dict(board=board, period=period, periods=PERIODS, ov=ov, people=people(c), win=win, newer=newer,
-               awards=awards(board), comeback=cb, months=statsdb.activity_by_month(c),
+               awards=awards(board), comeback=cb, best_clips=best, months=statsdb.activity_by_month(c),
                weeks=statsdb.weekly_counts(c), seen=statsdb.last_seen(c), ref=statsdb.latest_date(c),
                month30=statsdb.overview(c, "30d")["matches"],
                synced=(day(time.strftime("%Y-%m-%d", time.localtime(synced / 1000))) + " "

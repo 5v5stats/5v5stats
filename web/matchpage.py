@@ -4,6 +4,7 @@ Shared by the rendering PC (scoreboard_html.py, static pages) and the website (w
 beyond the standard library, so the website can run on a server without the demo/stats code.
 """
 import hashlib
+import math
 import html
 import re
 import urllib.parse
@@ -102,9 +103,9 @@ img.av { object-fit:cover; background:#222; }
                   padding:6px 12px; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
 .toolbar button.on { background:#3a1a0a; border-color:var(--accent); color:#ffb38a; }
 .thead { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:18px 2px 8px; }
-.thead .sc { font-weight:800; font-size:16px; } .thead .sc.w { color:var(--win); }
-.thead .nm { font-weight:800; }
-.thead .meta { margin-left:auto; color:var(--muted); font-size:12px; display:flex; gap:14px; flex-wrap:wrap; }
+.thead .sc { font-weight:800; font-size:20px; min-width:26px; } .thead .sc.w { color:var(--win); }
+.thead .nm { font-weight:800; font-size:17px; }
+.thead .meta { margin-left:auto; color:var(--muted); font-size:13px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
 .thead .meta b { color:var(--text); }
 .scroll { overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
 table { border-collapse:collapse; width:100%; min-width:1000px; }
@@ -115,7 +116,13 @@ th.on::after { content:" \\25BE"; } th.on.asc::after { content:" \\25B4"; }
 td { padding:8px; white-space:nowrap; border-bottom:1px solid rgba(255,255,255,.04); }
 tr.A td { background:var(--rowA); } tr.A:nth-child(even) td { background:var(--rowA2); }
 tr.B td { background:var(--rowB); } tr.B:nth-child(even) td { background:var(--rowB2); }
-td.pl { font-weight:700; } td.pl > span { display:flex; align-items:center; gap:8px; }
+td.pl { font-weight:700; } td.pl > span { display:flex; align-items:center; gap:10px; }
+td.pl .av { width:32px; height:32px; border-radius:50%; font-size:12px; box-shadow:0 0 0 2px rgba(255,255,255,.08); }
+td.lv > span { display:inline-flex; align-items:center; gap:8px; } td.lv b { font-weight:700; }
+.ring { display:block; flex:none; }
+.thead .av.tm { width:44px; height:44px; font-size:15px; }
+.thead .meta .avg { display:inline-flex; align-items:center; gap:8px; }
+.thead .meta .sep { width:1px; align-self:stretch; background:var(--line); }
 .rt { display:inline-flex; flex-direction:column; gap:3px; }
 .rt .v { padding:1px 6px; border-radius:3px; font-weight:800; font-size:12px; width:max-content;
          background:#2a2a2a; border:1px solid #3a3a3a; }
@@ -323,6 +330,25 @@ def band(r):
     return "hi" if r >= 1.8 else "good" if r >= 1.3 else "ok" if r >= 0.9 else "poor"
 
 
+# FACEIT's level colours: 1 white, 2-3 green, 4-7 yellow, 8-9 orange, 10 red (also used by the site and title cards)
+LEVEL_COLORS = {10: "#fe1f00", 9: "#ff6309", 8: "#ff6309", 7: "#ffc800", 6: "#ffc800", 5: "#ffc800", 4: "#ffc800",
+                3: "#1ce400", 2: "#1ce400", 1: "#eeeeee"}
+
+
+def level_ring(tier, size=30):
+    """FACEIT-style level ring: an open circle that fills up with the level (1-10), the number inside."""
+    C = 2 * math.pi * 13
+    col = LEVEL_COLORS.get(tier, "#5d6573")
+    arc = f'cx="16" cy="16" r="13" fill="none" stroke-width="3" stroke-linecap="round" transform="rotate(135 16 16)"'
+    fill = (f'<circle {arc} stroke="{col}" stroke-dasharray="{0.75 * C * tier / 10:.2f} {C:.2f}"/>' if tier else "")
+    return (f'<svg class="ring" width="{size}" height="{size}" viewBox="0 0 32 32" aria-label="Seviye {tier or "-"}">'
+            f'<circle cx="16" cy="16" r="11" fill="#0f1218"/>'
+            f'<circle {arc} stroke="rgba(255,255,255,.13)" stroke-dasharray="{0.75 * C:.2f} {C:.2f}"/>{fill}'
+            f'<text x="16" y="16.5" dominant-baseline="middle" text-anchor="middle" fill="{col if tier else "#8d8d8d"}" '
+            f'font-size="{12 if tier == 10 else 13}" font-weight="800" font-family="Segoe UI, Arial, sans-serif">'
+            f'{tier or "&ndash;"}</text></svg>')
+
+
 def rating_html(r, best=False):
     if r is None:
         return '<span class="dim">&ndash;</span>'
@@ -354,6 +380,9 @@ def render(data, base="", back="../index.html", extra_head="", back_label="Tüm 
     best_sid = max(pl, key=rank)
     map_name, date = data["map"], data["date"]
     cols = [c for c in COLS if c[2] == "name" or any(pl[s].get(c[2]) is not None for s in pl)]
+    tiers = data.get("tiers") or {}            # website only: {steamid: {"tier": 1-10, "points": 1.00-scale}}
+    if tiers:
+        cols.insert(1, ("Seviye", "Sitedeki seviyesi (1-10) ve genel güç puanı (1.00 = sunucu ortalaması)", "level"))
 
     def avatar(sid, name, size=""):
         if str(sid) in pics:
@@ -378,6 +407,11 @@ def render(data, base="", back="../index.html", extra_head="", back_label="Tüm 
             if key == "name":
                 cells.append(f'<td class="pl" data-v="{esc(v["name"].lower())}"><span>{avatar(sid, v["name"])}'
                              f'{esc(v["name"])}</span></td>')
+            elif key == "level":
+                t = tiers.get(str(sid)) or {}
+                pts = t.get("points")
+                cells.append(f'<td class="lv" data-v="{pts if pts is not None else -1:.3f}"><span>{level_ring(t.get("tier"))}'
+                             + (f'<b>{pts:.2f}</b>' if pts is not None else '<b class="dim">&ndash;</b>') + '</span></td>')
             elif x is None:
                 cells.append('<td data-v="-1" class="dim">&ndash;</td>')
             elif key == "rating":
@@ -402,10 +436,18 @@ def render(data, base="", back="../index.html", extra_head="", back_label="Tüm 
         h1, h2, ot = t.get("halves") or (None, None, None)
         halves = (f"<span>İlk yarı <b>{h1}</b></span><span>İkinci yarı <b>{h2}</b></span>"
                   + (f"<span>Uzatma <b>{ot}</b></span>" if ot else "")) if h1 is not None else ""
-        avg = (f"<span>Takım ortalaması <b>{t['avg_rating']:.2f}</b></span>"
-               if t.get("avg_rating") is not None else "")
+        lv = [tiers[str(s)] for s in t["players"] if str(s) in tiers and tiers[str(s)].get("points") is not None]
+        if lv:  # FACEIT shows the team's average level and elo; ours: average level ring + average score
+            ts = [x["tier"] for x in lv if x.get("tier")]
+            avg = (f'<span class="avg">Takım ortalaması {level_ring(round(sum(ts) / len(ts)) if ts else None, 28)}'
+                   f'<b>{sum(x["points"] for x in lv) / len(lv):.2f}</b></span><span class="sep"></span>')
+        else:
+            avg = (f"<span>Takım ortalaması <b>{t['avg_rating']:.2f}</b></span>"
+                   if t.get("avg_rating") is not None else "")
+        top = max(t["players"], key=rank, default=None)
         team_blocks.append(f"""
-<div class="thead"><span class="sc {"w" if k == 0 else ""}">{t["score"]}</span><span class="nm">{esc(t["name"])}</span>
+<div class="thead"><span class="sc {"w" if k == 0 else ""}">{t["score"]}</span>{avatar(top, pl[top]["name"], "tm") if top else ""}
+  <span class="nm">{esc(t["name"])}</span>
   <span class="meta">{avg}{halves}</span></div>
 {table(t["players"])}""")
 
@@ -425,7 +467,6 @@ def render(data, base="", back="../index.html", extra_head="", back_label="Tüm 
 
     # MVP card (best rating) with their best rendered clip
     team_color = {0: "#22d3c5", 1: "#8b5cf6"}  # winners teal, losers purple (FACEIT-like)
-    tiers = data.get("tiers") or {}            # website only: {steamid: {"tier": 1-10, "points": 1.00-scale}}
     mvp = pl[best_sid]
     mclip = max((c for c in clips if c.get("steamid") == best_sid), key=lambda c: c["score"], default=None)
     if mclip:
@@ -447,7 +488,7 @@ def render(data, base="", back="../index.html", extra_head="", back_label="Tüm 
                  f'<span class="rlbl"><i></i>ADR, maçın en iyisi</span>')
         first = f'<div><b>{mvp["kd"]:.2f}</b><span>K/Ö</span></div>' if mvp.get("kd") is not None else ""
     t = tiers.get(best_sid) or {}
-    lvl = (f'<span class="lvl num"><i>{t["tier"] or "?"}</i>{t["points"]:.2f}</span>' if t.get("points") is not None else "")
+    lvl = (f'<span class="lvl num">{level_ring(t.get("tier"), 26)}{t["points"]:.2f}</span>' if t.get("points") is not None else "")
     mvp_html = f"""<div class="mvp" style="--team:{team_color[mvp['team']]}">
   <div class="card">{avatar(best_sid, mvp["name"], "lg")}<div class="nm">{esc(mvp["name"])}</div>{lvl}</div>
   <div class="body">
