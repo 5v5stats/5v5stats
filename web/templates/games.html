@@ -46,7 +46,7 @@
 </form>
 <div class="chips">
   <a href="{{ link(map=None) }}" class="{{ 'on' if not mapf }}">Tüm haritalar</a>
-  {% for m in maps %}<a href="{{ link(map=m.map) }}" class="{{ 'on' if m.map == mapf }}">{{ map_label(m.map) }}{% if not pid %} <span class="faint">{{ m.n }}</span>{% endif %}</a>{% endfor %}
+  {% for m in maps %}<a href="{{ link(map=m.map) }}" class="{{ 'on' if m.map == mapf }}">{{ map_thumb(m.map, 'mchip') }}{{ map_label(m.map) }}{% if not pid %} <span class="faint">{{ m.n }}</span>{% endif %}</a>{% endfor %}
 </div>
 <div class="box"><div class="tbl"><table class="lb gtable">
   <thead><tr><th>Maç #</th><th>Harita</th><th>Takımlar</th><th class="r">Skor</th>
@@ -56,7 +56,7 @@
   {% for g in games %}
   <tr>
     <td><a class="mid" href="{{ url_for('game_page', gid=g.id) }}">{{ '#%d'|format(g.ext_id) if g.ext_id else 'demo' }}</a></td>
-    <td style="font-family:var(--sans)">{{ map_label(g.map) }}</td>
+    <td class="mapcell">{{ map_thumb(g.map) }}{{ map_label(g.map) }}</td>
     <td class="teams">{% if pid %}{% set mine = g.team_a if g.my_side == 'a' else g.team_b %}{% set theirs = g.team_b if g.my_side == 'a' else g.team_a %}
       <b>{{ mine }}</b><span class="vs">vs</span><span class="dim">{{ theirs }}</span>
       {% else %}<b>{{ g.team_a }}</b><span class="vs">vs</span><span class="dim">{{ g.team_b }}</span>{% endif %}</td>

@@ -85,7 +85,7 @@
   {% for key, label, note in [('best_duo', 'En iyi ikili', 'Birlikte en yüksek galibiyet oranı'), ('most_with', 'En çok oynadığı', 'Birlikte en çok maç'), ('nemesis', 'Kabusu', 'Karşısında en düşük galibiyet oranı'), ('easiest', 'En rahat rakibi', 'Karşısında en yüksek galibiyet oranı')] %}
   {% set d = rel[key] %}
   <div class="box"><span class="lbl">{{ label }}</span>
-    {% if d %}<a href="{{ url_for('player_page', steamid=d.sid) }}"><b>{{ d.name }}</b></a>
+    {% if d %}<a class="mate" href="{{ url_for('player_page', steamid=d.sid) }}">{{ avatar(people, d.sid, d.name) }}<b>{{ d.name }}</b></a>
       <span class="num small"><span class="{{ 'pos' if d.pct >= 0.5 else 'neg' }}">{{ d.pct|pct }}</span> &nbsp;{{ d.w }}G-{{ d.l }}M
         &nbsp;<a class="duo-go" href="{{ url_for('duo_page', a=p.steamid64, b=d.sid) }}">İkili &rarr;</a></span>
     {% else %}<b class="faint">&ndash;</b>{% endif %}
@@ -96,16 +96,16 @@
 <div class="sec"><h2>Harita dağılımı</h2><small>// maç sayısına göre</small></div>
 {% if best and worst %}
 <div class="bestworst">
-  <div class="box"><span class="lbl">En iyi haritası</span><b>{{ map_label(best.map) }}</b>
+  <div class="box mapbg" style="--img:url('{{ map_img(best.map) }}')"><span class="lbl">En iyi haritası</span><b>{{ map_label(best.map) }}</b>
     <span class="num small"><span class="pos">{{ (best.wins / best.matches)|pct }}</span> {{ best.wins }}G-{{ best.losses }}M &middot; {{ best.matches }} maç, {{ '%.0f'|format(best.adr) }} ADR</span></div>
-  <div class="box"><span class="lbl">En kötü haritası</span><b>{{ map_label(worst.map) }}</b>
+  <div class="box mapbg" style="--img:url('{{ map_img(worst.map) }}')"><span class="lbl">En kötü haritası</span><b>{{ map_label(worst.map) }}</b>
     <span class="num small"><span class="neg">{{ (worst.wins / worst.matches)|pct }}</span> {{ worst.wins }}G-{{ worst.losses }}M &middot; {{ worst.matches }} maç, {{ '%.0f'|format(worst.adr) }} ADR</span></div>
 </div>
 {% endif %}
 <div class="box"><div class="tbl"><table class="lb">
   <thead><tr><th>Harita</th><th class="r">Maç</th><th class="r">G-M</th><th class="r">Galibiyet%</th><th class="r">K/Ö</th><th class="r">ADR</th></tr></thead>
   <tbody>{% for m in maps %}
-  <tr><td style="font-family:var(--sans)">{{ map_label(m.map) }}</td><td class="r">{{ m.matches }}</td>
+  <tr><td class="mapcell">{{ map_thumb(m.map) }}{{ map_label(m.map) }}</td><td class="r">{{ m.matches }}</td>
     <td class="r"><span class="pos">{{ m.wins }}</span>-<span class="neg">{{ m.losses }}</span></td>
     <td class="r">{{ (m.wins / m.matches)|pct if m.matches else '-' }}</td><td class="r">{{ m.kd|f2 }}</td><td class="r">{{ '%.1f'|format(m.adr) }}</td></tr>
   {% endfor %}</tbody></table></div></div>
@@ -116,7 +116,7 @@
   <tbody>{% for h in hist %}
   <tr><td class="faint nowrap">{{ h.date|day }}</td>
     <td><a class="mid" href="{{ url_for('game_page', gid=h.gid) }}">{{ '#%d'|format(h.ext_id) if h.ext_id else 'demo' }}</a></td>
-    <td style="font-family:var(--sans)">{{ map_label(h.map) }}</td>
+    <td class="mapcell">{{ map_thumb(h.map) }}{{ map_label(h.map) }}</td>
     <td class="r nowrap">{{ h.score_a if h.side == 'a' else h.score_b }}-{{ h.score_b if h.side == 'a' else h.score_a }}</td>
     <td class="r nowrap">{{ h.kills }}-{{ h.deaths }}-{{ h.assists }}</td>
     <td class="r">{{ '%.0f'|format(h.adr) if h.adr is not none else '-' }}</td>

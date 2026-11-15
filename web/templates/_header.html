@@ -5,6 +5,7 @@
   <a class="logo" href="{{ url_for('stats_home') }}"><b>5V5 <i>TURKISH SERVER</i></b><span>Yerel istatistik &middot; klipler</span></a>
   <nav class="nav">
     <a href="{{ url_for('stats_home') }}" class="{{ 'on' if request.endpoint in ['stats_home', 'player_page'] }}">İstatistik</a>
+    <a href="{{ url_for('duo_page') }}" class="{{ 'on' if request.endpoint == 'duo_page' }}">İkili</a>
     <a href="{{ url_for('balancer') }}" class="{{ 'on' if request.endpoint == 'balancer' }}">Takım Kur</a>
     <a href="{{ url_for('games_page') }}" class="{{ 'on' if request.endpoint in ['games_page', 'game_page'] }}">Maçlar</a>
     <a href="{{ url_for('home') }}" class="{{ 'on' if request.endpoint in ['home', 'match_page'] }}">Klipler</a>

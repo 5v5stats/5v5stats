@@ -13,6 +13,7 @@ import functools
 import json
 import math
 import os
+import re
 import secrets
 import shutil
 import sys
@@ -40,7 +41,8 @@ app = Flask(__name__, template_folder=os.path.join(HERE, "templates"), static_fo
 app.secret_key = SECRETS["SECRET_KEY"]
 TR_TZ = datetime.timezone(datetime.timedelta(hours=3))  # Turkey (no DST); Vercel runs on UTC
 DEFAULT_PERIOD = "30d"  # the site opens on the last 30 days; ?p=all for all time
-app.jinja_env.globals.update(default_period=DEFAULT_PERIOD, cos=math.cos, sin=math.sin, media_url=storage.url,
+app.jinja_env.globals.update(map_img=lambda m: map_img(m), map_thumb=lambda m, cls="mthumb": map_thumb(m, cls),
+                             default_period=DEFAULT_PERIOD, cos=math.cos, sin=math.sin, media_url=storage.url,
                              level_ring=lambda t, size=28: Markup(matchpage.level_ring(t, size)))
 TICKETS = URLSafeTimedSerializer(SECRETS["SECRET_KEY"], salt="upload")
 db.init()  # tables (CREATE ... IF NOT EXISTS); cheap, and a fresh hosted database needs it before the first page
@@ -154,6 +156,22 @@ def f2(x):
 @app.template_global()
 def map_label(m):
     return statsdb.map_label(m)
+
+
+# map pictures: CS2 screenshots from the Valve Developer Community wiki (web/static/maps/de_<map>.jpg, 960x540)
+MAP_IMAGES = {os.path.splitext(f)[0] for f in os.listdir(os.path.join(HERE, "static", "maps")) if f.endswith(".jpg")}     if os.path.isdir(os.path.join(HERE, "static", "maps")) else set()
+
+
+def map_img(m):
+    """URL of a map's picture ("de_dust2", "Dust2", "Dust II" all work), or "" if we have none."""
+    k = str(m or "").lower().replace(" ", "").replace("dustii", "dust2")
+    k = k if k.startswith("de_") else "de_" + k
+    return url_for("static", filename=f"maps/{k}.jpg") if k in MAP_IMAGES else ""
+
+
+def map_thumb(m, cls="mthumb"):
+    u = map_img(m)
+    return Markup(f'<img class="{cls}" src="{u}" alt="" loading="lazy">') if u else Markup(f'<span class="{cls} none"></span>')
 
 
 TR_MONTHS = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"]
@@ -310,12 +328,59 @@ def stats_home():
     return render_template("stats.html", **ctx)
 
 
+CLIP_TYPES = [("ace", "Ace (5K)"), ("4k", "4K"), ("3k", "3K"), ("clutch", "Clutch")]
+CLIP_MIN_SCORES = [100, 125, 150, 175]
+
+
+def clip_type_of(label):
+    """Kinds a clip counts as, from its label ("4K + 1v2 clutch" -> {"4k", "clutch"})."""
+    lab = (label or "").lower()
+    kinds = set()
+    m = re.match(r"\s*(\d)k", lab)
+    if m:
+        kinds.add({"5": "ace", "4": "4k", "3": "3k"}.get(m.group(1), ""))
+    if "clutch" in lab:
+        kinds.add("clutch")
+    return kinds - {""}
+
+
 @app.route("/highlights")
 def home():
+    """Klipler: every clip, filterable by player, match, map, kind and points; the match cards below."""
     c = con()
-    rows = c.execute("SELECT * FROM matches WHERE published = 1 ORDER BY date DESC, id DESC").fetchall()
+    pub = "" if is_admin() else " WHERE m.published = 1"
+    matches = c.execute("SELECT * FROM matches m" + pub + " ORDER BY date DESC, id DESC").fetchall()
+    clips = c.execute(f"""SELECT cl.*, m.slug, m.media_rev, m.map AS mmap, m.date AS mdate, m.score1, m.score2
+                          FROM clips cl JOIN matches m ON m.id = cl.match_id{pub}""").fetchall()
+    mm = statsdb.merge_map(c)
+    ppl = people(c)
     c.close()
-    return render_template("home.html", matches=rows)
+    f = {k: request.args.get(k, "") for k in ("p", "m", "map", "t", "s", "o")}
+    try:
+        min_score = int(f["s"] or 0)
+    except ValueError:
+        min_score = 0
+    items = [dict(cl, who=mm.get(cl["steamid"], cl["steamid"]), kinds=clip_type_of(cl["label"])) for cl in clips]
+
+    def keep(x, skip=None):
+        return ((not f["p"] or x["who"] == f["p"]) and (not f["m"] or x["slug"] == f["m"])
+                and (not f["map"] or x["mmap"] == f["map"]) and (x["score"] or 0) >= min_score
+                and (skip == "t" or not f["t"] or f["t"] in x["kinds"]))
+    type_counts = {k: sum(1 for x in items if keep(x, "t") and k in x["kinds"]) for k, _ in CLIP_TYPES}
+    shown = [x for x in items if keep(x)]
+    if f["o"] == "new":
+        shown.sort(key=lambda x: (x["mdate"] or "", x["match_id"], -(x["idx"] or 0)), reverse=True)
+    else:
+        shown.sort(key=lambda x: (x["score"] or 0, x["mdate"] or ""), reverse=True)
+    pcount = {}
+    for x in items:
+        pcount[x["who"]] = pcount.get(x["who"], 0) + 1
+    players = sorted(((sid, (ppl.get(sid) or {}).get("name") or next(x["player"] for x in items if x["who"] == sid), n)
+                      for sid, n in pcount.items()), key=lambda t: (-t[2], t[1].lower()))
+    maps = sorted({x["mmap"] for x in items if x["mmap"]})
+    return render_template("home.html", matches=matches, clips=shown, total=len(items), f=f, players=players,
+                           maps=maps, types=CLIP_TYPES, type_counts=type_counts, min_scores=CLIP_MIN_SCORES,
+                           people=ppl, filtered=any(f[k] for k in ("p", "m", "map", "t", "s")))
 
 
 @app.route("/players/<steamid>")

@@ -1,17 +1,65 @@
 {% extends "base.html" %}
+{% from "_macros.html" import avatar %}
 {% block title %}Klipler // 5v5 Turkish Server{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='theater.js') }}" defer></script>{% endblock %}
 {% block body %}
+{% macro q() -%}
+  {%- set args = {} -%}
+  {%- for k in ['p', 'm', 'map', 't', 's', 'o'] -%}{%- set v = kwargs[k] if k in kwargs else f[k] -%}{%- if v -%}{%- set _ = args.update({k: v}) -%}{%- endif -%}{%- endfor -%}
+  {{- url_for('home', **args) -}}
+{%- endmacro %}
 <section class="hero">
   <div class="eyebrow">Klipler</div>
-  <div class="display xl">Klipli {{ matches|length }} maç</div>
-  <div class="dim">Kendi demolarımızdan: her maçın en iyi anları ve tam istatistikleri.</div>
+  <div class="display xl">{{ total }} klip, {{ matches|length }} maç</div>
+  <div class="dim">Kendi demolarımızdan: her maçın en iyi anları. Oyuncuya, maça, haritaya, türe ve puana göre filtrele.</div>
 </section>
+
+<form class="cfilter box" method="get" action="{{ url_for('home') }}">
+  <label><span class="lbl">Oyuncu</span><select name="p" onchange="this.form.submit()"><option value="">Hepsi</option>
+    {% for sid, name, n in players %}<option value="{{ sid }}" {{ 'selected' if sid == f.p }}>{{ name }} ({{ n }})</option>{% endfor %}</select></label>
+  <label><span class="lbl">Maç</span><select name="m" onchange="this.form.submit()"><option value="">Hepsi</option>
+    {% for m in matches %}<option value="{{ m.slug }}" {{ 'selected' if m.slug == f.m }}>{{ m.date|day }} &middot; {{ m.map }} {{ m.score1 }}-{{ m.score2 }}</option>{% endfor %}</select></label>
+  <label><span class="lbl">Harita</span><select name="map" onchange="this.form.submit()"><option value="">Hepsi</option>
+    {% for mp in maps %}<option value="{{ mp }}" {{ 'selected' if mp == f.map }}>{{ mp }}</option>{% endfor %}</select></label>
+  <label><span class="lbl">Puan</span><select name="s" onchange="this.form.submit()"><option value="">Hepsi</option>
+    {% for s in min_scores %}<option value="{{ s }}" {{ 'selected' if s|string == f.s }}>{{ s }}+</option>{% endfor %}</select></label>
+  <label><span class="lbl">Sırala</span><select name="o" onchange="this.form.submit()">
+    <option value="">En yüksek puan</option><option value="new" {{ 'selected' if f.o == 'new' }}>En yeni</option></select></label>
+  {% if f.t %}<input type="hidden" name="t" value="{{ f.t }}">{% endif %}
+  <noscript><button class="btn">Uygula</button></noscript>
+</form>
+<div class="ctypes">
+  <a href="{{ q(t='') }}" class="{{ 'on' if not f.t }}">Tümü</a>
+  {% for k, label in types %}<a href="{{ q(t=k) }}" class="{{ 'on' if f.t == k }} {{ 'zero' if not type_counts[k] }}">{{ label }} <i>{{ type_counts[k] }}</i></a>{% endfor %}
+  {% if filtered %}<a class="reset" href="{{ url_for('home', o=f.o or None) }}">&times; Filtreleri temizle</a>{% endif %}
+</div>
+
+<div class="sec"><h2>{{ 'Bulunan klipler' if filtered else 'Tüm klipler' }}</h2><small>// {{ clips|length }} klip &middot; {{ 'en yeni ilk' if f.o == 'new' else 'puana göre' }}</small></div>
+{% if clips %}
+<div class="tclips grid">
+  {% for c in clips %}
+  <a class="tclip" href="{{ url_for('match_page', slug=c.slug) }}#clip{{ c.idx }}"
+     data-src="{{ media_url(c.slug, c.media_rev, c.file) }}" data-poster="{{ media_url(c.slug, c.media_rev, c.thumb) if c.thumb else '' }}"
+     data-title="{{ c.player }} · {{ c.label }}" data-sub="{{ c.mmap }} · {{ c.round }}. round · {{ c.mdate|day }}">
+    <span class="th"{% if c.thumb %} style="background-image:url('{{ media_url(c.slug, c.media_rev, c.thumb) }}')"{% endif %}>
+      {% if f.o != 'new' %}<span class="rk num">#{{ loop.index }}</span>{% endif %}<span class="pts num">{{ c.score }} puan</span><span class="play">&#9654;</span>
+    </span>
+    <span class="tx">{{ avatar(people, c.who, c.player) }}
+      <span class="t"><b>{{ c.player }}</b><span class="lbl">{{ c.label }}</span>
+        <small>{{ c.mmap }} {{ c.score1 }}-{{ c.score2 }} &middot; {{ c.round }}. round &middot; {{ c.mdate|day }}</small></span></span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">Bu filtrelere uyan klip yok. <a class="acc" href="{{ url_for('home') }}">Filtreleri temizle</a></p>
+{% endif %}
+
 <div class="sec"><h2>Maçlar</h2><small>// en yeni ilk</small></div>
 {% if matches %}
 <div class="cards">
   {% for m in matches %}
   <a class="card" href="{{ url_for('match_page', slug=m.slug) }}">
-    <div class="img" {% if m.thumb %}style="background-image:url('{{ media_url(m.slug, m.media_rev, m.thumb) }}')"{% endif %}>
+    <div class="img" {% if m.thumb %}style="background-image:url('{{ media_url(m.slug, m.media_rev, m.thumb) }}')"{% elif map_img(m.map) %}style="background-image:url('{{ map_img(m.map) }}')"{% endif %}>
       <div class="t"><span class="map">{{ m.title or m.map }}</span>
         <span class="date">{{ m.date|day }}<br>{{ m.clip_count }} klip</span></div>
     </div>
