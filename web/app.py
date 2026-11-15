@@ -35,6 +35,7 @@ import statsdb  # noqa: E402
 import storage  # noqa: E402
 
 from itsdangerous import BadSignature, URLSafeTimedSerializer  # noqa: E402
+from werkzeug.security import check_password_hash, generate_password_hash  # noqa: E402
 
 SECRETS = config.ensure_secrets()
 app = Flask(__name__, template_folder=os.path.join(HERE, "templates"), static_folder=os.path.join(HERE, "static"))
@@ -486,8 +487,12 @@ def duo_page():
     ppl = people(c)
     tiers = player_tiers(c)
     d = statsdb.duo(c, a, b) if a and b and a != b and a in names and b in names else None
+    # who-killed-whom comes only from our demos: say since when there is any
+    since, n_demos = c.execute("SELECT MIN(g.date), COUNT(*) FROM games g "
+                               "WHERE EXISTS (SELECT 1 FROM duels d WHERE d.game_id = g.id)").fetchone()
     c.close()
-    return render_template("duo.html", a=a, b=b, d=d, plist=plist, names=names, people=ppl, tiers=tiers)
+    return render_template("duo.html", a=a, b=b, d=d, plist=plist, names=names, people=ppl, tiers=tiers,
+                           demo_since=since, n_demos=n_demos)
 
 
 @app.route("/balancer")
@@ -838,17 +843,231 @@ def admin_upload():
 
 # ---------------------------------------------------------------- admin ----
 
+OWNER = "admin"  # the main admin: logs in with ADMIN_PASSWORD and can add or remove other admins
+ADMIN_NAME = re.compile(r"[\w.\-]{2,32}", re.UNICODE)
+
+
+def check_login(name, password):
+    """The admin's name if the password is right, else None."""
+    name = name.strip()
+    if name.lower() in ("", OWNER):
+        return OWNER if secrets.compare_digest(password, SECRETS["ADMIN_PASSWORD"]) else None
+    c = con()
+    row = c.execute("SELECT name, pw_hash FROM admins WHERE lower(name) = lower(?)", (name,)).fetchone()
+    c.close()
+    return row["name"] if row and check_password_hash(row["pw_hash"], password) else None
+
+
+def is_owner():
+    return is_admin() and session.get("admin_name", OWNER) == OWNER
+
+
+@app.before_request
+def drop_removed_admins():
+    """An admin whose account was removed is logged out on their next request."""
+    name = session.get("admin_name")
+    if session.get("admin") and name and name != OWNER:
+        c = con()
+        alive = c.execute("SELECT 1 FROM admins WHERE name = ?", (name,)).fetchone()
+        c.close()
+        if not alive:
+            session.clear()
+
+
 @app.route("/admin/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        if secrets.compare_digest(request.form.get("password", ""), SECRETS["ADMIN_PASSWORD"]):
+        who = check_login(request.form.get("name", ""), request.form.get("password", ""))
+        if who:
             session.clear()
             session["admin"] = True
+            session["admin_name"] = who
             session["csrf"] = secrets.token_hex(16)
             nxt = request.args.get("next", "")
             return redirect(nxt if nxt.startswith("/") and not nxt.startswith("//") else url_for("admin"))
-        flash("Wrong password.")
+        time.sleep(1)  # slows down password guessing
+        flash("Kullanıcı adı veya şifre yanlış.")
     return render_template("login.html")
+
+
+@app.route("/admin/admins/add", methods=["POST"])
+@admin_required
+def admin_add():
+    if not is_owner():
+        abort(403)
+    name, pw = request.form.get("name", "").strip(), request.form.get("password", "")
+    if not ADMIN_NAME.fullmatch(name) or name.lower() == OWNER:
+        flash("Kullanıcı adı 2-32 karakter olmalı (harf, rakam, . _ -) ve 'admin' olamaz.")
+    elif len(pw) < 8:
+        flash("Şifre en az 8 karakter olmalı.")
+    else:
+        c = con()
+        if c.execute("SELECT 1 FROM admins WHERE lower(name) = lower(?)", (name,)).fetchone():
+            flash(f"{name} zaten yönetici.")
+        else:
+            c.execute("INSERT INTO admins(name, pw_hash, created_at) VALUES (?,?,?)",
+                      (name, generate_password_hash(pw), time.time()))
+            c.commit()
+            flash(f"{name} yönetici olarak eklendi. Kullanıcı adı ve şifreyi kendisine ilet.")
+        c.close()
+    return redirect(url_for("admin") + "#admins")
+
+
+@app.route("/admin/admins/remove", methods=["POST"])
+@admin_required
+def admin_remove():
+    if not is_owner():
+        abort(403)
+    name = request.form.get("name", "")
+    c = con()
+    c.execute("DELETE FROM admins WHERE name = ?", (name,))
+    c.commit()
+    c.close()
+    flash(f"{name} artık yönetici değil.")
+    return redirect(url_for("admin") + "#admins")
+
+
+# ---------------------------------------------------------------- clips: save / delete ----
+# Saved clips are kept when unsaved ones are cleaned up. A deleted clip's video and thumbnails are removed
+# from storage (R2) and it stays deleted when the match is uploaded again (clip_marks).
+
+def _mark(c, match_key, rnd, sid, who, **cols):
+    sets = ", ".join(f"{k} = excluded.{k}" for k in cols)
+    c.execute(f"""INSERT INTO clip_marks(match_key, round, steamid, {', '.join(cols)}, by_admin, updated_at)
+                  VALUES (?, ?, ?, {', '.join('?' for _ in cols)}, ?, ?)
+                  ON CONFLICT(match_key, round, steamid) DO UPDATE SET {sets}, by_admin = excluded.by_admin,
+                  updated_at = excluded.updated_at""",
+              (match_key, rnd, sid, *cols.values(), who, time.time()))
+
+
+def saved_clips(c):
+    """{(match_key, round, steamid)} of saved clips."""
+    return {(r["match_key"], r["round"], r["steamid"])
+            for r in c.execute("SELECT match_key, round, steamid FROM clip_marks WHERE saved = 1 AND removed = 0")}
+
+
+def remove_clips(c, m, plays, who, sizes=None):
+    """Delete clips of match row m: plays = {(round, steamid)}. Updates the page, remembers the deletion,
+    then removes the files. Returns (clips deleted, bytes freed)."""
+    data = json.loads(m["data_json"])
+    dropped = [x for x in data["clips"] if (x["round"], x["steamid"]) in plays]
+    if not dropped:
+        return 0, 0
+    data["clips"] = [x for x in data["clips"] if (x["round"], x["steamid"]) not in plays]
+    unused = ingest.clip_files(dropped) - ingest.clip_files(data["clips"]) - set(data["pics"].values())
+    sizes = sizes if sizes is not None else storage.file_sizes(m["slug"], m["media_rev"])
+    freed = sum(sizes.get(p, 0) for p in unused)
+    if not data["clips"]:
+        data["note"] = "Bu maçın klipleri silindi."
+    db.save_match_data(c, m["id"], data, ingest.summary(data))
+    c.execute("UPDATE matches SET size_bytes = CASE WHEN size_bytes > ? THEN size_bytes - ? ELSE 0 END WHERE id = ?",
+              (freed, freed, m["id"]))
+    for x in dropped:
+        _mark(c, m["match_key"], x["round"], x["steamid"], who, saved=0, removed=1)
+    c.commit()
+    storage.delete_files(m["slug"], m["media_rev"], unused)
+    return len(dropped), freed
+
+
+def _back(default):
+    ref = request.form.get("back", "")
+    return redirect(ref if ref.startswith("/") and not ref.startswith("//") else default)
+
+
+def _clip_row(c, cid):
+    row = c.execute("SELECT cl.*, m.match_key FROM clips cl JOIN matches m ON m.id = cl.match_id WHERE cl.id = ?",
+                    (cid,)).fetchone()
+    if row is None:
+        c.close()
+        abort(404)
+    return row
+
+
+@app.route("/admin/clip/<int:cid>/save", methods=["POST"])
+@admin_required
+def clip_save(cid):
+    c = con()
+    cl = _clip_row(c, cid)
+    keep = request.form.get("saved") == "1"
+    _mark(c, cl["match_key"], cl["round"], cl["steamid"], session.get("admin_name", OWNER), saved=int(keep))
+    c.commit()
+    c.close()
+    return _back(url_for("admin_clips"))
+
+
+@app.route("/admin/clip/<int:cid>/delete", methods=["POST"])
+@admin_required
+def clip_delete(cid):
+    c = con()
+    cl = _clip_row(c, cid)
+    m = c.execute("SELECT * FROM matches WHERE id = ?", (cl["match_id"],)).fetchone()
+    n, freed = remove_clips(c, m, {(cl["round"], cl["steamid"])}, session.get("admin_name", OWNER))
+    c.close()
+    flash(f"Klip silindi ({cl['player']}, {cl['label']}, round {cl['round']}); {freed / 1e6:.1f} MB yer açıldı.")
+    return _back(url_for("admin_clips"))
+
+
+def _unsaved(c):
+    """[(match row, [clip rows not saved])] for every match with unsaved clips."""
+    saved = saved_clips(c)
+    out = []
+    for m in c.execute("SELECT * FROM matches ORDER BY date DESC, id DESC").fetchall():
+        rows = [cl for cl in c.execute("SELECT * FROM clips WHERE match_id = ? ORDER BY idx", (m["id"],))
+                if (m["match_key"], cl["round"], cl["steamid"]) not in saved]
+        if rows:
+            out.append((m, rows))
+    return out
+
+
+@app.route("/admin/klipler")
+@admin_required
+def admin_clips():
+    c = con()
+    saved = saved_clips(c)
+    matches = c.execute("SELECT * FROM matches ORDER BY date DESC, id DESC").fetchall()
+    groups, n_saved, n_all = [], 0, 0
+    for m in matches:
+        rows = []
+        for cl in c.execute("SELECT * FROM clips WHERE match_id = ? ORDER BY score DESC", (m["id"],)):
+            s = (m["match_key"], cl["round"], cl["steamid"]) in saved
+            n_saved += s
+            rows.append(dict(cl, saved=s))
+        n_all += len(rows)
+        if rows:
+            groups.append((m, rows))
+    removed = c.execute("SELECT COUNT(*) FROM clip_marks WHERE removed = 1").fetchone()[0]
+    c.close()
+    return render_template("admin_clips.html", groups=groups, n_saved=n_saved, n_all=n_all, removed=removed)
+
+
+@app.route("/admin/klipler/temizle", methods=["GET", "POST"])
+@admin_required
+def admin_clean():
+    """Delete every clip nobody saved: GET shows what would go (count and size), POST does it."""
+    c = con()
+    todo = _unsaved(c)
+    sizes = {m["id"]: storage.file_sizes(m["slug"], m["media_rev"]) for m, _ in todo}
+    if request.method == "POST":
+        n = freed = 0
+        for m, rows in todo:
+            k, b = remove_clips(c, m, {(cl["round"], cl["steamid"]) for cl in rows},
+                                session.get("admin_name", OWNER), sizes[m["id"]])
+            n, freed = n + k, freed + b
+        c.close()
+        flash(f"{n} kaydedilmemiş klip silindi; {freed / 1e6:.1f} MB yer açıldı.")
+        return redirect(url_for("admin_clips"))
+    plan = []
+    for m, rows in todo:
+        data = json.loads(m["data_json"])
+        plays = {(cl["round"], cl["steamid"]) for cl in rows}
+        drop = [x for x in data["clips"] if (x["round"], x["steamid"]) in plays]
+        keep = [x for x in data["clips"] if (x["round"], x["steamid"]) not in plays]
+        unused = ingest.clip_files(drop) - ingest.clip_files(keep) - set(data["pics"].values())
+        plan.append({"m": m, "n": len(rows), "keep": len(keep),
+                     "bytes": sum(sizes[m["id"]].get(p, 0) for p in unused)})
+    c.close()
+    return render_template("admin_clean.html", plan=plan, n=sum(p["n"] for p in plan),
+                           total=sum(p["bytes"] for p in plan))
 
 
 @app.route("/admin/logout", methods=["POST"])
@@ -867,8 +1086,10 @@ def admin():
                         "FROM uploads LEFT JOIN matches ON matches.id = uploads.match_id "
                         "ORDER BY uploads.id DESC LIMIT 12").fetchall()
     total = c.execute("SELECT COALESCE(SUM(size_bytes), 0) FROM matches").fetchone()[0]
+    admins = c.execute("SELECT name, created_at FROM admins ORDER BY name").fetchall()
     c.close()
-    return render_template("admin.html", matches=matches, uploads=uploads, total=total,
+    return render_template("admin.html", matches=matches, uploads=uploads, total=total, admins=admins,
+                           owner=is_owner(), me=session.get("admin_name", OWNER),
                            server=request.host_url.rstrip("/"))
 
 
@@ -881,7 +1102,9 @@ def admin_match(mid):
         c.close()
         abort(404)
     players = c.execute("SELECT * FROM players WHERE match_id = ? ORDER BY team, rating DESC", (mid,)).fetchall()
-    clips = c.execute("SELECT * FROM clips WHERE match_id = ? ORDER BY idx", (mid,)).fetchall()
+    saved = saved_clips(c)
+    clips = [dict(cl, saved=(m["match_key"], cl["round"], cl["steamid"]) in saved)
+             for cl in c.execute("SELECT * FROM clips WHERE match_id = ? ORDER BY idx", (mid,))]
     c.close()
     return render_template("admin_match.html", m=m, players=players, clips=clips)
 

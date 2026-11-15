@@ -388,23 +388,40 @@ def finish_clip(parts, dst, title, fps, ff_windows=(), card=None):
                        f"box=1:boxcolor=black@0.55:boxborderw=18:x=(w-tw)/2:y=h*0.72:"
                        f"alpha='if(lt(t,3),1,if(lt(t,3.6),(3.6-t)/0.6,0))'")
     # fast-forwarded stretches play without a speed label (their sound is muted below)
-    vf = ",".join(filters) or "null"
+    import titlecard
+    dur = sum(media_duration(p) for p in parts)
+    end_fade = min(titlecard.END_FADE, dur / 4)
+    vf = ",".join(filters + [f"fade=t=out:st={dur - end_fade:.3f}:d={end_fade:.3f}"])
     aopts = []
     if has_audio(parts[0]):
         mute = "+".join(f"between(t,{s:.2f},{e:.2f})" for s, e, _ in ff_windows)
-        aopts = ["-af", f"volume=enable='{mute}':volume=0" if mute else "anull", "-c:a", "aac", "-b:a", "192k"]
+        af = (f"volume=enable='{mute}':volume=0," if mute else "") + \
+             f"afade=t=out:st={max(0.0, dur - end_fade - 0.3):.3f}:d={end_fade + 0.3:.3f}"
+        aopts = ["-af", af, "-c:a", "aac", "-b:a", "192k"]
+    # the ending: a small server badge slides in while the footage still plays, then picture and sound fade out
+    vh = card[1] if card else media_height(parts[0])
+    outro = dst + ".outro.png"
+    try:
+        titlecard.make_outro(outro, vh) if titlecard.available() and dur > titlecard.OUTRO + 1 else None
+    except Exception as e:
+        log(f"    note: end badge failed ({e}); fade only")
+    has_outro = os.path.isfile(outro)
+    inputs, graph, last = ["-f", "concat", "-safe", "0", "-i", lst], [], "0:v"
     if card:
-        import titlecard
-        png, vh = card
-        graph = (f"[0:v]{vf}[base];[1:v]{titlecard.fade_filter()}[card];"
-                 f"[base][card]{titlecard.overlay_filter(0, vh)}[v]")
-        ff("-f", "concat", "-safe", "0", "-i", lst, "-loop", "1", "-framerate", str(fps), "-i", png,
-           "-filter_complex", graph, "-map", "[v]", "-map", "0:a?", "-r", str(fps), *aopts,
-           *FINAL_ENCODE, "-movflags", "+faststart", dst, cwd=folder)
-    else:
-        ff("-f", "concat", "-safe", "0", "-i", lst, "-vf", vf, "-r", str(fps), *aopts,
-           *FINAL_ENCODE, "-movflags", "+faststart", dst, cwd=folder)
+        inputs += ["-loop", "1", "-framerate", str(fps), "-i", card[0]]
+        graph.append(f"[1:v]{titlecard.fade_filter()}[card];[{last}][card]{titlecard.overlay_filter(0, vh)}[vc]")
+        last = "vc"
+    if has_outro:
+        n = 2 if card else 1
+        inputs += ["-loop", "1", "-framerate", str(fps), "-i", os.path.basename(outro)]
+        graph.append(f"[{n}:v]format=rgba[ob];[{last}][ob]{titlecard.outro_filter(dur, vh)}[vo]")
+        last = "vo"
+    graph.append(f"[{last}]{vf}[v]")
+    ff(*inputs, "-filter_complex", ";".join(graph), "-map", "[v]", "-map", "0:a?", "-r", str(fps), *aopts,
+       *FINAL_ENCODE, "-movflags", "+faststart", dst, cwd=folder)
     os.remove(lst)
+    if has_outro:
+        os.remove(outro)
     if title and not card:
         os.remove(os.path.join(folder, tf))
 

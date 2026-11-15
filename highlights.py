@@ -21,7 +21,7 @@ from demoparser2 import DemoParser
 
 TICKRATE = 64
 LEAD_IN = 4 * TICKRATE    # shown before the first action of a segment
-TAIL = 2 * TICKRATE       # shown after the last action of a segment
+TAIL = 3 * TICKRATE       # shown after the last action (the last ~2 s carry the end badge and fade-out)
 MAX_GAP = 10 * TICKRATE   # quieter stretches longer than this are cut out of the clip
 T, CT = 2, 3
 BOMB_TIMER = 40 * TICKRATE

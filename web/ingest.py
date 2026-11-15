@@ -177,6 +177,11 @@ def prepare(con, data):
     return key, existing, (existing["slug"] if existing else uuid.uuid4().hex[:10])
 
 
+def clip_files(clips):
+    """The stored files (video and thumbnails) of these clips."""
+    return {c[k] for c in clips for k in ("file", "thumb", "thumb2") if c.get(k)}
+
+
 def apply(con, data, key, existing, slug, rev, files, via, size, notes=None):
     """Store a match whose files are in place. files = {relative path: size} that were actually stored.
     Returns (match row, created, notes)."""
@@ -192,6 +197,17 @@ def apply(con, data, key, existing, slug, rev, files, via, size, notes=None):
             if c[k] and not have(c[k]):
                 c[k] = ""
     data["pics"] = {s: p for s, p in data["pics"].items() if have(p)}
+    # clips an admin deleted stay deleted: drop them again and remove the files this upload brought back
+    gone = {(r["round"], r["steamid"]) for r in con.execute(
+        "SELECT round, steamid FROM clip_marks WHERE match_key = ? AND removed = 1", (key,))}
+    if gone:
+        dropped = [c for c in data["clips"] if (c["round"], c["steamid"]) in gone]
+        data["clips"] = [c for c in data["clips"] if (c["round"], c["steamid"]) not in gone]
+        unused = clip_files(dropped) - clip_files(data["clips"]) - set(data["pics"].values())
+        storage.delete_files(slug, rev, unused)
+        files = {p: n for p, n in files.items() if p not in unused}
+        if dropped:
+            notes.append(f"{len(dropped)} deleted clip(s) left out")
     if not data["clips"]:
         data["note"] = "No highlight clips were uploaded for this match."
     stored = sum(files.values())

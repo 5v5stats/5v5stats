@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Kaydedilmeyenleri sil - Yönetim{% endblock %}
+{% block body %}
+<p style="margin:0 0 8px"><a href="{{ url_for('admin_clips') }}" class="dim">&larr; Klipler</a></p>
+<h1>Kaydedilmeyen klipleri sil</h1>
+{% if not plan %}
+<p class="dim">Kaydedilmemiş klip yok: silinecek bir şey yok.</p>
+{% else %}
+<div class="panel" style="border-color:#3a1a1a">
+  <p style="margin-top:0"><b>{{ n }}</b> kaydedilmemiş klip silinecek, <b>{{ total|mb }}</b> yer açılacak.
+    Videoları ve resimleri depodan (R2) kalıcı olarak silinir, geri alınamaz. Kayıtlı klipler ve maç istatistikleri kalır.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Maç</th><th>Silinecek</th><th>Kalacak (kayıtlı)</th><th>Açılacak yer</th></tr></thead>
+    <tbody>{% for p in plan %}
+    <tr><td><b>{{ p.m.title or p.m.map }}</b> <span class="num">{{ p.m.score1 }}:{{ p.m.score2 }}</span> <span class="dim">{{ p.m.date }}</span></td>
+      <td class="num">{{ p.n }}</td><td class="num">{{ p.keep }}</td><td class="num dim">{{ p.bytes|mb }}</td></tr>
+    {% endfor %}</tbody></table></div>
+  <form method="post" style="margin-top:14px" onsubmit="return confirm('{{ n }} klip kalıcı olarak silinsin mi? Geri alınamaz.')">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button class="btn danger">{{ n }} klibi sil</button>
+    <a class="btn" href="{{ url_for('admin_clips') }}">Vazgeç</a>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -188,6 +188,31 @@ def drop_other_revs(slug, rev):
     delete_keys([k for k in list_objects(f"m/{slug}/") if not k.startswith(keep)])
 
 
+def delete_files(slug, rev, paths):
+    """Delete some of a match's files (relative paths like 03_R12_4K_x.mp4, thumbs/03.jpg)."""
+    paths = [p for p in paths if p and ".." not in p.split("/")]
+    if R2 and rev:
+        delete_keys([key(slug, rev, p) for p in paths])
+        return
+    for p in paths:
+        try:
+            os.remove(os.path.join(local_dir(slug), *p.split("/")))
+        except OSError:
+            pass  # already gone, or locked by someone watching it (Windows): left for the next upload
+
+
+def file_sizes(slug, rev):
+    """{relative path: size} of a match's stored files."""
+    if R2 and rev:
+        return files_of(slug, rev)
+    out, top = {}, local_dir(slug)
+    for root, _, fs in os.walk(top):
+        for f in fs:
+            p = os.path.join(root, f)
+            out[os.path.relpath(p, top).replace(os.sep, "/")] = os.path.getsize(p)
+    return out
+
+
 def delete_match(slug):
     if R2:
         delete_keys(list(list_objects(f"m/{slug}/")))

@@ -61,6 +61,17 @@ CREATE TABLE IF NOT EXISTS uploads (
   match_id INTEGER REFERENCES matches(id) ON DELETE SET NULL,
   via TEXT, ok INTEGER, message TEXT, size_bytes INTEGER, created_at REAL
 );
+-- admins' choices about clips, by match and play (round + player), so they survive a re-upload of the match:
+-- saved = kept when unsaved clips are cleaned up; removed = deleted (its files are gone, re-uploads skip it)
+CREATE TABLE IF NOT EXISTS clip_marks (
+  match_key TEXT NOT NULL, round INTEGER NOT NULL, steamid TEXT NOT NULL,
+  saved INTEGER DEFAULT 0, removed INTEGER DEFAULT 0, by_admin TEXT, updated_at REAL,
+  PRIMARY KEY (match_key, round, steamid)
+);
+-- extra admin accounts (the main admin logs in with ADMIN_PASSWORD); passwords are stored hashed
+CREATE TABLE IF NOT EXISTS admins (
+  name TEXT PRIMARY KEY, pw_hash TEXT NOT NULL, created_at REAL
+);
 """
 
 

@@ -30,7 +30,10 @@
 <div class="meta-line"><span><b>{{ d.total }}</b> ortak maç</span><span><b>{{ d.with.n }}</b> aynı takımda</span><span><b>{{ d.vs.n }}</b> rakip</span></div>
 
 {% set h = d.h2h %}
-<div class="sec"><h2>Birbirlerini öldürme</h2><small>// {{ h.games }} demo maçından{% if d.vs.n > h.games %} &middot; {{ d.vs.n }} karşılaşmanın kalanı 5v5stats'tan, orada kim kimi öldürdü bilgisi yok{% endif %}</small></div>
+<div class="sec"><h2>Birbirlerini öldürme</h2><small>// {{ h.games }} demo maçından</small></div>
+<p class="demo-note"><b>{% if demo_since %}{{ demo_since|day }} itibarıyla{% else %}Henüz{% endif %}</b>
+  Kim kimi öldürdü bilgisi sadece kendi demolarımızdan geliyor{% if demo_since %} ({{ n_demos }} maç){% endif %}. Demoları yeni kaydetmeye başladık, bu yüzden daha eski maçlar burada sayılmıyor.
+  {% if d.vs.n > h.games %}Rakip oldukları {{ d.vs.n }} maçın {{ d.vs.n - h.games }} tanesi 5v5stats'tan geliyor; orada bu bilgi yok.{% endif %}</p>
 {% if h.games %}
 {% set tot = [h.a.n + h.b.n, 1]|max %}
 <div class="h2h">

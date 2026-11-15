@@ -231,3 +231,54 @@ def overlay_filter(card_w, video_h=1080):
 
 def fade_filter():
     return f"format=rgba,fade=t=out:st={HOLD_UNTIL}:d={FADE}:alpha=1"
+
+
+# ending: the last OUTRO seconds of a clip. The footage keeps playing while a small server badge slides in
+# (same place and motion as the title card) and picture and sound fade out over the final END_FADE seconds.
+OUTRO, OUTRO_SLIDE, END_FADE = 1.8, 0.4, 0.8
+
+
+def make_outro(path, height=1080):
+    """Write the end badge PNG: '5V5 TURKISH SERVER' with the orange accent bar, like a small title card."""
+    from PIL import Image, ImageDraw, ImageFilter
+    s = height / 1080
+    S = lambda v: int(round(v * s))  # noqa: E731
+    f_big, f_small = _font("x", S(34), "Bold"), _font("x", S(15), "SemiBold")
+    probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    a_w = probe.textlength("5V5 ", font=f_big)
+    b_w = probe.textlength("TURKISH SERVER", font=f_big)
+    sub = "HIGHLIGHTS  ·  5V5STATS.COM"
+    pad = S(18)
+    w = S(8) + pad + int(max(a_w + b_w, _spaced_len(probe, sub, f_small, S(2.4)))) + S(30)
+    h = S(84)
+    shadow = S(26)
+    img = Image.new("RGBA", (w + 2 * shadow, h + 2 * shadow), (0, 0, 0, 0))
+    sh = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(sh).rounded_rectangle((shadow, shadow + S(6), shadow + w, shadow + h + S(6)), S(12), fill=(0, 0, 0, 150))
+    img.alpha_composite(sh.filter(ImageFilter.GaussianBlur(S(14))))
+    panel = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    mask = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, w - 1, h - 1), S(12), fill=255)
+    panel.paste(Image.new("RGBA", (w, h), (14, 17, 23, 235)), (0, 0), mask)
+    pd = ImageDraw.Draw(panel)
+    pd.rounded_rectangle((0, 0, w - 1, h - 1), S(12), outline=(255, 255, 255, 28), width=max(1, S(1)))
+    bar = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(bar).rounded_rectangle((0, 0, S(24), h - 1), S(12), fill=255)
+    ImageDraw.Draw(bar).rectangle((S(8), 0, S(24), h), fill=0)
+    panel.paste(Image.new("RGBA", (w, h), ACCENT + (255,)), (0, 0), bar)
+    tx = S(8) + pad
+    pd.text((tx, S(10)), "5V5 ", font=f_big, fill=(255, 255, 255, 255))
+    pd.text((tx + a_w, S(10)), "TURKISH SERVER", font=f_big, fill=ACCENT + (255,))
+    _spaced(pd, (tx, S(54)), sub, f_small, (150, 160, 175, 255), S(2.4))
+    img.alpha_composite(panel, (shadow, shadow))
+    img.save(path)
+    return path
+
+
+def outro_filter(duration, video_h=1080):
+    """FFmpeg overlay for the end badge: slides in from the left OUTRO seconds before the end."""
+    s = video_h / 1080
+    x0, y = int(40 * s) - int(26 * s), int(video_h * 0.60)
+    a = max(0.0, duration - OUTRO)
+    x = f"if(lt(t,{a:.3f}),-w,if(lt(t,{a + OUTRO_SLIDE:.3f}),{x0}-({x0}+w)*pow(1-(t-{a:.3f})/{OUTRO_SLIDE},3),{x0}))"
+    return f"overlay=x='{x}':y={y}:shortest=1:format=auto"

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Klipler - Yönetim{% endblock %}
+{% block body %}
+<p style="margin:0 0 8px"><a href="{{ url_for('admin') }}" class="dim">&larr; Yönetim</a></p>
+<h1>Klipler: kaydet / sil</h1>
+<div class="dim" style="margin-bottom:16px">{{ n_all }} klip &middot; <b style="color:var(--win)">{{ n_saved }}</b> kayıtlı &middot;
+  {{ n_all - n_saved }} kayıtsız{% if removed %} &middot; şimdiye kadar {{ removed }} klip silindi{% endif %}.
+  Kayıtlı klipler toplu temizlikte silinmez. Silinen klibin videosu ve resmi depodan (R2) da silinir, maç tekrar yüklense bile geri gelmez.</div>
+<div class="row" style="margin-bottom:18px"><a class="btn danger" href="{{ url_for('admin_clean') }}">Kaydedilmeyenleri sil…</a></div>
+
+{% for m, rows in groups %}
+<div class="panel">
+  <h2 style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">{{ m.title or m.map }} <span class="num">{{ m.score1 }}:{{ m.score2 }}</span>
+    <small class="dim" style="font-weight:400">{{ m.date }} &middot; {{ rows|length }} klip &middot; {{ m.size_bytes|mb }}
+      &middot; <a href="{{ url_for('match_page', slug=m.slug) }}">sayfa</a></small></h2>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Oyuncu</th><th>Oyun</th><th>Round</th><th>Puan</th><th>Durum</th><th></th></tr></thead>
+    <tbody>{% for c in rows %}
+    {% set back = url_for('admin_clips') ~ '#c' ~ c.id %}
+    <tr id="c{{ c.id }}"{% if c.saved %} style="background:rgba(60,200,120,.06)"{% endif %}>
+      <td><a href="{{ media_url(m.slug, m.media_rev, c.file) }}" target="_blank" rel="noopener"><span class="thumb" {% if c.thumb %}style="background-image:url('{{ media_url(m.slug, m.media_rev, c.thumb) }}')"{% endif %}></span></a></td>
+      <td><b>{{ c.player }}</b></td><td>{{ c.label }}</td><td class="num">{{ c.round }}</td><td class="num">{{ c.score }}</td>
+      <td>{% if c.saved %}<span class="pill pub">&#9733; kayıtlı</span>{% else %}<span class="pill">kayıtsız</span>{% endif %}</td>
+      <td class="nowrap">
+        <form method="post" action="{{ url_for('clip_save', cid=c.id) }}" style="display:inline;margin:0">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="back" value="{{ back }}">
+          <input type="hidden" name="saved" value="{{ '0' if c.saved else '1' }}">
+          <button class="btn small{{ '' if c.saved else ' primary' }}">{{ 'Kaydı kaldır' if c.saved else '&#9733; Kaydet'|safe }}</button></form>
+        <form method="post" action="{{ url_for('clip_delete', cid=c.id) }}" style="display:inline;margin:0"
+              onsubmit="return confirm({{ ('Bu klip silinsin mi? (' ~ c.player ~ ' - ' ~ c.label ~ ', round ' ~ c.round ~ ')\nVideo ve resmi depodan da silinir, geri alınamaz.')|tojson|forceescape }})">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="back" value="{{ url_for('admin_clips') }}">
+          <button class="btn small danger">Sil</button></form>
+      </td></tr>
+    {% endfor %}</tbody></table></div>
+</div>
+{% else %}
+<p class="dim">Sitede hiç klip yok.</p>
+{% endfor %}
+{% endblock %}

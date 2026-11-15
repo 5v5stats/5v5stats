@@ -495,3 +495,6 @@ code { font-family:var(--mono); font-size:12px; color:#ffb38a; }
 .rb.ok { background:#2a2a2a; color:#f2f2f2; } .rb.ok u { background:#fff; }
 .rb.poor { background:#2c0f0f; color:#ff4a4a; } .rb.poor u { background:#ff3b3b; }
 .rb.big { font-size:30px; padding:4px 12px 10px; } .rb.big::after, .rb.big u { height:3px; bottom:3px; }
+/* İkili: since when who-killed-whom data exists */
+.demo-note { margin:-4px 0 14px; padding:9px 12px; border-left:3px solid var(--accent); background:var(--panel); color:var(--muted); font-size:13px; line-height:1.5; }
+.demo-note b { color:var(--text); margin-right:4px; }

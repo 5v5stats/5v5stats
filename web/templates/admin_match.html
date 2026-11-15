@@ -32,10 +32,20 @@
   <h2>Clips ({{ clips|length }})</h2>
   {% if clips %}
   <div class="tbl"><table>
-    <thead><tr><th></th><th>Player</th><th>Play</th><th>Round</th><th>Points</th></tr></thead>
+    <thead><tr><th></th><th>Player</th><th>Play</th><th>Round</th><th>Points</th><th></th></tr></thead>
     <tbody>{% for c in clips %}
+    {% set back = url_for('admin_match', mid=m.id) %}
     <tr><td><a href="{{ media_url(m.slug, m.media_rev, c.file) }}"><span class="thumb" {% if c.thumb %}style="background-image:url('{{ media_url(m.slug, m.media_rev, c.thumb) }}')"{% endif %}></span></a></td>
-      <td>{{ c.player }}</td><td>{{ c.label }}</td><td class="num">{{ c.round }}</td><td class="num">{{ c.score }}</td></tr>
+      <td>{{ c.player }}</td><td>{{ c.label }}</td><td class="num">{{ c.round }}</td><td class="num">{{ c.score }}</td>
+      <td class="nowrap">
+        <form method="post" action="{{ url_for('clip_save', cid=c.id) }}" style="display:inline;margin:0">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="back" value="{{ back }}">
+          <input type="hidden" name="saved" value="{{ '0' if c.saved else '1' }}">
+          <button class="btn small{{ '' if c.saved else ' primary' }}">{{ '&#9733; Kayıtlı (kaldır)'|safe if c.saved else '&#9733; Kaydet'|safe }}</button></form>
+        <form method="post" action="{{ url_for('clip_delete', cid=c.id) }}" style="display:inline;margin:0"
+              onsubmit="return confirm({{ ('Bu klip silinsin mi? (' ~ c.player ~ ' - ' ~ c.label ~ ', round ' ~ c.round ~ ')\nVideo ve resmi depodan da silinir, geri alınamaz.')|tojson|forceescape }})">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="back" value="{{ back }}">
+          <button class="btn small danger">Sil</button></form></td></tr>
     {% endfor %}</tbody></table></div>
   {% else %}<p class="dim" style="margin:0">No clips were uploaded for this match.</p>{% endif %}
 </div>
