@@ -49,6 +49,7 @@ main.wrap { padding-bottom:56px; min-height:70vh; }
 .sec small { font:11px var(--mono); color:var(--faint); letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; }
 .sec::after { content:""; flex:1; height:1px; background:var(--line); }
 .hero { padding:26px 0 18px; border-bottom:1px solid var(--line); margin-bottom:8px; }
+.hero .display.xl { margin:14px 0 18px; }  /* breathing room around the page title */
 
 /* boxes */
 .box { background:var(--panel); border:1px solid var(--line); }
