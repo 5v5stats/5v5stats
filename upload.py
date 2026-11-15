@@ -49,6 +49,12 @@ def settings():
     return url, token
 
 
+def clips_enabled():
+    """UPLOAD_CLIPS=0 in upload.env: send stats only (no clips, thumbnails or pictures, nothing to storage)."""
+    v = read_env(os.path.join(ROOT, "upload.env")).get("UPLOAD_CLIPS", "1")
+    return v.strip().lower() not in ("0", "no", "false", "off")
+
+
 def match_data(folder):
     """match_data.json for a render folder; (re)made from the demo if missing or older than the clips."""
     path = os.path.join(folder, "match_data.json")
@@ -64,9 +70,11 @@ def match_data(folder):
     return json.load(open(path, encoding="utf-8"))
 
 
-def package_files(folder):
-    """(match data, files of the package that exist, as relative paths with /)."""
+def package_files(folder, clips=True):
+    """(match data, files of the package that exist, as relative paths with /). clips=False: no files."""
     data = match_data(folder)
+    if not clips:
+        return data, []
     files = []
     for c in data["clips"]:
         files += [c["file"]] + [c[k] for k in ("thumb", "thumb2") if c.get(k)]
@@ -74,9 +82,9 @@ def package_files(folder):
     return data, [f for f in dict.fromkeys(files) if os.path.isfile(os.path.join(folder, *f.split("/")))]
 
 
-def package(folder, dst):
+def package(folder, dst, clips=True):
     """Write the match package zip. Returns (number of files, bytes)."""
-    files = ["match_data.json"] + package_files(folder)[1]
+    files = ["match_data.json"] + package_files(folder, clips)[1]
     with zipfile.ZipFile(dst, "w", zipfile.ZIP_STORED) as z:  # videos and jpgs are already compressed
         for f in files:
             z.write(os.path.join(folder, *f.split("/")), f)
@@ -102,14 +110,15 @@ class Progress:
         return self.size
 
 
-def upload(folder, public=False, zip_only=False, url=None, token=None):
+def upload(folder, public=False, zip_only=False, url=None, token=None, clips=None):
     name = os.path.basename(os.path.normpath(folder))
     if not os.path.isdir(folder):
         raise SystemExit(f"No such render folder: {folder}")
-    print(f"{name}:")
+    clips = clips_enabled() if clips is None else clips
+    print(f"{name}:" + ("" if clips else "  (stats only: clips switched off, UPLOAD_CLIPS=0 in upload.env)"))
     if zip_only:
         dst = os.path.join(OUTPUT, name + ".zip")
-        n, size = package(folder, dst)
+        n, size = package(folder, dst, clips)
         print(f"  package: {dst} ({n} files, {size / 1e6:.1f} MB). Upload it in Admin > Upload a package by hand.")
         return dst
     url, token = (url, token) if url else settings()
@@ -118,7 +127,7 @@ def upload(folder, public=False, zip_only=False, url=None, token=None):
     import requests
     auth = {"Authorization": f"Bearer {token}"}
     params = {"publish": "1"} if public else None
-    data, files = package_files(folder)
+    data, files = package_files(folder, clips)
     sizes = {f: os.path.getsize(os.path.join(folder, *f.split("/"))) for f in files}
     try:
         r = requests.post(f"{url}/api/upload/begin", json={"data": data, "files": sizes}, headers=auth,
@@ -129,7 +138,7 @@ def upload(folder, public=False, zip_only=False, url=None, token=None):
     if begin["mode"] == "r2":
         res = upload_direct(folder, begin, sizes, auth, params, data, url)
     else:
-        res = upload_zip(folder, auth, params, url)
+        res = upload_zip(folder, auth, params, url, clips)
     state = "public" if res.get("published") else "hidden (make it public in Admin, or use --public)"
     print(f"  {'added' if res['created'] else 'updated'}: {res['url']}  [{state}]")
     for note in res.get("notes", []):
@@ -178,12 +187,12 @@ def upload_direct(folder, begin, sizes, auth, params, data, url):
     return result(r)
 
 
-def upload_zip(folder, auth, params, url):
+def upload_zip(folder, auth, params, url, clips=True):
     import requests
     fd, tmp = tempfile.mkstemp(suffix=".zip")
     os.close(fd)
     try:
-        n, size = package(folder, tmp)
+        n, size = package(folder, tmp, clips)
         print(f"  package: {n} files, {size / 1e6:.1f} MB")
         body = Progress(tmp)
         try:
@@ -219,12 +228,15 @@ def main():
     ap.add_argument("--all", action="store_true", help="every rendered match in output\\")
     ap.add_argument("--public", action="store_true", help="make the match public right away")
     ap.add_argument("--zip-only", action="store_true", help="only write the package zip next to the folder")
+    ap.add_argument("--no-clips", dest="clips", action="store_const", const=False, default=None,
+                    help="stats only: no clips/pictures (default: UPLOAD_CLIPS in upload.env, on if not set)")
+    ap.add_argument("--clips", dest="clips", action="store_const", const=True, help="send clips even if UPLOAD_CLIPS=0")
     ap.add_argument("--demo", action="append", metavar="FILE.dem",
                     help="stats only: analyse this demo and upload its stats without rendering clips "
                          "(doesn't use CS2; render it later and the clips join the same match)")
     a = ap.parse_args()
     for path in a.demo or []:
-        upload(stats_only_folder(path), a.public, a.zip_only)
+        upload(stats_only_folder(path), a.public, a.zip_only, clips=a.clips)
     if a.demo and not a.matches and not a.all:
         return
     names = a.matches
@@ -233,7 +245,7 @@ def main():
     if not names:
         ap.error("give a match folder name from output\\ (or --all)")
     for n in names:
-        upload(n if os.path.isabs(n) else os.path.join(OUTPUT, n), a.public, a.zip_only)
+        upload(n if os.path.isabs(n) else os.path.join(OUTPUT, n), a.public, a.zip_only, clips=a.clips)
 
 
 if __name__ == "__main__":
