@@ -42,12 +42,24 @@ main.wrap { max-width:1480px; }  /* this page uses the extra width for the playe
 .trow .n { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .trow .p { color:var(--muted); }
 .trow .adj { font-size:10px; margin-left:4px; }
-.verdict { padding:14px 16px; }
-.verdict b { font:30px var(--display); font-weight:400; }
-.balbar { height:8px; background:#7b9cff; margin:10px 0 6px; position:relative; }
-.balbar i { position:absolute; left:0; top:0; bottom:0; background:var(--win); }
-.balbar em { position:absolute; left:50%; top:-3px; bottom:-3px; width:2px; background:#fff; }
-.copied { color:var(--win); font:11px var(--mono); margin-left:8px; }
+.verdict { padding:16px 18px 18px; }
+/* win chance face-off: Team 1 % | verdict | Team 2 % */
+.odds { display:grid; grid-template-columns:auto 1fr auto; align-items:end; gap:14px; margin-top:10px; }
+.odds .side { line-height:1; }
+.odds .side small { display:block; font:700 10px var(--mono); letter-spacing:.14em; text-transform:uppercase; margin-bottom:6px; }
+.odds .side b { font:56px var(--display); font-weight:400; }
+.odds .side b sup { font-size:.42em; vertical-align:.95em; margin-left:2px; }
+.odds .a { color:var(--win); } .odds .b { color:#7b9cff; text-align:right; }
+.odds .side.lead b { text-shadow:0 0 22px currentColor; }
+.odds .mid { text-align:center; padding-bottom:6px; }
+.odds .mid .tag { display:inline-block; font:700 11px var(--mono); letter-spacing:.14em; text-transform:uppercase; padding:5px 10px;
+  border:1px solid currentColor; }
+.odds .mid .tag.even { color:var(--win); } .odds .mid .tag.ok { color:#ffc800; } .odds .mid .tag.off { color:#ff5a5a; }
+.odds .mid .sub { display:block; margin-top:7px; font:11px var(--mono); color:var(--muted); }
+.balbar { height:14px; margin:14px 0 4px; position:relative; display:flex; overflow:hidden; border-radius:2px; }
+.balbar i { background:var(--win); transition:width .4s; } .balbar s { flex:1; background:#7b9cff; }
+.balbar em { position:absolute; left:50%; top:0; bottom:0; width:2px; margin-left:-1px; background:var(--bg, #0a0d12); }
+@media (max-width: 560px) { .odds .side b { font-size:42px; } }
 @media (max-width: 1000px) { .bal { grid-template-columns:1fr; } }
 @media (max-width: 560px) { .plist { grid-template-columns:1fr; } }
 </style>
@@ -187,26 +199,19 @@ function show(s, map) {
   const team = (t, cls, title, total) => `<div class="team ${cls}"><h3>${title}<small>güç ${fmt(total)} &middot; ort. ${fmt(total / 5)}</small></h3>
     ${t.map(p => `<div class="trow">${av(p)}<span class="n">${esc(p.name)}</span><span class="p">${badge(p.eff)}${p.adj ? `<span class="adj ${p.adj > 0 ? 'pos' : 'neg'}">${p.adj > 0 ? '+' : ''}${p.adj.toFixed(2)}</span>` : ''}</span></div>`).join('')}</div>`;
   const diff = s.sa - s.sb, chance = 1 / (1 + Math.exp(-2 * diff));
+  const pa = Math.round(chance * 100), pb = 100 - pa, gap = Math.abs(pa - pb);
+  const [tagCls, tagTxt] = gap <= 10 ? ['even', 'Dengeli maç'] : gap <= 20 ? ['ok', 'Hafif fark'] : ['off', 'Dengesiz'];
   const mapname = map ? document.querySelector(`#map option[value="${map}"]`).textContent : '';
   document.getElementById('result').innerHTML = `
-    <div class="box verdict"><span class="lbl">Sonuç${mapname ? ' // ' + esc(mapname) : ''}${choice ? ' // alternatif ' + (choice + 1) : ''}</span><br>
-      <b>Fark ${Math.abs(diff).toFixed(2)}</b> <span class="dim small">güç</span>
-      <div class="balbar"><i style="width:${(chance * 100).toFixed(1)}%"></i><em></em></div>
-      <div class="small dim num">Tahmini kazanma şansı: Takım 1 %${Math.round(chance * 100)} &middot; Takım 2 %${100 - Math.round(chance * 100)}</div></div>
+    <div class="box verdict"><span class="lbl">Tahmini kazanma şansı${mapname ? ' // ' + esc(mapname) : ''}${choice ? ' // alternatif ' + (choice + 1) : ''}</span>
+      <div class="odds num">
+        <div class="side a${pa > pb ? ' lead' : ''}"><small>Takım 1</small><b>${pa}<sup>%</sup></b></div>
+        <div class="mid"><span class="tag ${tagCls}">${tagTxt}</span><span class="sub">güç farkı ${Math.abs(diff).toFixed(2)}</span></div>
+        <div class="side b${pb > pa ? ' lead' : ''}"><small>Takım 2</small><b>${pb}<sup>%</sup></b></div>
+      </div>
+      <div class="balbar"><i style="width:${(chance * 100).toFixed(1)}%"></i><s></s><em></em></div></div>
     <div class="teams">${team(s.A, 'a', 'Takım 1', s.sa)}${team(s.B, 'b', 'Takım 2', s.sb)}</div>
-    <div class="actions" style="padding:12px 0"><button class="btn" onclick="build(true)">Başka bölünme</button>
-      <button class="btn" onclick="copyTeams()">Kopyala</button><span id="cp"></span></div>`;
-  window._shown = s;
-}
-function shareUrl() {
-  const ids = [...sel].filter(s => !s.startsWith('x'));
-  const map = document.getElementById('map').value;
-  return location.origin + location.pathname + '?sec=' + ids.join(',') + (map ? '&map=' + map : '');
-}
-function copyTeams() {
-  const s = window._shown; if (!s) return;
-  const txt = `Takım 1: ${s.A.map(p => p.name).join(', ')}\nTakım 2: ${s.B.map(p => p.name).join(', ')}\n${shareUrl()}`;
-  navigator.clipboard.writeText(txt).then(() => { document.getElementById('cp').innerHTML = '<span class="copied">Kopyalandı</span>'; });
+    <div class="actions" style="padding:12px 0"><button class="btn" onclick="build(true)">Başka bölünme</button></div>`;
 }
 // a shared link (?sec=steamid,steamid,...&map=de_dust2) picks those players and builds the teams
 (() => {
