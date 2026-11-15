@@ -1,0 +1,42 @@
+{# The site header, shared by every page: base.html, and match pages (matchpage.py) through site_nav().
+   `periods`: extra controls on the right (the stats page's Bu Hafta / 30 Gün / ... buttons). #}
+{% macro site_header(periods="") -%}
+<header class="hdr"><div class="hdr-in">
+  <a class="logo" href="{{ url_for('stats_home') }}"><b>5V5 <i>TURKISH SERVER</i></b><span>Yerel istatistik &middot; klipler</span></a>
+  <nav class="nav">
+    <a href="{{ url_for('stats_home') }}" class="{{ 'on' if request.endpoint in ['stats_home', 'player_page'] }}">İstatistik</a>
+    <a href="{{ url_for('balancer') }}" class="{{ 'on' if request.endpoint == 'balancer' }}">Takım Kur</a>
+    <a href="{{ url_for('games_page') }}" class="{{ 'on' if request.endpoint in ['games_page', 'game_page'] }}">Maçlar</a>
+    <a href="{{ url_for('home') }}" class="{{ 'on' if request.endpoint in ['home', 'match_page'] }}">Klipler</a>
+    {% if admin %}<a href="{{ url_for('admin') }}" class="{{ 'on' if request.endpoint and request.endpoint.startswith('admin') }}">Yönetim</a>{% endif %}
+  </nav>
+  {{ periods }}
+  {% if admin %}<form method="post" action="{{ url_for('logout') }}" class="logout"><input type="hidden" name="csrf" value="{{ csrf }}">
+    <button class="btn link">Çıkış</button></form>{% endif %}
+</div></header>
+{%- endmacro %}
+
+{# Match pages have their own stylesheet: this carries the header's look with it, scoped to .sitehdr. #}
+{% macro standalone_header() -%}
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+.sitehdr { --line:#222a36; --line2:#2b3442; --panel:#121720; --text:#e9edf3; --muted:#7f8a99; --faint:#566070; --accent:#ff5a1f;
+  --display:"Anton", "Impact", "Arial Narrow", sans-serif; --mono:"JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  position:sticky; top:0; z-index:50; }
+.sitehdr * { box-sizing:border-box; }
+.sitehdr .hdr { border-bottom:1px solid var(--line); background:rgba(10,13,18,.92); backdrop-filter:blur(6px); color:var(--text); }
+.sitehdr .hdr-in { max-width:1240px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.sitehdr .logo { text-decoration:none; line-height:1.05; margin-right:auto; color:var(--text); }
+.sitehdr .logo b { display:block; font:22px var(--display); letter-spacing:.01em; font-weight:400; }
+.sitehdr .logo b i { font-style:normal; color:var(--accent); }
+.sitehdr .logo span { font:500 10px var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.sitehdr .nav { display:flex; gap:6px; flex-wrap:wrap; }
+.sitehdr .nav a { font:700 11px var(--mono); letter-spacing:.12em; text-transform:uppercase; text-decoration:none; padding:8px 12px;
+  border:1px solid var(--line2); background:var(--panel); color:var(--text); }
+.sitehdr .nav a:hover { border-color:var(--faint); } .sitehdr .nav a.on { border-color:var(--accent); color:var(--accent); }
+.sitehdr .logout { margin:0; } .sitehdr .btn.link { background:none; border:0; color:var(--muted); cursor:pointer; font:13px inherit; }
+@media (max-width: 560px) { .sitehdr .hdr-in { gap:10px; } .sitehdr .logo { width:100%; } }
+</style>
+<div class="sitehdr">{{ site_header() }}</div>
+{%- endmacro %}

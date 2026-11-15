@@ -345,7 +345,7 @@ def summary(data):
             "clips": len(clips), "page": "scoreboard.html"}
 
 
-def render(data, base="", back="../index.html", extra_head="", back_label="Tüm maçlar"):
+def render(data, base="", back="../index.html", extra_head="", back_label="Tüm maçlar", site_nav=""):
     """HTML page for collect()'s data. `base` is prepended to media paths (clips, thumbnails, pictures).
     Stats a match doesn't have (None, e.g. rating/swing/KAST for 5v5stats matches) are left out."""
     pl, teams, clips, pics = data["players"], data["teams"], data["clips"], data["pics"]
@@ -498,7 +498,7 @@ def render(data, base="", back="../index.html", extra_head="", back_label="Tüm 
     return f"""<!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(map_name)} maç özeti</title><style>{CSS}</style>{extra_head}</head>
-<body><div class="wrap">
+<body>{site_nav}<div class="wrap">
   <div class="hero"{bg_style}>
     <div class="meta"><span>{back_link}{esc(map_name)}</span><span>{esc(tr_date(date))} &middot; {data["rounds"]} round</span></div>
     {vs}

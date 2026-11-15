@@ -20,7 +20,7 @@ import tempfile
 import time
 
 from markupsafe import Markup  # noqa: E402
-from flask import (Flask, abort, flash, jsonify, redirect, render_template, request, send_from_directory, session,
+from flask import (Flask, abort, flash, jsonify, redirect, render_template, render_template_string, request, send_from_directory, session,
                    url_for)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -421,8 +421,14 @@ def game_page(gid):
             f'<script>document.addEventListener("DOMContentLoaded",()=>{{const m=document.querySelector(".wrap");'
             f'm.insertAdjacentHTML("beforeend",`<div class="srcnote">{label}. 5v5stats maç başına sadece K/Ö/A, '
             f'ADR ve kafa% verir; puan, swing ve KAST için demo gerekir.</div>`)}})</script>') if g["ext_id"] else ""
-    page = matchpage.render(data, back=url_for("games_page"), back_label="Tüm maçlar", extra_head=note)
+    page = matchpage.render(data, back=url_for("games_page"), back_label="Tüm maçlar", extra_head=note,
+                            site_nav=site_nav())
     return page.replace("<title>", f"<title>{label} - ", 1)
+
+
+def site_nav():
+    """The site's header for match pages (they're drawn by matchpage.py with their own stylesheet)."""
+    return render_template_string('{% from "_header.html" import standalone_header with context %}{{ standalone_header() }}')
 
 
 @app.route("/m/<slug>")
@@ -441,6 +447,7 @@ def match_page(slug):
                   f'"afterbegin",`<div class="adminbar">{state} &middot; <a href="/admin/match/{m["id"]}">'
                   f'Bu maçı yönet</a></div>`))</script>')
     page = matchpage.render(data, base=storage.base(slug, m["media_rev"]), back="/highlights", extra_head=banner,
+                            site_nav=site_nav(),
                             back_label="Klipler")
     if m["title"]:
         page = page.replace("<title>", f"<title>{matchpage.esc(m['title'])} - ", 1)

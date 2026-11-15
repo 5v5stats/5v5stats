@@ -6,19 +6,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
 {% block head %}{% endblock %}
 </head><body>
-<header class="hdr"><div class="hdr-in">
-  <a class="logo" href="{{ url_for('stats_home') }}"><b>5V5 <i>TURKISH SERVER</i></b><span>Yerel istatistik &middot; klipler</span></a>
-  <nav class="nav">
-    <a href="{{ url_for('stats_home') }}" class="{{ 'on' if request.endpoint in ['stats_home', 'player_page'] }}">İstatistik</a>
-    <a href="{{ url_for('balancer') }}" class="{{ 'on' if request.endpoint == 'balancer' }}">Takım Kur</a>
-    <a href="{{ url_for('games_page') }}" class="{{ 'on' if request.endpoint in ['games_page'] }}">Maçlar</a>
-    <a href="{{ url_for('home') }}" class="{{ 'on' if request.endpoint == 'home' }}">Klipler</a>
-    {% if admin %}<a href="{{ url_for('admin') }}" class="{{ 'on' if request.endpoint and request.endpoint.startswith('admin') }}">Yönetim</a>{% endif %}
-  </nav>
-  {% block periods %}{% endblock %}
-  {% if admin %}<form method="post" action="{{ url_for('logout') }}" class="logout"><input type="hidden" name="csrf" value="{{ csrf }}">
-    <button class="btn link">Çıkış</button></form>{% endif %}
-</div></header>
+{% from "_header.html" import site_header with context %}
+{{ site_header(self.periods()) }}
+{% if false %}{% block periods %}{% endblock %}{% endif %}
 <main class="wrap">
 {% for msg in get_flashed_messages() %}<div class="flash">{{ msg }}</div>{% endfor %}
 {% block body %}{% endblock %}
