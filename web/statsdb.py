@@ -44,6 +44,11 @@ MAP_NAMES = {"de_dust2": "Dust II", "de_inferno": "Inferno", "de_mirage": "Mirag
              "de_anubis": "Anubis", "de_ancient": "Ancient", "de_vertigo": "Vertigo", "de_cache": "Cache",
              "de_train": "Train", "de_overpass": "Overpass", "de_cbble_d": "Cbble d"}
 
+# portable upsert (SQLite and PostgreSQL) for a player's row in a game
+GP_UPSERT = """ ON CONFLICT(game_id, steamid) DO UPDATE SET name = excluded.name, side = excluded.side,
+    won = excluded.won, kills = excluded.kills, deaths = excluded.deaths, assists = excluded.assists,
+    adr = excluded.adr, hs_pct = excluded.hs_pct, counters = excluded.counters"""
+
 
 def init(con):
     con.executescript(SCHEMA)
@@ -67,8 +72,10 @@ def map_label(m):
 
 def import_5v5(con, site, players, matches):
     """Load parsed 5v5stats data (import5v5/parse.py output). Replaces the previous 5v5stats import."""
+    # batched (executemany) so a sync to a hosted database takes seconds, not one round trip per row
     con.execute("DELETE FROM baseline")
-    keep = set()
+    ids = {r["ext_id"]: r["id"] for r in con.execute("SELECT id, ext_id FROM games WHERE source = '5v5stats'")}
+    updates, inserts, rosters = [], [], {}
     for mid, m in matches.items():
         if len(m.get("teams", [])) != 2 or not all("name" in t for t in m["teams"]):
             continue
@@ -77,38 +84,36 @@ def import_5v5(con, site, players, matches):
         if m.get("round_winners"):
             rw = json.dumps(["a" if w == a["name"] else "b" for w in m["round_winners"]])
         vals = (m["map"], m["date"], m["rounds"], a["name"], a["score"], b["name"], b["score"], rw)
-        old = con.execute("SELECT id FROM games WHERE source = '5v5stats' AND ext_id = ?", (int(mid),)).fetchone()
-        if old:  # update in place: a match keeps its page address (/g/<id>) across syncs
-            gid = old["id"]
-            con.execute("""UPDATE games SET map=?, date=?, rounds=?, team_a=?, score_a=?, team_b=?, score_b=?,
-                           round_winners=? WHERE id=?""", vals + (gid,))
-            con.execute("DELETE FROM game_players WHERE game_id = ?", (gid,))
+        if int(mid) in ids:  # update in place: a match keeps its page address (/g/<id>) across syncs
+            updates.append(vals + (ids[int(mid)],))
         else:
-            gid = con.execute("""INSERT INTO games(source, ext_id, map, date, rounds, team_a, score_a, team_b,
-                                 score_b, round_winners) VALUES ('5v5stats',?,?,?,?,?,?,?,?,?)""",
-                              (int(mid),) + vals).lastrowid
-        keep.add(gid)
-        for side, t in (("a", a), ("b", b)):
-            for p in t["players"]:
-                con.execute("""INSERT OR REPLACE INTO game_players(game_id, steamid, name, side, won, kills, deaths,
-                               assists, adr, hs_pct) VALUES (?,?,?,?,?,?,?,?,?,?)""",
-                            (gid, p["steamid"], p["name"], side, int(bool(t.get("won"))), p["k"], p["d"], p["a"],
-                             p["adr"], p["hs_pct"]))
-    for (gid,) in con.execute("SELECT id FROM games WHERE source = '5v5stats'").fetchall():
-        if gid not in keep:  # no longer on 5v5stats (e.g. a player opted out of a match listing)
-            con.execute("DELETE FROM games WHERE id = ?", (gid,))
-    for sid, rec in players.items():
-        totals = {k: rec.get(k, 0) or 0 for k in rating.TOTALS}
-        con.execute("INSERT OR REPLACE INTO baseline(steamid, name, totals, map_stats) VALUES (?,?,?,?)",
-                    (sid, rec["name"], json.dumps(totals), json.dumps(rec.get("mapStats", []))))
-    for sid, av in (site.get("avatars") or {}).items():
-        name = (players.get(sid) or {}).get("name")
-        con.execute("""INSERT INTO people(steamid, name, avatar) VALUES (?,?,?) ON CONFLICT(steamid) DO UPDATE
+            inserts.append((int(mid),) + vals)
+        rosters[int(mid)] = [(side, t) for side, t in (("a", a), ("b", b))]
+    con.executemany("""UPDATE games SET map=?, date=?, rounds=?, team_a=?, score_a=?, team_b=?, score_b=?,
+                       round_winners=? WHERE id=?""", updates)
+    con.executemany("""INSERT INTO games(source, ext_id, map, date, rounds, team_a, score_a, team_b,
+                       score_b, round_winners) VALUES ('5v5stats',?,?,?,?,?,?,?,?,?)""", inserts)
+    if inserts:
+        ids = {r["ext_id"]: r["id"] for r in con.execute("SELECT id, ext_id FROM games WHERE source = '5v5stats'")}
+    keep = {ids[e] for e in rosters}
+    con.executemany("DELETE FROM game_players WHERE game_id = ?", [(ids[e],) for e in rosters])
+    con.executemany("""INSERT INTO game_players(game_id, steamid, name, side, won, kills, deaths,
+                       assists, adr, hs_pct) VALUES (?,?,?,?,?,?,?,?,?,?)""" + GP_UPSERT,
+                    [(ids[e], p["steamid"], p["name"], side, int(bool(t.get("won"))), p["k"], p["d"], p["a"],
+                      p["adr"], p["hs_pct"]) for e, teams in rosters.items() for side, t in teams for p in t["players"]])
+    # no longer on 5v5stats (e.g. a player opted out of a match listing)
+    con.executemany("DELETE FROM games WHERE id = ?", [(g,) for g in ids.values() if g not in keep])
+    con.executemany("""INSERT INTO baseline(steamid, name, totals, map_stats) VALUES (?,?,?,?)
+                       ON CONFLICT(steamid) DO UPDATE SET name = excluded.name, totals = excluded.totals,
+                       map_stats = excluded.map_stats""",
+                    [(sid, rec["name"], json.dumps({k: rec.get(k, 0) or 0 for k in rating.TOTALS}),
+                      json.dumps(rec.get("mapStats", []))) for sid, rec in players.items()])
+    con.executemany("""INSERT INTO people(steamid, name, avatar) VALUES (?,?,?) ON CONFLICT(steamid) DO UPDATE
                        SET avatar = excluded.avatar, name = COALESCE(excluded.name, people.name)""",
-                    (sid, name, av.get("medium") or av.get("full") or av.get("small")))
-    for sid, rec in players.items():
-        con.execute("INSERT INTO people(steamid, name) VALUES (?,?) ON CONFLICT(steamid) DO UPDATE SET name = excluded.name",
-                    (sid, rec["name"]))
+                    [(sid, (players.get(sid) or {}).get("name"), av.get("medium") or av.get("full") or av.get("small"))
+                     for sid, av in (site.get("avatars") or {}).items()])
+    con.executemany("INSERT INTO people(steamid, name) VALUES (?,?) ON CONFLICT(steamid) DO UPDATE SET name = excluded.name",
+                    [(sid, rec["name"]) for sid, rec in players.items()])
     set_meta(con, "synced_at", site.get("lastSyncMs"))
     # exact 30-day / 7-day totals as published (window ends at the newest 5v5stats match)
     set_meta(con, "sync_date", max((m["date"] for m in matches.values() if m.get("date")), default=None))
@@ -179,8 +184,8 @@ def add_demo(con, match_key, data):
                            a["score"], b["name"], b["score"])).lastrowid
     for sid, c in counters.items():
         p = data["players"].get(sid, {})
-        con.execute("""INSERT OR REPLACE INTO game_players(game_id, steamid, name, side, won, kills, deaths, assists,
-                       adr, hs_pct, counters) VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+        con.execute("""INSERT INTO game_players(game_id, steamid, name, side, won, kills, deaths, assists,
+                       adr, hs_pct, counters) VALUES (?,?,?,?,?,?,?,?,?,?,?)""" + GP_UPSERT,
                     (gid, sid, c["name"], side_of.get(sid, "b"), c["wins"], c["total_kills"], c["total_deaths"],
                      c["total_assists"], p.get("adr"), p.get("hs_pct"), json.dumps(c)))
         con.execute("INSERT INTO people(steamid, name) VALUES (?,?) ON CONFLICT(steamid) DO UPDATE SET name = excluded.name",
@@ -438,7 +443,7 @@ def window(con, period):
 def period_where(con, period, alias=""):
     """SQL condition (and args) selecting a period's games."""
     if period == "all":
-        return "1", ()
+        return "1=1", ()
     since, _ = window(con, period)
     return f"{alias}date >= ?", (since,)
 

@@ -55,7 +55,7 @@
 {% if clips %}
 <div class="sec"><h2>Klipler</h2><small>// {{ clips|length }} klip</small></div>
 <div class="clipsrow">{% for c in clips %}
-  <a href="{{ url_for('match_page', slug=c.slug) }}#clip{{ c.idx }}"><span class="thumb" {% if c.thumb %}style="background-image:url('{{ url_for('media', slug=c.slug, path=c.thumb) }}')"{% endif %}></span>
+  <a href="{{ url_for('match_page', slug=c.slug) }}#clip{{ c.idx }}"><span class="thumb" {% if c.thumb %}style="background-image:url('{{ media_url(c.slug, c.media_rev, c.thumb) }}')"{% endif %}></span>
     <b>{{ c.label }}</b><span class="dim small num">{{ c.mmap }} &middot; Round {{ c.round }} &middot; {{ c.score }} puan</span></a>
 {% endfor %}</div>
 {% endif %}

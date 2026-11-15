@@ -7,20 +7,25 @@ A package contains:
   avatars/<steamid>.jpg   profile pictures
 Anything else in the zip is ignored. Uploading the same match again (same "key") replaces its files and
 stats but keeps its link, title and public/hidden setting.
+
+Files are stored by storage.py (this PC's disk, or Cloudflare R2). With R2, upload.py doesn't send a zip:
+it sends the files straight to the bucket and only the page data to the site (app.py /api/upload/begin and
+/api/upload/finish), which then calls prepare() and apply() here.
 """
 import json
 import os
 import re
 import shutil
+import tempfile
 import time
 import uuid
 import zipfile
 
 import db
 import statsdb
+import storage
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-MEDIA = os.path.join(db.DATA, "media")
 ALLOWED = re.compile(r"^(match_data\.json|[^/\\:]+\.mp4|thumbs/[^/\\:]+\.jpg|avatars/\d{1,20}\.jpg)$")
 MAX_UNPACKED = 4 * 1024 ** 3   # refuse zips that would unpack to more than 4 GB
 PLAYER_KEYS = ("name", "team", "rating", "swing", "kills", "deaths", "assists", "adr", "kd", "kpr", "hs",
@@ -29,10 +34,6 @@ PLAYER_KEYS = ("name", "team", "rating", "swing", "kills", "deaths", "assists", 
 
 class BadPackage(Exception):
     pass
-
-
-def media_dir(slug):
-    return os.path.join(MEDIA, slug)
 
 
 def summary(data):
@@ -133,8 +134,66 @@ def merge_into(src_dir, dst_dir):
     return notes
 
 
+def new_rev():
+    return uuid.uuid4().hex[:8]
+
+
+def prepare(con, data):
+    """Validate page data; returns (match key, existing match row or None, slug)."""
+    check_data(data)
+    key = str(data["key"])
+    existing = con.execute("SELECT * FROM matches WHERE match_key = ?", (key,)).fetchone()
+    return key, existing, (existing["slug"] if existing else uuid.uuid4().hex[:10])
+
+
+def apply(con, data, key, existing, slug, rev, files, via, size, notes=None):
+    """Store a match whose files are in place. files = {relative path: size} that were actually stored.
+    Returns (match row, created, notes)."""
+    notes = list(notes or [])
+    files = {p: n for p, n in files.items() if ALLOWED.match(p) and p != "match_data.json"}
+    have = files.__contains__
+    before = len(data["clips"])
+    data["clips"] = [c for c in data["clips"] if have(c["file"])]
+    if len(data["clips"]) < before:
+        notes.append(f"{before - len(data['clips'])} clip(s) listed but not in the package")
+    for c in data["clips"]:
+        for k in ("thumb", "thumb2"):
+            if c[k] and not have(c[k]):
+                c[k] = ""
+    data["pics"] = {s: p for s, p in data["pics"].items() if have(p)}
+    if not data["clips"]:
+        data["note"] = "No highlight clips were uploaded for this match."
+    stored = sum(files.values())
+
+    now = time.time()
+    if existing:
+        mid = existing["id"]
+        con.execute("UPDATE matches SET size_bytes=?, uploads=uploads+1, media_rev=? WHERE id=?", (stored, rev, mid))
+    else:
+        mid = con.execute("INSERT INTO matches(slug, match_key, data_json, size_bytes, media_rev, created_at, "
+                          "updated_at) VALUES (?,?,?,?,?,?,?)", (slug, key, "{}", stored, rev, now, now)).lastrowid
+    db.save_match_data(con, mid, data, summary(data))
+    if data.get("counters"):  # player stats: add this match to the leaderboard
+        statsdb.add_demo(con, key, data)
+    con.execute("INSERT INTO uploads(match_id, via, ok, message, size_bytes, created_at) VALUES (?,?,?,?,?,?)",
+                (mid, via, 1, ("updated" if existing else "new match") + (f"; {'; '.join(notes)}" if notes else ""),
+                 size, now))
+    con.commit()
+    return con.execute("SELECT * FROM matches WHERE id = ?", (mid,)).fetchone(), existing is None, notes
+
+
+def _walk(folder):
+    out = {}
+    for root, _, fs in os.walk(folder):
+        for f in fs:
+            p = os.path.join(root, f)
+            out[os.path.relpath(p, folder).replace(os.sep, "/")] = os.path.getsize(p)
+    return out
+
+
 def ingest(con, zip_path, via="admin"):
-    """Import a package. Returns (match row, created: bool, notes: list of str)."""
+    """Import a package zip (admin form, or upload.py talking to a site that stores files itself).
+    Returns (match row, created: bool, notes: list of str)."""
     size = os.path.getsize(zip_path)
     try:
         z = zipfile.ZipFile(zip_path)
@@ -150,16 +209,13 @@ def ingest(con, zip_path, via="admin"):
             data = json.loads(z.read("match_data.json").decode("utf-8"))
         except ValueError:
             raise BadPackage("match_data.json is not valid JSON")
-        check_data(data)
-        key = str(data["key"])
-        existing = con.execute("SELECT * FROM matches WHERE match_key = ?", (key,)).fetchone()
-        slug = existing["slug"] if existing else uuid.uuid4().hex[:10]
+        key, existing, slug = prepare(con, data)
 
-        # unpack only the allowed files into a fresh folder, then swap it in
-        incoming = media_dir(slug) + ".incoming"
+        # unpack only the allowed files into a fresh folder
+        incoming = (tempfile.mkdtemp(prefix=f"{slug}-") if storage.R2 else storage.local_dir(slug) + ".incoming")
         shutil.rmtree(incoming, ignore_errors=True)
         os.makedirs(incoming)
-        notes, stored = [], 0
+        notes = []
         for info in z.infolist():
             if info.is_dir() or info.filename == "match_data.json":
                 continue
@@ -170,23 +226,20 @@ def ingest(con, zip_path, via="admin"):
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             with z.open(info) as src, open(dst, "wb") as out:
                 shutil.copyfileobj(src, out, 1 << 20)
-            stored += info.file_size
+    files = _walk(incoming)
 
-    # drop references to files that weren't in the package
-    have = lambda rel: os.path.isfile(os.path.join(incoming, *rel.split("/")))  # noqa: E731
-    before = len(data["clips"])
-    data["clips"] = [c for c in data["clips"] if have(c["file"])]
-    if len(data["clips"]) < before:
-        notes.append(f"{before - len(data['clips'])} clip(s) listed but not in the package")
-    for c in data["clips"]:
-        for k in ("thumb", "thumb2"):
-            if c[k] and not have(c[k]):
-                c[k] = ""
-    data["pics"] = {s: p for s, p in data["pics"].items() if have(p)}
-    if not data["clips"]:
-        data["note"] = "No highlight clips were uploaded for this match."
+    if storage.R2:  # to the bucket, in a new folder; older uploads' files are removed once the page points here
+        rev = new_rev()
+        try:
+            for rel in files:
+                storage.put_file(storage.key(slug, rev, rel), os.path.join(incoming, *rel.split("/")))
+        finally:
+            shutil.rmtree(incoming, ignore_errors=True)
+        result = apply(con, data, key, existing, slug, rev, files, via, size, notes)
+        storage.drop_other_revs(slug, rev)
+        return result
 
-    final = media_dir(slug)
+    final = storage.local_dir(slug)
     if os.path.isdir(final):
         # update in place: files someone is watching right now are locked on Windows, so identical files are
         # kept as they are and only changed or new files are swapped in; files no longer used are removed
@@ -194,23 +247,9 @@ def ingest(con, zip_path, via="admin"):
         notes += merge_into(incoming, final)
         shutil.rmtree(incoming, ignore_errors=True)
     else:
+        os.makedirs(os.path.dirname(final), exist_ok=True)
         os.replace(incoming, final)
-
-    now = time.time()
-    if existing:
-        mid = existing["id"]
-        con.execute("UPDATE matches SET size_bytes=?, uploads=uploads+1 WHERE id=?", (stored, mid))
-    else:
-        mid = con.execute("INSERT INTO matches(slug, match_key, data_json, size_bytes, created_at, updated_at) "
-                          "VALUES (?,?,?,?,?,?)", (slug, key, "{}", stored, now, now)).lastrowid
-    db.save_match_data(con, mid, data, summary(data))
-    if data.get("counters"):  # player stats: add this match to the leaderboard
-        statsdb.add_demo(con, key, data)
-    con.execute("INSERT INTO uploads(match_id, via, ok, message, size_bytes, created_at) VALUES (?,?,?,?,?,?)",
-                (mid, via, 1, ("updated" if existing else "new match") + (f"; {'; '.join(notes)}" if notes else ""),
-                 size, now))
-    con.commit()
-    return con.execute("SELECT * FROM matches WHERE id = ?", (mid,)).fetchone(), existing is None, notes
+    return apply(con, data, key, existing, slug, "", files, via, size, notes)
 
 
 def log_failure(con, via, message, size):

@@ -28,3 +28,6 @@ hlae_issue_draft.md
 
 # "con" is a reserved Windows device name; git cannot read it
 con.py
+
+# local Python environment
+.venv/

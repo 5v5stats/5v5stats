@@ -180,8 +180,74 @@ python upload.py <match> --zip-only                        :: just make the pack
   Hidden matches and their files are visible only to the admin, with a bar on the page saying so.
 - **Storage:** `web\data\site.db` (SQLite: matches, players, clips, uploads) and `web\data\media\<id>\`
   (clips, thumbnails, profile pictures).
-- **For a real server later:** copy the `web` folder (it doesn't need the demo/stats code), and on this PC put
-  `SERVER_URL` and `UPLOAD_TOKEN` in `upload.env`.
+- **Hosted:** see the next section (Vercel + Neon + Cloudflare R2). The same code runs both ways.
+
+## Hosting the website: Vercel + Neon Postgres + Cloudflare R2
+
+The site runs as a Vercel function (Flask, `api/index.py` + `vercel.json`). Vercel functions keep nothing
+between requests, so the data lives elsewhere:
+
+| What | Where | Set by |
+|---|---|---|
+| Stats, matches, players, upload log | Neon Postgres | `DATABASE_URL` (or `POSTGRES_URL`) |
+| Clips, thumbnails, profile pictures | Cloudflare R2 bucket, served from its public address | `R2_*`, `MEDIA_URL` |
+| Admin password, session key, upload token | Vercel environment variables | `ADMIN_PASSWORD`, `SECRET_KEY`, `UPLOAD_TOKEN` |
+
+Without these settings the site falls back to SQLite and files on this PC, as above (`config.py`).
+
+**Uploads skip Vercel's 4.5 MB request limit:** `upload.py` asks the site for signed links
+(`/api/upload/begin`), sends each file straight into the bucket, then sends only the stats
+(`/api/upload/finish`). Each upload goes to a new folder in the bucket (`m/<match>/<upload>/`), and the old
+one is deleted afterwards, so nobody watching a clip gets cut off. Against a site without R2, `upload.py` sends
+the zip as before. The admin page's "upload a package" works too, but on Vercel only for zips under 4.5 MB.
+
+**Setup, once:**
+
+1. **R2:** in the Cloudflare dashboard, R2, create a bucket (e.g. `cs2-media`). Settings, Public access:
+   allow the `r2.dev` address (or connect your own domain) and copy that URL. Manage API tokens, create a
+   token with *Object Read & Write* on that bucket; copy the Access Key ID and Secret Access Key. The
+   account ID is on the R2 overview page.
+   No CORS rule is needed: browsers only play the files, and uploads come from `upload.py`.
+2. **Neon:** copy the connection string (the *pooled* one, `...-pooler...`, `sslmode=require`).
+3. **Vercel:** import the GitHub repo as a project (no framework, root directory = repo root). In Settings,
+   Environment Variables, add:
+
+   ```
+   DATABASE_URL           postgresql://...neon.tech/...?sslmode=require
+   ADMIN_PASSWORD         (pick one)
+   SECRET_KEY             (64 random hex characters)
+   UPLOAD_TOKEN           (long random string)
+   R2_ACCOUNT_ID          ...
+   R2_ACCESS_KEY_ID       ...
+   R2_SECRET_ACCESS_KEY   ...
+   R2_BUCKET              cs2-media
+   MEDIA_URL              https://pub-xxxx.r2.dev   (or your domain)
+   ```
+
+   Then deploy. Tables are created on the first request.
+4. **Fill the database from this PC** (the 5v5stats history; takes seconds, the import is batched). Once:
+   `pip install "psycopg[binary]"`. Then put
+   `DATABASE_URL=...` in `web\admin.env` for one run, or set it in the shell:
+
+   ```bat
+   set DATABASE_URL=postgresql://...
+   python import5v5\sync.py --offline
+   ```
+
+   Remove it from `admin.env` afterwards if you want the local prototype back on SQLite.
+5. **Upload matches:** in `upload.env` (next to `upload.py`):
+
+   ```
+   SERVER_URL=https://your-project.vercel.app
+   UPLOAD_TOKEN=(the same token as in Vercel)
+   ```
+
+   then `python upload.py --all --public`.
+
+Notes: Python packages for the site are in `requirements.txt` (Flask, psycopg). `.vercelignore` keeps the
+renderer, tools and local data out of the deployment. Video traffic is served by R2 (no egress fees), not by
+Vercel. Matches on the site are public to anyone with the link once published, with player names and Steam
+pictures.
 
 ## Publishing as static files (alternative)
 

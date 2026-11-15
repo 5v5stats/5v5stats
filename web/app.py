@@ -5,7 +5,8 @@ The site only stores finished results. Matches are rendered on the gaming PC and
 
     python web\\app.py      -> http://localhost:5000   (admin: http://localhost:5000/admin)
 
-Secrets (admin password, upload token) are in web\\admin.env, created on first start.
+Settings and secrets (admin password, upload token, optional DATABASE_URL and R2 bucket) are in
+web\\admin.env, created on first start; on Vercel they are environment variables (see config.py).
 """
 import datetime
 import functools
@@ -24,39 +25,22 @@ from flask import (Flask, abort, flash, jsonify, redirect, render_template, requ
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import config  # noqa: E402
 import db  # noqa: E402
 import ingest  # noqa: E402
 import matchpage  # noqa: E402
 import rating  # noqa: E402
 import statsdb  # noqa: E402
+import storage  # noqa: E402
 
-ENV = os.path.join(HERE, "admin.env")
+from itsdangerous import BadSignature, URLSafeTimedSerializer  # noqa: E402
 
-
-def load_secrets():
-    """Admin password, session key and upload token from web/admin.env; random values on first start."""
-    vals = {}
-    if os.path.isfile(ENV):
-        for line in open(ENV, encoding="utf-8"):
-            if "=" in line and not line.startswith("#"):
-                k, v = line.strip().split("=", 1)
-                vals[k] = v
-    if not all(vals.get(k) for k in ("ADMIN_PASSWORD", "SECRET_KEY", "UPLOAD_TOKEN")):
-        vals.setdefault("ADMIN_PASSWORD", secrets.token_urlsafe(12))
-        vals.setdefault("SECRET_KEY", secrets.token_hex(32))
-        vals.setdefault("UPLOAD_TOKEN", secrets.token_urlsafe(32))
-        with open(ENV, "w", encoding="utf-8") as f:
-            f.write("# Secrets for the website. Change ADMIN_PASSWORD if you like, then restart.\n"
-                    "# UPLOAD_TOKEN lets upload.py on the rendering PC send matches to the site.\n")
-            for k in ("ADMIN_PASSWORD", "SECRET_KEY", "UPLOAD_TOKEN"):
-                f.write(f"{k}={vals[k]}\n")
-    return vals
-
-
-SECRETS = load_secrets()
+SECRETS = config.ensure_secrets()
 app = Flask(__name__, template_folder=os.path.join(HERE, "templates"), static_folder=os.path.join(HERE, "static"))
 app.secret_key = SECRETS["SECRET_KEY"]
-app.jinja_env.globals.update(cos=math.cos, sin=math.sin)
+app.jinja_env.globals.update(cos=math.cos, sin=math.sin, media_url=storage.url)
+TICKETS = URLSafeTimedSerializer(SECRETS["SECRET_KEY"], salt="upload")
+db.init()  # tables (CREATE ... IF NOT EXISTS); cheap, and a fresh hosted database needs it before the first page
 app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 ** 3
 
 
@@ -292,7 +276,7 @@ def player_page(steamid):
     for m in maps.values():
         m["adr"] = m["damage"] / m["rounds"] if m["rounds"] else 0
         m["kd"] = m["kills"] / m["deaths"] if m["deaths"] else 0
-    clips = c.execute("""SELECT clips.*, matches.slug, matches.map AS mmap, matches.date AS mdate FROM clips
+    clips = c.execute("""SELECT clips.*, matches.slug, matches.media_rev, matches.map AS mmap, matches.date AS mdate FROM clips
                          JOIN matches ON matches.id = clips.match_id WHERE clips.steamid = ?""" +
                       ("" if is_admin() else " AND matches.published = 1") + " ORDER BY clips.score DESC",
                       (steamid,)).fetchall()
@@ -325,7 +309,7 @@ def balancer():
     """Takım Kur: pick 10 players, get the most even 5v5 split (all 252 splits are checked in the browser)."""
     c = con()
     pool = statsdb.balancer_pool(c)
-    maps = [r["map"] for r in c.execute("SELECT map, COUNT(*) n FROM games GROUP BY map HAVING n >= 5 ORDER BY n DESC")]
+    maps = [r["map"] for r in c.execute("SELECT map, COUNT(*) n FROM games GROUP BY map HAVING COUNT(*) >= 5 ORDER BY n DESC")]
     c.close()
     return render_template("balancer.html", pool=pool, maps=[(m, statsdb.map_label(m)) for m in maps])
 
@@ -377,7 +361,7 @@ def games_page():
                                         args).fetchone()
     maps = c.execute("SELECT map, COUNT(*) AS n FROM games GROUP BY map ORDER BY n DESC").fetchall()
     players = c.execute("""SELECT p.steamid, p.name, COUNT(*) AS n FROM game_players gp JOIN people p ON p.steamid = gp.steamid
-                           GROUP BY gp.steamid ORDER BY n DESC""").fetchall()
+                           GROUP BY p.steamid, p.name ORDER BY n DESC""").fetchall()
     names = {r["steamid"]: r["name"] for r in players}
     links = highlight_links(c)
     c.close()
@@ -430,7 +414,8 @@ def match_page(slug):
                   f'<script>document.addEventListener("DOMContentLoaded",()=>document.body.insertAdjacentHTML('
                   f'"afterbegin",`<div class="adminbar">{state} &middot; <a href="/admin/match/{m["id"]}">'
                   f'Bu maçı yönet</a></div>`))</script>')
-    page = matchpage.render(data, base=f"/media/{slug}/", back="/highlights", extra_head=banner, back_label="Klipler")
+    page = matchpage.render(data, base=storage.base(slug, m["media_rev"]), back="/highlights", extra_head=banner,
+                            back_label="Klipler")
     if m["title"]:
         page = page.replace("<title>", f"<title>{matchpage.esc(m['title'])} - ", 1)
     return page
@@ -438,15 +423,17 @@ def match_page(slug):
 
 @app.route("/media/<slug>/<path:path>")
 def media(slug, path):
-    get_match(slug)  # files of hidden matches are hidden too
-    return send_from_directory(ingest.media_dir(slug), path, conditional=True, max_age=3600)
+    m = get_match(slug)  # files of hidden matches are hidden too
+    if storage.R2 and m["media_rev"]:
+        return redirect(storage.url(slug, m["media_rev"], path))
+    return send_from_directory(storage.local_dir(slug), path, conditional=True, max_age=3600)
 
 
 # ---------------------------------------------------------------- uploads ----
 
 def receive(stream_or_file, via):
     """Save an uploaded package to a temp file and import it. Returns (match, created, notes)."""
-    fd, tmp = tempfile.mkstemp(suffix=".zip", dir=db.DATA)
+    fd, tmp = tempfile.mkstemp(suffix=".zip")
     try:
         with os.fdopen(fd, "wb") as out:
             shutil.copyfileobj(stream_or_file, out, 1 << 20)
@@ -463,25 +450,88 @@ def receive(stream_or_file, via):
         os.remove(tmp)
 
 
-@app.route("/api/upload", methods=["POST"])
-def api_upload():
-    """For upload.py: body = the package zip, header Authorization: Bearer <UPLOAD_TOKEN>."""
+def upload_auth():
     auth = request.headers.get("Authorization", "")
-    if not (auth.startswith("Bearer ") and secrets.compare_digest(auth[7:], SECRETS["UPLOAD_TOKEN"])):
-        return jsonify(ok=False, error="wrong or missing upload token"), 401
-    try:
-        m, created, notes = receive(request.stream, "upload.py")
-    except ingest.BadPackage as e:
-        return jsonify(ok=False, error=str(e)), 400
-    if request.args.get("publish") == "1" and not m["published"]:
+    return auth.startswith("Bearer ") and secrets.compare_digest(auth[7:], SECRETS["UPLOAD_TOKEN"])
+
+
+def upload_result(m, created, notes):
+    publish = request.args.get("publish") == "1"
+    if publish and not m["published"]:
         c = con()
         c.execute("UPDATE matches SET published = 1 WHERE id = ?", (m["id"],))
         c.commit()
         c.close()
     base = request.host_url.rstrip("/")
     return jsonify(ok=True, created=created, notes=notes, match=m["map"], key=m["match_key"],
-                   published=bool(m["published"]) or request.args.get("publish") == "1",
+                   published=bool(m["published"]) or publish,
                    url=f"{base}/m/{m['slug']}", admin_url=f"{base}/admin/match/{m['id']}")
+
+
+@app.route("/api/upload", methods=["POST"])
+def api_upload():
+    """For upload.py: body = the package zip, header Authorization: Bearer <UPLOAD_TOKEN>.
+    (A site on Vercel can't take big bodies; there upload.py uses /api/upload/begin + /finish.)"""
+    if not upload_auth():
+        return jsonify(ok=False, error="wrong or missing upload token"), 401
+    try:
+        m, created, notes = receive(request.stream, "upload.py")
+    except ingest.BadPackage as e:
+        return jsonify(ok=False, error=str(e)), 400
+    return upload_result(m, created, notes)
+
+
+@app.route("/api/upload/begin", methods=["POST"])
+def api_upload_begin():
+    """upload.py step 1. Body: {"data": match_data.json, "files": {path: size}}.
+    Answers mode "r2" with a signed link per file (PUT the file there) and a ticket for step 2, or
+    mode "zip" when this site keeps files on its own disk (then send the package to /api/upload)."""
+    if not upload_auth():
+        return jsonify(ok=False, error="wrong or missing upload token"), 401
+    if not storage.R2:
+        return jsonify(ok=True, mode="zip")
+    body = request.get_json(silent=True) or {}
+    files = body.get("files") if isinstance(body.get("files"), dict) else {}
+    c = con()
+    try:
+        key, existing, slug = ingest.prepare(c, body.get("data"))
+    except ingest.BadPackage as e:
+        return jsonify(ok=False, error=str(e)), 400
+    finally:
+        c.close()
+    paths = [p for p in files if isinstance(p, str) and p != "match_data.json" and ingest.ALLOWED.match(p)]
+    rev = ingest.new_rev()
+    return jsonify(ok=True, mode="r2", slug=slug, rev=rev,
+                   ticket=TICKETS.dumps({"slug": slug, "rev": rev, "key": key}),
+                   put={p: storage.presign("PUT", storage.key(slug, rev, p), expires=3 * 3600) for p in paths},
+                   ignored=[p for p in files if p not in paths and p != "match_data.json"])
+
+
+@app.route("/api/upload/finish", methods=["POST"])
+def api_upload_finish():
+    """upload.py step 2, after the files are in the bucket. Body: {"ticket": ..., "data": match_data.json}."""
+    if not upload_auth():
+        return jsonify(ok=False, error="wrong or missing upload token"), 401
+    body = request.get_json(silent=True) or {}
+    try:
+        t = TICKETS.loads(body.get("ticket") or "", max_age=12 * 3600)
+    except BadSignature:
+        return jsonify(ok=False, error="upload ticket invalid or expired; run upload.py again"), 400
+    c = con()
+    try:
+        key, existing, _ = ingest.prepare(c, body.get("data"))
+        if key != t["key"] or (existing and existing["slug"] != t["slug"]):
+            raise ingest.BadPackage("the ticket is for another match; run upload.py again")
+        files = storage.files_of(t["slug"], t["rev"])
+        m, created, notes = ingest.apply(c, body["data"], key, existing, t["slug"], t["rev"], files, "upload.py",
+                                         sum(files.values()))
+    except ingest.BadPackage as e:
+        ingest.log_failure(c, "upload.py", str(e), 0)
+        return jsonify(ok=False, error=str(e)), 400
+    finally:
+        c.close()
+    storage.drop_other_revs(t["slug"], t["rev"])
+    return upload_result(m, created, notes)
 
 
 @app.route("/admin/upload", methods=["POST"])
@@ -576,13 +626,12 @@ def delete_match(mid):
     c.execute("DELETE FROM matches WHERE id = ?", (mid,))
     c.commit()
     c.close()
-    shutil.rmtree(ingest.media_dir(m["slug"]), ignore_errors=True)
+    storage.delete_match(m["slug"])
     flash("Match deleted from the site. Your files on the rendering PC are untouched; upload it again to bring it back.")
     return redirect(url_for("admin"))
 
 
 def main():
-    db.init()
     print("Website: http://localhost:5000   Admin: http://localhost:5000/admin  (secrets in web\\admin.env)")
     sys.stdout.flush()
     app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False, threaded=True)

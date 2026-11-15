@@ -35,10 +35,10 @@
     <tbody>
     {% for m in matches %}
     <tr>
-      <td><span class="thumb" {% if m.thumb %}style="background-image:url('{{ url_for('media', slug=m.slug, path=m.thumb) }}')"{% endif %}></span></td>
+      <td><span class="thumb" {% if m.thumb %}style="background-image:url('{{ media_url(m.slug, m.media_rev, m.thumb) }}')"{% endif %}></span></td>
       <td><b>{{ m.title or m.map }}</b><br><span class="dim">{{ m.date }} &middot; updated {{ m.updated_at|ago }}</span></td>
       <td class="nowrap num">{{ m.score1 }} : {{ m.score2 }}</td>
-      <td class="nowrap">{% if m.mvp_avatar %}<img class="av" src="{{ url_for('media', slug=m.slug, path=m.mvp_avatar) }}" alt=""> {% endif %}{{ m.mvp_name }}</td>
+      <td class="nowrap">{% if m.mvp_avatar %}<img class="av" src="{{ media_url(m.slug, m.media_rev, m.mvp_avatar) }}" alt=""> {% endif %}{{ m.mvp_name }}</td>
       <td class="num">{{ m.clip_count }}</td>
       <td class="nowrap num dim">{{ m.size_bytes|mb }}</td>
       <td>{% if m.published %}<span class="pill pub">public</span>{% else %}<span class="pill">hidden</span>{% endif %}</td>

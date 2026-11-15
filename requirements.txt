@@ -1,0 +1,3 @@
+# The website (web/), as deployed on Vercel. The rendering PC needs more (see README).
+flask>=3.0
+psycopg[binary]>=3.2

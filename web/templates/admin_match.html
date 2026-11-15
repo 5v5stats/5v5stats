@@ -34,7 +34,7 @@
   <div class="tbl"><table>
     <thead><tr><th></th><th>Player</th><th>Play</th><th>Round</th><th>Points</th></tr></thead>
     <tbody>{% for c in clips %}
-    <tr><td><a href="{{ url_for('media', slug=m.slug, path=c.file) }}"><span class="thumb" {% if c.thumb %}style="background-image:url('{{ url_for('media', slug=m.slug, path=c.thumb) }}')"{% endif %}></span></a></td>
+    <tr><td><a href="{{ media_url(m.slug, m.media_rev, c.file) }}"><span class="thumb" {% if c.thumb %}style="background-image:url('{{ media_url(m.slug, m.media_rev, c.thumb) }}')"{% endif %}></span></a></td>
       <td>{{ c.player }}</td><td>{{ c.label }}</td><td class="num">{{ c.round }}</td><td class="num">{{ c.score }}</td></tr>
     {% endfor %}</tbody></table></div>
   {% else %}<p class="dim" style="margin:0">No clips were uploaded for this match.</p>{% endif %}

@@ -5,8 +5,12 @@
     python upload.py de_inferno_2026-11-05_02-31-19 --zip-only  only make the package (to upload by hand in Admin)
     python upload.py --all                                       every rendered match in output\\
 
-A package is one zip: match_data.json (stats), the clips, thumbnails and profile pictures. The demo is not
-uploaded; the website only gets results. Uploading the same match again updates it on the site.
+A package is match_data.json (stats), the clips, thumbnails and profile pictures. The demo is not uploaded;
+the website only gets results. Uploading the same match again updates it on the site.
+
+How it's sent depends on the site: one that stores files in a Cloudflare R2 bucket (the hosted site on
+Vercel) gives signed links and the files go straight into the bucket, then only the stats go to the site;
+one that keeps files itself (the local prototype) takes the package as one zip.
 
 Server and token: SERVER_URL / UPLOAD_TOKEN in upload.env. Defaults: http://localhost:5000 and the token
 from web\\admin.env (the local prototype on this PC).
@@ -22,6 +26,7 @@ import zipfile
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUTPUT = os.path.join(ROOT, "output")
+CONTENT_TYPES = {".mp4": "video/mp4", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
 CSGO = r"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\game\csgo"
 
 
@@ -59,14 +64,19 @@ def match_data(folder):
     return json.load(open(path, encoding="utf-8"))
 
 
-def package(folder, dst):
-    """Write the match package zip. Returns (number of files, bytes)."""
+def package_files(folder):
+    """(match data, files of the package that exist, as relative paths with /)."""
     data = match_data(folder)
-    files = ["match_data.json"]
+    files = []
     for c in data["clips"]:
         files += [c["file"]] + [c[k] for k in ("thumb", "thumb2") if c.get(k)]
     files += list(data["pics"].values())
-    files = [f for f in dict.fromkeys(files) if os.path.isfile(os.path.join(folder, *f.split("/")))]
+    return data, [f for f in dict.fromkeys(files) if os.path.isfile(os.path.join(folder, *f.split("/")))]
+
+
+def package(folder, dst):
+    """Write the match package zip. Returns (number of files, bytes)."""
+    files = ["match_data.json"] + package_files(folder)[1]
     with zipfile.ZipFile(dst, "w", zipfile.ZIP_STORED) as z:  # videos and jpgs are already compressed
         for f in files:
             z.write(os.path.join(folder, *f.split("/")), f)
@@ -74,16 +84,18 @@ def package(folder, dst):
 
 
 class Progress:
-    """File wrapper that prints upload progress while requests reads it."""
-    def __init__(self, path):
+    """File wrapper that prints upload progress while requests reads it (offset/total: for several files)."""
+    def __init__(self, path, offset=0, total=None):
         self.f, self.size, self.done, self.t = open(path, "rb"), os.path.getsize(path), 0, 0
+        self.offset, self.total = offset, total or self.size
 
     def read(self, n=-1):
         b = self.f.read(n if n and n > 0 else 1 << 20)
         self.done += len(b)
         if time.time() - self.t > 0.5 or not b:
             self.t = time.time()
-            print(f"\r  uploading {self.done / 1e6:6.1f} / {self.size / 1e6:.1f} MB", end="", flush=True)
+            print(f"\r  uploading {(self.offset + self.done) / 1e6:6.1f} / {self.total / 1e6:.1f} MB", end="",
+                  flush=True)
         return b
 
     def __len__(self):
@@ -104,6 +116,70 @@ def upload(folder, public=False, zip_only=False, url=None, token=None):
     if not token:
         raise SystemExit("No upload token: put UPLOAD_TOKEN in upload.env (it's in the website's admin.env).")
     import requests
+    auth = {"Authorization": f"Bearer {token}"}
+    params = {"publish": "1"} if public else None
+    data, files = package_files(folder)
+    sizes = {f: os.path.getsize(os.path.join(folder, *f.split("/"))) for f in files}
+    try:
+        r = requests.post(f"{url}/api/upload/begin", json={"data": data, "files": sizes}, headers=auth,
+                          timeout=(10, 120))
+    except requests.ConnectionError:
+        raise SystemExit(f"  Can't reach the website at {url}. Is it running? (python web\\app.py)")
+    begin = {"mode": "zip"} if r.status_code == 404 else result(r)   # 404: an older site without direct uploads
+    if begin["mode"] == "r2":
+        res = upload_direct(folder, begin, sizes, auth, params, data, url)
+    else:
+        res = upload_zip(folder, auth, params, url)
+    state = "public" if res.get("published") else "hidden (make it public in Admin, or use --public)"
+    print(f"  {'added' if res['created'] else 'updated'}: {res['url']}  [{state}]")
+    for note in res.get("notes", []):
+        print(f"  note: {note}")
+    return res
+
+
+def result(r):
+    try:
+        res = r.json()
+    except ValueError:
+        raise SystemExit(f"  Upload failed: HTTP {r.status_code}")
+    if not res.get("ok"):
+        raise SystemExit(f"  Upload rejected: {res.get('error')}")
+    return res
+
+
+def upload_direct(folder, begin, sizes, auth, params, data, url):
+    """Files straight into the bucket with the site's signed links, then the stats to the site."""
+    import requests
+    put = begin["put"]
+    total, done = sum(sizes[f] for f in put), 0
+    print(f"  {len(put)} files, {total / 1e6:.1f} MB -> storage bucket")
+    for rel, link in put.items():
+        path = os.path.join(folder, *rel.split("/"))
+        ctype = CONTENT_TYPES.get(os.path.splitext(rel)[1].lower(), "application/octet-stream")
+        for attempt in range(3):
+            body = Progress(path, done, total)
+            try:
+                r = requests.put(link, data=body, timeout=(10, 600),
+                                 headers={"Content-Type": ctype, "Content-Length": str(sizes[rel])})
+                if r.status_code < 300:
+                    break
+                err = f"HTTP {r.status_code} {r.text[:200]}"
+            except requests.RequestException as e:
+                err = str(e)
+            finally:
+                body.f.close()
+            print(f"\n  {rel}: upload failed ({err}), " + ("retrying" if attempt < 2 else "giving up"))
+        else:
+            raise SystemExit("  Upload failed; nothing changed on the site. Run upload.py again.")
+        done += sizes[rel]
+    print()
+    r = requests.post(f"{url}/api/upload/finish", params=params, json={"ticket": begin["ticket"], "data": data},
+                      headers=auth, timeout=(10, 300))
+    return result(r)
+
+
+def upload_zip(folder, auth, params, url):
+    import requests
     fd, tmp = tempfile.mkstemp(suffix=".zip")
     os.close(fd)
     try:
@@ -111,9 +187,9 @@ def upload(folder, public=False, zip_only=False, url=None, token=None):
         print(f"  package: {n} files, {size / 1e6:.1f} MB")
         body = Progress(tmp)
         try:
-            r = requests.post(f"{url}/api/upload", params={"publish": "1"} if public else None, data=body,
-                              headers={"Authorization": f"Bearer {token}", "Content-Type": "application/zip",
-                                       "Content-Length": str(size)}, timeout=(10, 600))
+            r = requests.post(f"{url}/api/upload", params=params, data=body,
+                              headers={**auth, "Content-Type": "application/zip", "Content-Length": str(size)},
+                              timeout=(10, 600))
         finally:
             body.f.close()
             print()
@@ -121,17 +197,7 @@ def upload(folder, public=False, zip_only=False, url=None, token=None):
         raise SystemExit(f"  Can't reach the website at {url}. Is it running? (python web\\app.py)")
     finally:
         os.remove(tmp)
-    try:
-        res = r.json()
-    except ValueError:
-        raise SystemExit(f"  Upload failed: HTTP {r.status_code}")
-    if not res.get("ok"):
-        raise SystemExit(f"  Upload rejected: {res.get('error')}")
-    state = "public" if res.get("published") else "hidden (make it public in Admin, or use --public)"
-    print(f"  {'added' if res['created'] else 'updated'}: {res['url']}  [{state}]")
-    for note in res.get("notes", []):
-        print(f"  note: {note}")
-    return res
+    return result(r)
 
 
 def stats_only_folder(demo):

@@ -11,13 +11,13 @@
 <div class="cards">
   {% for m in matches %}
   <a class="card" href="{{ url_for('match_page', slug=m.slug) }}">
-    <div class="img" {% if m.thumb %}style="background-image:url('{{ url_for('media', slug=m.slug, path=m.thumb) }}')"{% endif %}>
+    <div class="img" {% if m.thumb %}style="background-image:url('{{ media_url(m.slug, m.media_rev, m.thumb) }}')"{% endif %}>
       <div class="t"><span class="map">{{ m.title or m.map }}</span>
         <span class="date">{{ m.date|day }}<br>{{ m.clip_count }} klip</span></div>
     </div>
     <div class="body">
       <span class="score"><span class="w">{{ m.score1 }}</span>-{{ m.score2 }}<span class="teams">{{ m.team1 }} vs {{ m.team2 }}</span></span>
-      <span class="mvp">{% if m.mvp_avatar %}<img src="{{ url_for('media', slug=m.slug, path=m.mvp_avatar) }}" alt="">{% endif %}
+      <span class="mvp">{% if m.mvp_avatar %}<img src="{{ media_url(m.slug, m.media_rev, m.mvp_avatar) }}" alt="">{% endif %}
         <span>MVP<br><b>{{ m.mvp_name }}</b></span></span>
     </div>
   </a>

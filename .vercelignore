@@ -1,0 +1,11 @@
+# Vercel only needs the website: api/, web/ and requirements.txt
+*
+!api/
+!api/**
+!web/
+!web/**
+!requirements.txt
+!vercel.json
+web/data/
+web/__pycache__/
+web/admin.env
