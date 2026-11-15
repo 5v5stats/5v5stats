@@ -87,11 +87,12 @@
 <div class="sec"><h2>{{ {'7d': 'Bu haftanın', '30d': 'Bu ayın', '90d': 'Son 3 ayın', 'all': 'Tüm zamanların'}[period] }} ödülleri</h2><small>// {{ awards|length }} kategori</small></div>
 <div class="awards">
   {% for a in awards %}
-  <div class="award"><span class="lbl">Ödül {{ '%02d'|format(loop.index) }}</span><span class="no">#{{ '%02d'|format(loop.index) }}</span>
+  <div class="award"><a class="cover" href="{{ url_for('award_page', slug=a.slug, p=period if period != 'all' else None) }}" aria-label="{{ a.title }} sıralaması"></a>
+    <span class="lbl">Ödül {{ '%02d'|format(loop.index) }}</span><span class="no">#{{ '%02d'|format(loop.index) }}</span>
     <h3>{{ a.title }}</h3>
     <a class="who" href="{{ url_for('player_page', steamid=a.sid) }}">{{ avatar(people, a.sid, a.name) }}{{ a.name }}</a>
     <div class="val">{{ a.value }}<small>{{ a.unit }}</small></div>
-    <p>{{ a.desc }}</p></div>
+    <p>{{ a.desc }}</p><span class="rank-go">Sıralama &rarr;</span></div>
   {% endfor %}
 </div>
 {% endif %}

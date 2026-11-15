@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar %}
+{% block title %}{{ title }} // 5v5 Turkish Server{% endblock %}
+{% block periods %}
+<div class="periods">{% for key, label in periods.items() %}<a href="?p={{ key }}" class="{{ 'on' if key == period }}">{{ label }}</a>{% endfor %}</div>
+{% endblock %}
+{% block body %}
+{% set plabel = {'all': 'Tüm zamanlar', '90d': 'Son 3 ay', '30d': 'Bu ay', '7d': 'Bu hafta'}[period] %}
+{% set pq = period if period != 'all' else None %}
+
+<section class="hero">
+  <div class="eyebrow"><a href="{{ url_for('stats_home', p=pq) }}" class="dim" style="text-decoration:none">&larr; İstatistik</a> // {{ plabel }} ödülleri</div>
+  <div class="display xl">{{ title }}</div>
+  <div class="meta-line"><span>{{ desc }}</span><span><b>{{ rows|length }}</b> sıralamadaki oyuncu</span>
+    {% if minm %}<span>en az <b>{{ minm }}</b> maç</span>{% endif %}</div>
+</section>
+
+<nav class="aw-tabs">{% for s, t in others %}<a href="{{ url_for('award_page', slug=s, p=pq) }}" class="{{ 'on' if s == slug }}">{{ t }}</a>{% endfor %}</nav>
+
+{% if not rows %}
+<p class="dim" style="margin:30px 0">Bu dönemde sıralamaya girecek kadar maç oynayan oyuncu yok.</p>
+{% else %}
+<div class="podium">
+  {% for r in rows[:3] %}
+  <a class="pod p{{ r.pos }}" href="{{ url_for('player_page', steamid=r.sid) }}">
+    <span class="medal">#{{ r.pos }}</span>
+    <span class="ring-at">{{ level_ring(r.tier, 34 if r.pos == 1 else 28) }}</span>
+    {{ avatar(people, r.sid, r.name) }}
+    <span class="nm">{{ r.name }}</span>
+    <span class="v">{{ r.value }}<small>{{ unit }}</small></span>
+    <span class="d">{{ r.detail }} &middot; {{ r.matches }} maç</span>
+  </a>
+  {% endfor %}
+</div>
+
+{% if rows|length > 3 %}
+<div class="aw-list">
+  {% for r in rows[3:] %}
+  <a class="aw-row" href="{{ url_for('player_page', steamid=r.sid) }}">
+    <span class="pos">#{{ r.pos }}</span>
+    {{ level_ring(r.tier, 28) }}
+    <span class="who2">{{ avatar(people, r.sid, r.name) }}<span style="min-width:0"><b>{{ r.name }}</b><small>{{ r.detail }} &middot; {{ r.matches }} maç</small></span></span>
+    <span class="bar"><i style="width:{{ '%.1f'|format(r.frac * 100) }}%"></i></span>
+    <span class="val">{{ r.value }}<small>{{ unit }}</small></span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% if unranked %}<p class="dim small" style="margin-top:14px">{{ unranked }} oyuncu yeterli maç oynamadığı için sıralamada değil.</p>{% endif %}
+{% endif %}
+{% endblock %}

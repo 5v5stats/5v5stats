@@ -208,30 +208,71 @@ def possessive(name):
     return f"{word}'{suffix}"
 
 
-AWARDS = [  # (title, metric, unit, format, description) - titles as on 5v5stats
-    ("Hasar Ustası", "ADR", "ADR", "{:.0f}", "Round başına en yüksek hasar"),
-    ("En Çok Frag", "KPR", "KPR", "{:.2f}", "Round başına en çok kill"),
-    ("Keskin Nişancı", "ACC_PCT", "% isabet", "pct1", "En yüksek isabet oranı"),
-    ("Kafa Avcısı", "HS_PCT", "% kafa", "pct", "En yüksek kafa atışı oranı"),
-    ("Clutch Kralı", "CLUTCH_WR", "% clutch", "pct", "En iyi clutch kazanma oranı"),
-    ("Giriş Kralı", "ENTRY_WR", "% giriş", "pct", "En iyi açılış düellosu oranı"),
-    ("Util Ustası", "UDR_PER_ROUND", "util/r", "{:.1f}", "Round başına en çok util hasarı"),
-    ("Klip Adamı", "MK_per_match", "3K+/M", "{:.2f}", "Maç başına en çok multi-kill round"),
+def _n(x):
+    return thousands(x or 0)
+
+
+AWARDS = [  # (slug, title, metric, unit, format, description, detail) - titles as on 5v5stats
+    ("hasar-ustasi", "Hasar Ustası", "ADR", "ADR", "{:.0f}", "Round başına en yüksek hasar",
+     lambda r: f"{_n(r['total_damage'])} hasar"),
+    ("en-cok-frag", "En Çok Frag", "KPR", "KPR", "{:.2f}", "Round başına en çok kill",
+     lambda r: f"{_n(r['total_kills'])} kill"),
+    ("keskin-nisanci", "Keskin Nişancı", "ACC_PCT", "% isabet", "pct1", "En yüksek isabet oranı",
+     lambda r: f"{_n(r['total_shots_on_tgt'])} / {_n(r['total_shots_fired'])} mermi isabet"),
+    ("kafa-avcisi", "Kafa Avcısı", "HS_PCT", "% kafa", "pct", "En yüksek kafa atışı oranı",
+     lambda r: f"{_n(r['total_hs_kills'])} / {_n(r['total_kills'])} kill kafadan"),
+    ("clutch-krali", "Clutch Kralı", "CLUTCH_WR", "% clutch", "pct", "En iyi clutch kazanma oranı",
+     lambda r: f"1v1 {_n(r['total_v1_wins'])}/{_n(r['total_v1_count'])} · 1v2 {_n(r['total_v2_wins'])}/{_n(r['total_v2_count'])}"),
+    ("giris-krali", "Giriş Kralı", "ENTRY_WR", "% giriş", "pct", "En iyi açılış düellosu oranı",
+     lambda r: f"{_n(r['total_entry_wins'])} / {_n(r['total_entry_count'])} açılış düellosu"),
+    ("util-ustasi", "Util Ustası", "UDR_PER_ROUND", "util/r", "{:.1f}", "Round başına en çok util hasarı",
+     lambda r: f"{_n(r['total_util_damage'])} util hasarı"),
+    ("klip-adami", "Klip Adamı", "MK_per_match", "3K+/M", "{:.2f}", "Maç başına en çok multi-kill round",
+     lambda r: f"{_n(r['total_multi'])} multi-kill round"),
 ]
+
+
+def award_value(fmt, v):
+    v = v or 0
+    return f"{v * 100:.1f}" if fmt == "pct1" else f"{v * 100:.0f}" if fmt == "pct" else fmt.format(v)
 
 
 def awards(board):
     q = [r for r in board if r["qualified"]]
     out = []
-    for title, key, unit, fmt, desc in AWARDS:
+    for slug, title, key, unit, fmt, desc, _ in AWARDS:
         if not q:
             break
         w = max(q, key=lambda r: r.get(key) or 0)
-        v = w.get(key) or 0
-        shown = f"{v * 100:.1f}" if fmt == "pct1" else f"{v * 100:.0f}" if fmt == "pct" else fmt.format(v)
-        out.append({"title": title, "unit": unit, "value": shown, "desc": desc, "sid": w["steamid64"],
-                    "name": w["name"]})
+        out.append({"slug": slug, "title": title, "unit": unit, "value": award_value(fmt, w.get(key)), "desc": desc,
+                    "sid": w["steamid64"], "name": w["name"]})
     return out
+
+
+@app.route("/odul/<slug>")
+def award_page(slug):
+    """One award's full ranking: every ranked player of the period sorted by the award's stat, top 3 on a podium."""
+    found = [a for a in AWARDS if a[0] == slug]
+    if not found:
+        abort(404)
+    slug, title, key, unit, fmt, desc, detail = found[0]
+    period = request.args.get("p", "all")
+    if period not in PERIODS:
+        period = "all"
+    c = con()
+    board = statsdb.leaderboard(c, period)
+    q = sorted((r for r in board if r["qualified"]), key=lambda r: r.get(key) or 0, reverse=True)
+    hi = (q[0].get(key) or 0) if q else 0
+    lo = (q[-1].get(key) or 0) if q else 0
+    span = hi - lo  # bars run from the lowest ranked value to the highest, so close values still differ visibly
+    rows = [{"pos": i + 1, "sid": r["steamid64"], "name": r["name"], "value": award_value(fmt, r.get(key)),
+             "frac": (0.12 + 0.88 * ((r.get(key) or 0) - lo) / span) if span else 1, "tier": r.get("rating"), "matches": r["total_matches"],
+             "detail": detail(r)} for i, r in enumerate(q)]
+    ctx = dict(rows=rows, title=title, unit=unit, desc=desc, slug=slug, period=period, periods=PERIODS,
+               people=people(c), others=[(a[0], a[1]) for a in AWARDS], unranked=len(board) - len(q),
+               minm=rating.MIN_MATCHES.get(period))
+    c.close()
+    return render_template("award.html", **ctx)
 
 
 @app.route("/")
