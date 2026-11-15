@@ -142,6 +142,37 @@ h2 { font-size:20px; margin:34px 0 12px; }
 .clipcard .info b { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .clipcard .info span { color:var(--muted); font-size:12px; }
 .clipcard .pts { font-weight:800; color:var(--accent); }
+.clipcard .vwrap { position:relative; }
+.clipcard .big { position:absolute; top:8px; right:8px; width:36px; height:36px; border:0; border-radius:6px; cursor:pointer;
+  background:rgba(0,0,0,.6); color:#fff; font-size:18px; display:grid; place-items:center; opacity:.85; transition:opacity .15s, background .15s; }
+.clipcard .big:hover { opacity:1; background:var(--accent); }
+.clipcard .info { cursor:pointer; }
+.clipcard .info:hover b { color:var(--accent); }
+/* theater view: one clip large over the page */
+.theater { position:fixed; inset:0; z-index:100; background:rgba(5,6,8,.94); display:none; flex-direction:column;
+  align-items:center; justify-content:center; padding:16px; box-sizing:border-box; }
+.theater.on { display:flex; }
+body.theater-open { overflow:hidden; }
+.theater .bar { width:min(100%, calc((100vh - 150px) * 16 / 9), 1500px); display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.theater .bar .who { flex:1; min-width:0; display:flex; align-items:center; gap:10px; }
+.theater .bar .who b { display:block; font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.theater .bar .who span { color:var(--muted); font-size:13px; }
+.theater .bar .count { color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.theater .tbtn { background:#1d2129; color:#fff; border:1px solid #2c323d; border-radius:6px; height:36px; padding:0 12px;
+  cursor:pointer; font:600 13px inherit; white-space:nowrap; }
+.theater .tbtn:hover { border-color:var(--accent); color:var(--accent); }
+.theater .tbtn.x { width:36px; padding:0; font-size:20px; }
+.theater .stage { position:relative; width:min(100%, calc((100vh - 150px) * 16 / 9), 1500px); }
+.theater video { display:block; width:100%; aspect-ratio:16/9; background:#000; border-radius:8px; }
+.theater .nav { position:absolute; top:50%; transform:translateY(-50%); width:48px; height:72px; border:0; border-radius:8px;
+  background:rgba(0,0,0,.55); color:#fff; font-size:30px; cursor:pointer; opacity:.7; transition:opacity .15s, background .15s; }
+.theater .nav:hover { opacity:1; background:var(--accent); }
+.theater .nav.prev { left:-60px; } .theater .nav.next { right:-60px; }
+.theater .nav[disabled] { opacity:.15; cursor:default; background:rgba(0,0,0,.55); }
+.theater .hint { color:#5d6573; font-size:12px; margin-top:10px; }
+@media (max-width: 1100px) { .theater .nav.prev { left:8px; } .theater .nav.next { right:8px; } .theater .nav { width:40px; height:56px; } }
+@media (max-width: 640px) { .theater { padding:8px; } .theater .hint, .theater .bar .count { display:none; }
+  .theater .tbtn.fs span { display:none; } }
 .playall { margin-left:10px; vertical-align:middle; background:var(--accent); color:#fff; border:0; border-radius:6px;
            padding:6px 14px; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
 .back { text-decoration:none; color:#d0d0d0; } .back:hover { color:#fff; }
@@ -173,11 +204,79 @@ function sortTable(th) {
   [...body.rows].sort((a, b) => { const x = key(a), y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * (asc ? 1 : -1); })
     .forEach(r => body.appendChild(r));
 }
-function playAll() {
-  const vids = [...document.querySelectorAll('.clipcard video')];
-  vids.forEach((v, i) => { v.onended = () => { const n = vids[i + 1]; if (n) { n.scrollIntoView({behavior: 'smooth', block: 'center'}); n.play(); } }; });
-  if (vids[0]) { vids[0].scrollIntoView({behavior: 'smooth', block: 'center'}); vids[0].play(); }
+function playAll() { openTheater(0); }
+
+// ---- theater view: a clip large over the page; arrows / keys for the others, plays on to the next one
+const T = { i: 0, el: null };
+function theaterClips() { return [...document.querySelectorAll('.clipcard')]; }
+function openTheater(i, from) {
+  const cards = theaterClips();
+  if (!cards.length) return;
+  if (!T.el) {
+    T.el = document.createElement('div');
+    T.el.className = 'theater';
+    T.el.innerHTML = `<div class="bar"><div class="who"></div><span class="count"></span>
+        <button class="tbtn fs" title="Tam ekran (F)">&#x26F6; <span>Tam ekran</span></button>
+        <button class="tbtn x" title="Kapat (Esc)">&times;</button></div>
+      <div class="stage"><video controls playsinline></video>
+        <button class="nav prev" title="Önceki (&larr;)">&#8249;</button><button class="nav next" title="Sonraki (&rarr;)">&#8250;</button></div>
+      <div class="hint">&larr; &rarr; klipler &middot; F tam ekran &middot; Esc kapat</div>`;
+    document.body.appendChild(T.el);
+    const v = T.el.querySelector('video');
+    T.el.querySelector('.x').onclick = () => history.state && history.state.theater ? history.back() : closeTheater();
+    T.el.querySelector('.fs').onclick = () => (v.requestFullscreen || v.webkitEnterFullscreen || (() => {})).call(v);
+    T.el.querySelector('.prev').onclick = () => showClip(T.i - 1);
+    T.el.querySelector('.next').onclick = () => showClip(T.i + 1);
+    T.el.addEventListener('click', e => { if (e.target === T.el) T.el.querySelector('.x').click(); });
+    v.addEventListener('ended', () => { if (T.i < theaterClips().length - 1) showClip(T.i + 1); });
+    document.addEventListener('keydown', e => {
+      if (!T.el.classList.contains('on') || e.target.closest('input, textarea, select')) return;
+      if (e.key === 'Escape' && !document.fullscreenElement) T.el.querySelector('.x').click();
+      else if (e.key === 'ArrowRight') { e.preventDefault(); showClip(T.i + 1); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); showClip(T.i - 1); }
+      else if (e.key === 'f' || e.key === 'F') T.el.querySelector('.fs').click();
+    });
+    window.addEventListener('popstate', () => { if (T.el.classList.contains('on')) closeTheater(); });
+  }
+  cards.forEach(c => c.querySelector('video').pause());
+  if (!T.el.classList.contains('on')) history.pushState({theater: true}, '');
+  T.el.classList.add('on');
+  document.body.classList.add('theater-open');
+  showClip(i, from);
 }
+function showClip(i, from) {
+  const cards = theaterClips();
+  if (i < 0 || i >= cards.length) return;
+  T.i = i;
+  const c = cards[i], small = c.querySelector('video'), v = T.el.querySelector('video');
+  v.poster = small.poster || '';
+  v.src = small.currentSrc || small.src;
+  v.currentTime = from || 0;
+  v.play().catch(() => {});
+  const av = c.querySelector('.info .av');
+  T.el.querySelector('.who').innerHTML = (av ? av.outerHTML : '') + '<div style="min-width:0">' + c.querySelector('.info .t').innerHTML + '</div>';
+  T.el.querySelector('.count').textContent = (i + 1) + ' / ' + cards.length;
+  T.el.querySelector('.prev').disabled = i === 0;
+  T.el.querySelector('.next').disabled = i === cards.length - 1;
+}
+function closeTheater() {
+  if (!T.el) return;
+  const v = T.el.querySelector('video');
+  v.pause();
+  v.removeAttribute('src'); v.load();
+  T.el.classList.remove('on');
+  document.body.classList.remove('theater-open');
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+}
+document.addEventListener('DOMContentLoaded', () => {
+  theaterClips().forEach((c, i) => {
+    const small = c.querySelector('video');
+    c.querySelector('.big').onclick = () => openTheater(i, small.currentTime || 0);
+    c.querySelector('.info').onclick = () => openTheater(i, small.currentTime || 0);
+  });
+  const m = location.hash.match(/^#izle([0-9]+)$/);
+  if (m) openTheater(+m[1] - 1);
+});
 function view(mode) {
   document.querySelectorAll('[data-view]').forEach(e => e.classList.toggle('hidden', e.dataset.view !== mode));
   document.querySelectorAll('.toolbar button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
@@ -330,7 +429,8 @@ def render(data, base="", back="../index.html", extra_head="", back_label="Tüm 
     mvp = pl[best_sid]
     mclip = max((c for c in clips if c.get("steamid") == best_sid), key=lambda c: c["score"], default=None)
     if mclip:
-        clip_link = (f'<a class="clip" href="#clip{clips.index(mclip) + 1}"><span class="play">&#9654;</span>'
+        clip_link = (f'<a class="clip" href="#clip{clips.index(mclip) + 1}" '
+                     f'onclick="openTheater({clips.index(mclip)}); return false"><span class="play">&#9654;</span>'
                      f'<span>Öne çıkan anlar<small>{esc(mclip["label"])} &middot; {mclip["round"]}. round</small></span></a>')
     else:
         clip_link = '<span class="clip locked"><span class="play">&#128274;</span><span>Öne çıkan an yok</span></span>'
@@ -384,7 +484,8 @@ def render(data, base="", back="../index.html", extra_head="", back_label="Tüm 
         for i, c in enumerate(clips, 1):
             poster = f' poster="{media(c["thumb"])}"' if c.get("thumb") else ""
             cards.append(f"""<div class="clipcard" id="clip{i}">
-  <video controls preload="none"{poster} src="{media(c["file"])}"></video>
+  <div class="vwrap"><video controls preload="none"{poster} src="{media(c["file"])}"></video>
+    <button class="big" type="button" title="Büyük izle">&#x26F6;</button></div>
   <div class="info">{avatar(c.get("steamid", ""), c["player"], "md")}<div class="t"><b>{esc(c["player"])} &middot; {esc(c["label"])}</b>
     <span>{c["round"]}. round</span></div><span class="pts num" title="Klip puanı">{c["score"]} puan</span></div>
 </div>""")

@@ -73,6 +73,49 @@ def _font(text, size, weight="Bold"):
     return f
 
 
+_MISSING = {}
+
+
+def _has_glyph(font, ch):
+    """False for characters the font would draw as an empty box (e.g. ✪ in Bahnschrift)."""
+    if ch.isspace():
+        return True
+    key = id(font)
+    if key not in _MISSING:
+        _MISSING[key] = bytes(font.getmask(""))  # a private-use character no font has
+    return bytes(font.getmask(ch)) != _MISSING[key]
+
+
+def _runs(text, font, size):
+    """Split text into (piece, font) runs: symbols the main font lacks use Segoe UI Symbol."""
+    from PIL import ImageFont
+    sym = None
+    runs = []
+    for ch in text:
+        f = font
+        if not _has_glyph(font, ch):
+            sym = sym or ImageFont.truetype(os.path.join(FONTS, "seguisym.ttf"), int(size * 0.9))
+            f = sym
+        if runs and runs[-1][1] is f:
+            runs[-1][0] += ch
+        else:
+            runs.append([ch, f])
+    return runs
+
+
+def _text_len(draw, text, font, size):
+    return sum(draw.textlength(t, font=f) for t, f in _runs(text, font, size))
+
+
+def _draw_text(draw, xy, text, font, size, fill):
+    x, y = xy
+    asc = font.getmetrics()[0]
+    for t, f in _runs(text, font, size):
+        dy = asc - f.getmetrics()[0] if f is not font else 0  # line up the baselines
+        draw.text((x, y + dy), t, font=f, fill=fill)
+        x += draw.textlength(t, font=f)
+
+
 def _hex(c, a=255):
     c = c.lstrip("#")
     return tuple(int(c[i:i + 2], 16) for i in (0, 2, 4)) + (a,)
@@ -110,7 +153,7 @@ def make_card(path, name, steamid, label, round_no, demo_name="", height=1080):
     probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
     av, pad, gap = S(112), S(18), S(22)
     badge = S(25) if tier else 0
-    name_w = probe.textlength(name, font=f_name)
+    name_w = _text_len(probe, name, f_name, S(46))
     text_w = max(name_w + (S(16) + 2 * badge + S(8) if tier else 0), _spaced_len(probe, label.upper(), f_play, S(1.5)),
                  _spaced_len(probe, meta, f_meta, S(2.2)))
     w = S(8) + pad + av + gap + int(text_w) + S(34)
@@ -167,7 +210,7 @@ def make_card(path, name, steamid, label, round_no, demo_name="", height=1080):
         pd.text((cx, cy + S(1)), str(tier), font=_font("1", S(25), "Bold"), fill=col, anchor="mm")
 
     # text
-    pd.text((tx, pad + S(2)), name, font=f_name, fill=(255, 255, 255, 255), anchor="lt")
+    _draw_text(pd, (tx, pad + S(2)), name, f_name, S(46), (255, 255, 255, 255))
     _spaced(pd, (tx, pad + S(58)), label.upper(), f_play, ACCENT + (255,), S(1.5))
     _spaced(pd, (tx, pad + S(92)), meta, f_meta, (150, 160, 175, 255), S(2.2))
 
