@@ -8,7 +8,7 @@ Every (player, round) gets points from four groups, and each point comes with a 
   penalties   kills on nearly dead enemies
 All weights are in POINTS below, so the ranking is easy to tune.
 
-Usage: python highlights.py <demo.dem> [--player NAME] [--min-score 45] [--all] [--json]
+Usage: python highlights.py <demo.dem> [--player NAME] [--min-score 100] [--all] [--json]
 """
 import argparse
 import json
@@ -139,7 +139,7 @@ def _label(c):
     return " + ".join(parts[:3])
 
 
-def find_highlights(demo_path, player=None, min_kills=1, min_score=45):
+def find_highlights(demo_path, player=None, min_kills=1, min_score=100):
     p = DemoParser(demo_path)
     deaths = p.parse_event("player_death", player=["team_num"],
                            other=["total_rounds_played", "is_warmup_period"])
@@ -408,7 +408,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("demo")
     ap.add_argument("--player")
-    ap.add_argument("--min-score", type=int, default=45)
+    ap.add_argument("--min-score", type=int, default=100)
     ap.add_argument("--all", action="store_true", help="show every scored play (min score 0)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()

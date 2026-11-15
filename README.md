@@ -31,7 +31,7 @@ scoreboard.txt                     <- the same as text, plus every player's swin
 | `python render.py match.dem --list` | Only lists the highlights it found and records nothing (quick) |
 | `python render.py match.dem --player "!"` | Only one player's highlights (repeat `--player` for several) |
 | `python render.py match.dem --max-clips 10` | Records up to 10 highlights (default 5) |
-| `python render.py match.dem --min-score 100` | Only big plays (see the scoring below) |
+| `python render.py match.dem --min-score 150` | Only the biggest plays: 4Ks, aces, big clutches (see the scoring below) |
 | `--gaps cut` | Cut quiet stretches out instead of fast-forwarding them |
 | `python render.py a.dem b.dem c.dem` | Several demos in one go |
 | `--no-titles` / `--no-reel` | No title overlay / no joined reel |
@@ -58,8 +58,11 @@ Every player's round gets **points**, and each point comes with a reason. `--lis
 | Round impact | **swing**: +0.5 per 1% the player changed their team's chance to win the round (at most −10 if negative); see *Player stats* below |
 | Penalty | victim had 20 HP or less −4 |
 
-The opening kill of a round gets no bonus of its own. The default threshold is **45 points** (`--min-score`);
-a plain 3K lands around 55 and a 4K above 100. All weights are in `POINTS` at the top of `highlights.py`.
+The opening kill of a round gets no bonus of its own. The default threshold is **100 points** (`--min-score`),
+and each match gets at most 5 clips (`--max-clips`), the best ones first. With round impact counted, an ordinary
+3K lands around 90-120 and a 4K or clutch well above, so 100 keeps the standout plays: a quiet match gets fewer
+than 5 clips instead of filler. `--min-score 45` brings back every 3K. All weights are in `POINTS` at the top of
+`highlights.py`.
 
 ### Quiet stretches inside a highlight
 

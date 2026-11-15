@@ -3,7 +3,7 @@ r"""Render CS2 demo highlights to MP4 clips + a highlight reel, in the backgroun
 Usage examples:
   python render.py "C:\Users\me\Downloads\match.dem"                 # top 5 highlights, all players
   python render.py match.dem --player "!" --max-clips 10              # one player
-  python render.py a.dem b.dem --min-score 80                         # several demos, only 4K/ace/big clutches
+  python render.py a.dem b.dem --min-score 150                        # several demos, only 4K/ace/big clutches
   python render.py match.dem --list                                   # just list highlights, record nothing
 
 How it works: find highlights (highlights.py) -> snapshot your CS2 settings -> launch CS2 (-insecure, muted,
@@ -694,8 +694,8 @@ def main():
     ap.add_argument("demos", nargs="*", help="path(s) to .dem files, or names of demos already in the csgo folder")
     ap.add_argument("--player", action="append", help="only this player (repeat for several)")
     ap.add_argument("--min-kills", type=int, default=1, help="ignore plays with fewer kills (unless clutch/defuse/etc.)")
-    ap.add_argument("--min-score", type=int, default=45,
-                    help="minimum highlight points (default 45; a plain 3K is ~55, a 4K ~100+)")
+    ap.add_argument("--min-score", type=int, default=100,
+                    help="minimum highlight points (default 100: a strong 3K, 4K, ace or big clutch; 45 = any 3K)")
     ap.add_argument("--max-clips", type=int, default=5, help="per demo (default 5)")
     ap.add_argument("--fps", type=int, default=60)
     ap.add_argument("--height", type=int, default=1080, help="output height (0 = native window size)")
