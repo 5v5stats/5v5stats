@@ -250,6 +250,8 @@ AWARDS = [  # (slug, title, metric, unit, format, description, detail) - titles 
      lambda r: f"{_n(r['total_util_damage'])} util hasarı"),
     ("klip-adami", "Klip Adamı", "MK_per_match", "3K+/M", "{:.2f}", "Maç başına en çok multi-kill round",
      lambda r: f"{_n(r['total_multi'])} multi-kill round"),
+    ("en-cok-gelisen", "En Çok Gelişen", "FORM", "skor farkı", "{:+.2f}", "Tüm zamanlara göre skoru en çok artan",
+     lambda r: f"tüm zamanlar {r['FORM_FROM']:.2f} → bu dönem {r['FORM_TO']:.2f}"),
 ]
 
 
@@ -271,8 +273,35 @@ ANTI_AWARDS = [
      lambda r: f"{_n(r['total_entry_wins'])} / {_n(r['total_entry_count'])} açılış düellosu"),
     ("utilsiz", "Utilsiz Adam", "UDR_PER_ROUND", "util/r", "{:.1f}", "Round başına en az util hasarı",
      lambda r: f"{_n(r['total_util_damage'])} util hasarı"),
+    ("ilk-kurban", "İlk Kurban", "OPEN_DPR", "ilk ölüm/r", "{:.3f}", "Round'un ilk ölen oyuncusu en sık olan",
+     lambda r: f"{_n(r['OPEN_DEATHS'])} kez ilk ölen · {_n(r['total_entry_count'])} açılış düellosu"),
+    ("formsuz", "Formsuz", "FORM", "skor farkı", "{:+.2f}", "Tüm zamanlara göre skoru en çok düşen",
+     lambda r: f"tüm zamanlar {r['FORM_FROM']:.2f} → bu dönem {r['FORM_TO']:.2f}"),
 ]
-ANTI_HIGH = {"yem"}  # anti-awards where the worst is the highest value (the rest: lowest)
+ANTI_HIGH = {"yem", "ilk-kurban"}  # anti-awards where the worst is the highest value (the rest: lowest)
+
+
+FORM_MIN_ALL = 30  # all-time matches a player needs for "En Çok Gelişen" / "Formsuz" (a real baseline)
+
+
+def award_board(c, period):
+    """The period's leaderboard, plus FORM: the change of a player's Skor in the period against their all-time
+    Skor (both without the small-sample shrink, so a short period isn't pulled towards 1.00). None for the
+    all-time view and for players without FORM_MIN_ALL matches in total.
+    Also OPEN_DPR: opening deaths (lost opening duels: the first death of the round) per round."""
+    board = statsdb.leaderboard(c, period)
+    for r in board:
+        rounds = r.get("estimated_rounds") or 0
+        lost = (r.get("total_entry_count") or 0) - (r.get("total_entry_wins") or 0)
+        r["OPEN_DEATHS"], r["OPEN_DPR"] = lost, (lost / rounds if rounds else None)
+    if period != "all":
+        base = {r["steamid64"]: r for r in statsdb.leaderboard(c, "all")}
+        for r in board:
+            b = base.get(r["steamid64"])
+            if b and b.get("total_matches", 0) >= FORM_MIN_ALL:
+                r["FORM_FROM"], r["FORM_TO"] = rating.points(b["PowerScore"]), rating.points(r["PowerScore"])
+                r["FORM"] = r["FORM_TO"] - r["FORM_FROM"]
+    return board
 
 
 def award_order(slug):
@@ -298,7 +327,10 @@ def awards(board, anti=False):
         if not q:
             break
         _, _, desc_order = award_order(slug)
-        w = (max if desc_order else min)(q, key=lambda r: r.get(key) or 0)
+        cand = [r for r in q if r.get(key) is not None]
+        if not cand:
+            continue
+        w = (max if desc_order else min)(cand, key=lambda r: r[key])
         out.append({"slug": slug, "title": title, "unit": unit, "value": award_value(fmt, w.get(key)), "desc": desc,
                     "sid": w["steamid64"], "name": w["name"]})
     return out
@@ -311,13 +343,15 @@ def awards_page():
     if period not in PERIODS:
         period = DEFAULT_PERIOD
     c = con()
-    board = statsdb.leaderboard(c, period)
+    board = award_board(c, period)
     q = [r for r in board if r["qualified"]]
     def cards_of(lst):
         out = []
         for slug, title, key, unit, fmt, desc, detail in lst:
             _, _, desc_order = award_order(slug)
-            top = sorted(q, key=lambda r: r.get(key) or 0, reverse=desc_order)[:3]
+            top = sorted((r for r in q if r.get(key) is not None), key=lambda r: r[key], reverse=desc_order)[:3]
+            if not top:
+                continue
             out.append({"slug": slug, "title": title, "unit": unit, "desc": desc,
                         "top": [{"sid": r["steamid64"], "name": r["name"], "value": award_value(fmt, r.get(key)),
                                  "tier": r.get("rating"), "detail": detail(r)} for r in top]})
@@ -339,8 +373,9 @@ def award_page(slug):
     if period not in PERIODS:
         period = DEFAULT_PERIOD
     c = con()
-    board = statsdb.leaderboard(c, period)
-    q = sorted((r for r in board if r["qualified"]), key=lambda r: r.get(key) or 0, reverse=desc_order)
+    board = award_board(c, period)
+    q = sorted((r for r in board if r["qualified"] and r.get(key) is not None), key=lambda r: r[key],
+               reverse=desc_order)
     first = (q[0].get(key) or 0) if q else 0
     last = (q[-1].get(key) or 0) if q else 0
     span = first - last  # bars run from the last ranked value to the first, so close values still differ visibly
@@ -360,7 +395,7 @@ def stats_home():
     if period not in PERIODS:
         period = DEFAULT_PERIOD
     c = con()
-    board = statsdb.leaderboard(c, period)
+    board = award_board(c, period)
     ov = statsdb.overview(c, period)
     synced = statsdb.get_meta(c, "synced_at")
     win = statsdb.window(c, period) if period != "all" else None
