@@ -253,18 +253,52 @@ AWARDS = [  # (slug, title, metric, unit, format, description, detail) - titles 
 ]
 
 
+# anti-awards: the worst of the period's ranked players in a category (same shape as AWARDS)
+ANTI_AWARDS = [
+    ("bot-modu", "Bot Modu", "points", "skor", "{:.2f}", "En düşük skor ortalaması",
+     lambda r: f"{_n(r['total_matches'])} maç"),
+    ("hasar-turisti", "Hasar Turisti", "ADR", "ADR", "{:.0f}", "Round başına en az hasar",
+     lambda r: f"{_n(r['total_damage'])} hasar"),
+    ("yem", "Yem", "DPR", "ölüm/r", "{:.2f}", "Round başına en çok ölüm",
+     lambda r: f"{_n(r['total_deaths'])} ölüm"),
+    ("mermi-savurgan", "Mermi Savurgan", "ACC_PCT", "% isabet", "pct1", "En düşük isabet oranı",
+     lambda r: f"{_n(r['total_shots_on_tgt'])} / {_n(r['total_shots_fired'])} mermi isabet"),
+    ("ayak-avcisi", "Ayak Avcısı", "HS_PCT", "% kafa", "pct", "En düşük kafa atışı oranı",
+     lambda r: f"{_n(r['total_hs_kills'])} / {_n(r['total_kills'])} kill kafadan"),
+    ("clutch-kacagi", "Clutch Kaçağı", "CLUTCH_WR", "% clutch", "pct", "En kötü clutch kazanma oranı",
+     lambda r: f"1v1 {_n(r['total_v1_wins'])}/{_n(r['total_v1_count'])} · 1v2 {_n(r['total_v2_wins'])}/{_n(r['total_v2_count'])}"),
+    ("giris-kurbani", "Giriş Kurbanı", "ENTRY_WR", "% giriş", "pct", "En kötü açılış düellosu oranı",
+     lambda r: f"{_n(r['total_entry_wins'])} / {_n(r['total_entry_count'])} açılış düellosu"),
+    ("utilsiz", "Utilsiz Adam", "UDR_PER_ROUND", "util/r", "{:.1f}", "Round başına en az util hasarı",
+     lambda r: f"{_n(r['total_util_damage'])} util hasarı"),
+]
+ANTI_HIGH = {"yem"}  # anti-awards where the worst is the highest value (the rest: lowest)
+
+
+def award_order(slug):
+    """(the award's tuple, is it an anti-award, sort best-of-the-category first descending?)"""
+    for a in AWARDS:
+        if a[0] == slug:
+            return a, False, True
+    for a in ANTI_AWARDS:
+        if a[0] == slug:
+            return a, True, a[0] in ANTI_HIGH
+    return None, False, True
+
+
 def award_value(fmt, v):
     v = v or 0
     return f"{v * 100:.1f}" if fmt == "pct1" else f"{v * 100:.0f}" if fmt == "pct" else fmt.format(v)
 
 
-def awards(board):
+def awards(board, anti=False):
     q = [r for r in board if r["qualified"]]
     out = []
-    for slug, title, key, unit, fmt, desc, _ in AWARDS:
+    for slug, title, key, unit, fmt, desc, _ in (ANTI_AWARDS if anti else AWARDS):
         if not q:
             break
-        w = max(q, key=lambda r: r.get(key) or 0)
+        _, _, desc_order = award_order(slug)
+        w = (max if desc_order else min)(q, key=lambda r: r.get(key) or 0)
         out.append({"slug": slug, "title": title, "unit": unit, "value": award_value(fmt, w.get(key)), "desc": desc,
                     "sid": w["steamid64"], "name": w["name"]})
     return out
@@ -279,13 +313,16 @@ def awards_page():
     c = con()
     board = statsdb.leaderboard(c, period)
     q = [r for r in board if r["qualified"]]
-    cards = []
-    for slug, title, key, unit, fmt, desc, detail in AWARDS:
-        top = sorted(q, key=lambda r: r.get(key) or 0, reverse=True)[:3]
-        cards.append({"slug": slug, "title": title, "unit": unit, "desc": desc,
-                      "top": [{"sid": r["steamid64"], "name": r["name"], "value": award_value(fmt, r.get(key)),
-                               "tier": r.get("rating"), "detail": detail(r)} for r in top]})
-    ctx = dict(cards=cards, period=period, periods=PERIODS, people=people(c), ranked=len(q),
+    def cards_of(lst):
+        out = []
+        for slug, title, key, unit, fmt, desc, detail in lst:
+            _, _, desc_order = award_order(slug)
+            top = sorted(q, key=lambda r: r.get(key) or 0, reverse=desc_order)[:3]
+            out.append({"slug": slug, "title": title, "unit": unit, "desc": desc,
+                        "top": [{"sid": r["steamid64"], "name": r["name"], "value": award_value(fmt, r.get(key)),
+                                 "tier": r.get("rating"), "detail": detail(r)} for r in top]})
+        return out
+    ctx = dict(cards=cards_of(AWARDS), anti=cards_of(ANTI_AWARDS), period=period, periods=PERIODS, people=people(c), ranked=len(q),
                minm=rating.MIN_MATCHES.get(period))
     c.close()
     return render_template("awards.html", **ctx)
@@ -294,24 +331,24 @@ def awards_page():
 @app.route("/odul/<slug>")
 def award_page(slug):
     """One award's full ranking: every ranked player of the period sorted by the award's stat, top 3 on a podium."""
-    found = [a for a in AWARDS if a[0] == slug]
+    found, anti, desc_order = award_order(slug)
     if not found:
         abort(404)
-    slug, title, key, unit, fmt, desc, detail = found[0]
+    slug, title, key, unit, fmt, desc, detail = found
     period = request.args.get("p", DEFAULT_PERIOD)
     if period not in PERIODS:
         period = DEFAULT_PERIOD
     c = con()
     board = statsdb.leaderboard(c, period)
-    q = sorted((r for r in board if r["qualified"]), key=lambda r: r.get(key) or 0, reverse=True)
-    hi = (q[0].get(key) or 0) if q else 0
-    lo = (q[-1].get(key) or 0) if q else 0
-    span = hi - lo  # bars run from the lowest ranked value to the highest, so close values still differ visibly
+    q = sorted((r for r in board if r["qualified"]), key=lambda r: r.get(key) or 0, reverse=desc_order)
+    first = (q[0].get(key) or 0) if q else 0
+    last = (q[-1].get(key) or 0) if q else 0
+    span = first - last  # bars run from the last ranked value to the first, so close values still differ visibly
     rows = [{"pos": i + 1, "sid": r["steamid64"], "name": r["name"], "value": award_value(fmt, r.get(key)),
-             "frac": (0.12 + 0.88 * ((r.get(key) or 0) - lo) / span) if span else 1, "tier": r.get("rating"), "matches": r["total_matches"],
+             "frac": (0.12 + 0.88 * ((r.get(key) or 0) - last) / span) if span else 1, "tier": r.get("rating"), "matches": r["total_matches"],
              "detail": detail(r)} for i, r in enumerate(q)]
-    ctx = dict(rows=rows, title=title, unit=unit, desc=desc, slug=slug, period=period, periods=PERIODS,
-               people=people(c), others=[(a[0], a[1]) for a in AWARDS], unranked=len(board) - len(q),
+    ctx = dict(rows=rows, title=title, unit=unit, desc=desc, slug=slug, period=period, periods=PERIODS, anti=anti,
+               people=people(c), others=[(a[0], a[1]) for a in (ANTI_AWARDS if anti else AWARDS)], unranked=len(board) - len(q),
                minm=rating.MIN_MATCHES.get(period))
     c.close()
     return render_template("award.html", **ctx)
@@ -340,7 +377,7 @@ def stats_home():
         best = top_clips(c, period)
     cb = None if best else statsdb.comeback(c, period)  # the comeback story only when there are no clips
     ctx = dict(board=board, period=period, periods=PERIODS, ov=ov, people=people(c), win=win, newer=newer,
-               awards=awards(board), min_matches=rating.MIN_MATCHES.get(period, 3), comeback=cb, best_clips=best, clip_title=clip_title, months=statsdb.activity_by_month(c),
+               awards=awards(board), anti_awards=awards(board, anti=True), min_matches=rating.MIN_MATCHES.get(period, 3), comeback=cb, best_clips=best, clip_title=clip_title, months=statsdb.activity_by_month(c),
                weeks=statsdb.weekly_counts(c), seen=statsdb.last_seen(c), ref=statsdb.latest_date(c),
                month30=statsdb.overview(c, "30d")["matches"],
                sync_date=sync_date,  # newest 5v5stats match we have; later games are our demos only

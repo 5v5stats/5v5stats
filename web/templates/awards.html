@@ -17,7 +17,8 @@
 {% if not ranked %}
 <p class="dim" style="margin:26px 0">Bu dönemde sıralamaya girecek kadar maç oynayan oyuncu yok.</p>
 {% else %}
-<div class="awgrid">
+{% macro grid(cards, cls='') %}
+<div class="awgrid {{ cls }}">
   {% for a in cards %}
   <a class="awc" href="{{ url_for('award_page', slug=a.slug, p=pq) }}">
     <span class="no">#{{ '%02d'|format(loop.index) }}</span>
@@ -33,5 +34,9 @@
   </a>
   {% endfor %}
 </div>
+{% endmacro %}
+{{ grid(cards) }}
+<div class="sec"><h2>Anti-ödüller</h2><small>// kategorinin en kötüsü // sıralamadakiler arasında</small></div>
+{{ grid(anti, 'anti') }}
 {% endif %}
 {% endblock %}

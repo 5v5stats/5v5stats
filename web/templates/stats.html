@@ -114,6 +114,20 @@
 </div>
 {% endif %}
 
+{% if anti_awards %}
+<div class="sec"><h2>{{ {'7d': 'Bu haftanın', '30d': 'Bu ayın', '90d': 'Son 3 ayın', 'all': 'Tüm zamanların'}[period] }} anti-ödülleri</h2><small>// kategorinin en kötüsü // sıralamadakiler arasında</small></div>
+<div class="awards anti">
+  {% for a in anti_awards %}
+  <div class="award"><a class="cover" href="{{ url_for('award_page', slug=a.slug, p=period if period != default_period else None) }}" aria-label="{{ a.title }} sıralaması"></a>
+    <span class="lbl">Anti-ödül {{ '%02d'|format(loop.index) }}</span><span class="no">#{{ '%02d'|format(loop.index) }}</span>
+    <h3>{{ a.title }}</h3>
+    <span class="who">{{ avatar(people, a.sid, a.name) }}{{ a.name }}</span>
+    <div class="val">{{ a.value }}<small>{{ a.unit }}</small></div>
+    <p>{{ a.desc }}</p><span class="rank-go">Sıralama &rarr;</span></div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <div class="sec"><h2>Sıralama</h2><small>// güç puanına göre // en az {{ minm }} maç</small></div>
 <div class="box">
   <div class="lbtools"><span class="lbl">Oyuncu ara</span><input id="q" type="text" placeholder="İsim yaz" oninput="filt(this.value)">

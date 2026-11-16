@@ -9,7 +9,7 @@
 {% set pq = period if period != default_period else None %}
 
 <section class="hero">
-  <div class="eyebrow"><a href="{{ url_for('awards_page', p=pq) }}" class="dim" style="text-decoration:none">&larr; Tüm ödüller</a> // {{ plabel }} ödülleri</div>
+  <div class="eyebrow"><a href="{{ url_for('awards_page', p=pq) }}" class="dim" style="text-decoration:none">&larr; Tüm ödüller</a> // {{ plabel }} {{ 'anti-ödülleri' if anti else 'ödülleri' }}</div>
   <div class="display xl">{{ title }}</div>
   <div class="meta-line"><span>{{ desc }}</span><span><b>{{ rows|length }}</b> sıralamadaki oyuncu</span>
     {% if minm %}<span>en az <b>{{ minm }}</b> maç</span>{% endif %}</div>
@@ -20,7 +20,7 @@
 {% if not rows %}
 <p class="dim" style="margin:30px 0">Bu dönemde sıralamaya girecek kadar maç oynayan oyuncu yok.</p>
 {% else %}
-<div class="podium">
+<div class="podium{{ ' anti' if anti }}">
   {% for r in rows[:3] %}
   <a class="pod p{{ r.pos }}" href="{{ url_for('player_page', steamid=r.sid) }}">
     <span class="medal">#{{ r.pos }}</span>
