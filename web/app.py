@@ -248,8 +248,8 @@ AWARDS = [  # (slug, title, metric, unit, format, description, detail) - titles 
      lambda r: f"{_n(r['total_entry_wins'])} / {_n(r['total_entry_count'])} açılış düellosu"),
     ("util-ustasi", "Util Ustası", "UDR_PER_ROUND", "util/r", "{:.1f}", "Round başına en çok util hasarı (HE, molotof)",
      lambda r: f"{_n(r['total_util_damage'])} util hasarı"),
-    ("flas-manyagi", "Flaş Manyağı", "FPR_PER_ROUND", "flaş/r", "{:.2f}", "Round başına en çok flaş atan",
-     lambda r: f"{_n(r['total_flashes'])} flaş"),
+    ("flas-manyagi", "Flaş Manyağı", "BLIND_PR", "kör sn/r", "{:.2f}", "Round başına rakipleri en uzun kör eden (demolardan)",
+     lambda r: f"{_n(r['enemy_blinds'])} rakip kör (1 sn+) · toplam {_n(r['enemy_blind_ms'] / 1000)} sn"),
     ("klip-adami", "Klip Adamı", "MK_per_match", "3K+/M", "{:.2f}", "Maç başına en çok multi-kill round",
      lambda r: f"{_n(r['total_multi'])} multi-kill round"),
     ("sessiz-adim", "Sessiz Adım", "WALK_PCT", "% shift", "pct", "Hayattayken en çok shift'le yürüyen (demolardan)",
@@ -279,12 +279,14 @@ ANTI_AWARDS = [
      lambda r: f"{_n(r['total_util_damage'])} util hasarı"),
     ("ayak-sesi", "Ayak Sesi", "WALK_PCT", "% shift", "pct", "Hayattayken en az shift'le yürüyen (demolardan)",
      lambda r: f"{r['demo_matches']:.0f} demo maç · {_n(r['walk_presses'])} kez shift"),
+    ("takim-flascisi", "Takım Flaşçısı", "TEAMFLASH", "% takıma", "pct", "Kör ettiği sürenin en çok takım arkadaşına gittiği (demolardan)",
+     lambda r: f"takım {_n(r['team_blind_ms'] / 1000)} sn · rakip {_n(r['enemy_blind_ms'] / 1000)} sn kör"),
     ("ilk-kurban", "İlk Kurban", "OPEN_DPR", "ilk ölüm/r", "{:.3f}", "Round'un ilk ölen oyuncusu en sık olan",
      lambda r: f"{_n(r['OPEN_DEATHS'])} kez ilk ölen · {_n(r['total_entry_count'])} açılış düellosu"),
     ("formsuz", "Formsuz", "FORM", "skor farkı", "{:+.2f}", "Tüm zamanlara göre skoru en çok düşen",
      lambda r: f"tüm zamanlar {r['FORM_FROM']:.2f} → bu dönem {r['FORM_TO']:.2f}"),
 ]
-ANTI_HIGH = {"yem", "ilk-kurban"}  # anti-awards where the worst is the highest value (the rest: lowest)
+ANTI_HIGH = {"yem", "ilk-kurban", "takim-flascisi"}  # anti-awards where the worst is the highest value (the rest: lowest)
 
 
 WALK_MIN_DEMOS = 3  # demo matches a player needs for the shift awards (only our demos record walking)
@@ -301,6 +303,10 @@ def award_board(c, period):
         rounds = r.get("estimated_rounds") or 0
         lost = (r.get("total_entry_count") or 0) - (r.get("total_entry_wins") or 0)
         r["OPEN_DEATHS"], r["OPEN_DPR"] = lost, (lost / rounds if rounds else None)
+        demos = (r.get("demo_matches") or 0) >= WALK_MIN_DEMOS
+        dr, en, tm = r.get("demo_rounds") or 0, r.get("enemy_blind_ms") or 0, r.get("team_blind_ms") or 0
+        r["BLIND_PR"] = en / 1000 / dr if demos and dr else None
+        r["TEAMFLASH"] = tm / (tm + en) if demos and tm + en >= 10000 else None  # 10 s+ of blinding in total
         alive = r.get("alive_ticks") or 0
         r["WALK_PCT"] = (r.get("walk_ticks") or 0) / alive if alive and (r.get("demo_matches") or 0) >= WALK_MIN_DEMOS else None
     if period != "all":

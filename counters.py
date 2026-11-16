@@ -31,6 +31,7 @@ def counters(demo_path):
                 df[col] = df[col].astype(str)
 
     walk = walking(demo_path)
+    blind = blinding(demo_path)
     c = collections.defaultdict(lambda: collections.Counter())
     active = [s for s in players if players[s]["rounds"]]
     team_score = {}  # final result per player: did their team win the match?
@@ -101,13 +102,33 @@ def counters(demo_path):
                                                     "total_v1_wins", "total_v2_count", "total_v2_wins",
                                                     "total_entry_count", "total_entry_wins", "total_util_damage",
                                                     "total_flashes", "t_rounds", "ct_rounds")},
-                  "demo_matches": 1, **walking_of(walk, s)}
+                  "demo_matches": 1, "demo_rounds": pl["rounds"], **walking_of(walk, s),
+                  **{k: int(blind.get(s, {}).get(k, 0)) for k in ("enemy_blinds", "enemy_blind_ms", "team_blind_ms")}}
     return out
 
 
 def walking_of(walk, sid):
     w = walk.get(sid) or {}
     return {k: int(w.get(k, 0)) for k in ("alive_ticks", "walk_ticks", "walk_presses")}
+
+
+def blinding(demo_path):
+    """{steamid: {enemy_blinds, enemy_blind_ms, team_blind_ms}}: enemies blinded for 1 s or more, and the total
+    time enemies / teammates (not themselves) stayed blind from the player's flashes."""
+    from demoparser2 import DemoParser
+    b = DemoParser(demo_path).parse_event("player_blind", player=["team_num"])
+    out = collections.defaultdict(collections.Counter)
+    for _, e in b.iterrows():
+        a, v = str(e.get("attacker_steamid")), str(e.get("user_steamid"))
+        ta, tv, dur = e.get("attacker_team_num"), e.get("user_team_num"), float(e.get("blind_duration") or 0)
+        if a == v or ta not in (2, 3) or tv not in (2, 3):
+            continue
+        if ta != tv:
+            out[a]["enemy_blind_ms"] += int(dur * 1000)
+            out[a]["enemy_blinds"] += dur >= 1.0
+        else:
+            out[a]["team_blind_ms"] += int(dur * 1000)
+    return out
 
 
 def walking(demo_path):

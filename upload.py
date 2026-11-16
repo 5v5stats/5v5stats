@@ -60,8 +60,8 @@ def match_data(folder):
     path = os.path.join(folder, "match_data.json")
     cj = os.path.join(folder, "clips.json")
     fresh = os.path.isfile(path) and (not os.path.isfile(cj) or os.path.getmtime(path) >= os.path.getmtime(cj))
-    def complete(d):  # made by the current scoreboard_html (older packages lack duels / walking counters)
-        return {"key", "counters", "duels"} <= set(d) and all("walk_ticks" in c for c in d["counters"].values())
+    def complete(d):  # made by the current scoreboard_html (older packages lack duels / walking / flash counters)
+        return {"key", "counters", "duels"} <= set(d) and all("enemy_blind_ms" in c for c in d["counters"].values())
 
     if not fresh or not complete(json.load(open(path, encoding="utf-8"))):
         demo = os.path.join(CSGO, os.path.basename(folder) + ".dem")

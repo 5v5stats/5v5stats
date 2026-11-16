@@ -57,8 +57,9 @@ TOTALS = ["total_matches", "estimated_rounds", "wins", "losses", "total_kills", 
           "total_damage", "total_hs_kills", "total_multi", "total_shots_fired", "total_shots_on_tgt",
           "total_v1_count", "total_v1_wins", "total_v2_count", "total_v2_wins", "total_entry_count",
           "total_entry_wins", "total_util_damage", "total_flashes", "t_rounds", "ct_rounds",
-          # demo-only counters (5v5stats has none: 0 there), not used by the rating: walking with shift
-          "demo_matches", "alive_ticks", "walk_ticks", "walk_presses"]
+          # demo-only counters (5v5stats has none: 0 there), not used by the rating: walking with shift, flashes
+          "demo_matches", "demo_rounds", "alive_ticks", "walk_ticks", "walk_presses",
+          "enemy_blinds", "enemy_blind_ms", "team_blind_ms"]
 
 
 def _div(a, b):
