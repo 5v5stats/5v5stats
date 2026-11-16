@@ -259,15 +259,16 @@ def duo_players(con, min_games=5):
     return sorted(((s, names.get(s) or s, c) for s, c in n.items() if c >= min_games), key=lambda x: -x[2])
 
 
-def duo(con, a, b):
-    """Two players: games as teammates and as opponents (all games), and head-to-head kills (our demo games)."""
+def duo(con, a, b, period="all"):
+    """Two players: games as teammates and as opponents in the period, and head-to-head kills (our demo games)."""
     ia, ib = ids_of(con, a), ids_of(con, b)
-    sa, sb = set(ia), set(ib)
+    sa = set(ia)
     q = ",".join("?" * (len(ia) + len(ib)))
+    cond, cargs = period_where(con, period, "g.")
     games = {}
     for r in con.execute(f"""SELECT gp.*, g.date, g.map, g.rounds,
                              g.score_a, g.score_b, g.source FROM game_players gp JOIN games g ON g.id = gp.game_id
-                             WHERE gp.steamid IN ({q})""", (*ia, *ib)):
+                             WHERE gp.steamid IN ({q}) AND {cond}""", (*ia, *ib, *cargs)):
         g = games.setdefault(r["game_id"], {"id": r["game_id"], "date": r["date"], "map": r["map"],
                                             "score": f'{r["score_a"]}-{r["score_b"]}', "source": r["source"]})
         g["a" if r["steamid"] in sa else "b"] = r
@@ -303,10 +304,10 @@ def duo(con, a, b):
                      "a": side(rows, "a"), "b": side(rows, "b")}
         if rows:
             guests += [(out[mode]["a"], totals(rows, "a")), (out[mode]["b"], totals(rows, "b"))]
-    if guests:
-        pri = (get_meta(con, "priors", {}) or {}).get("all")
-        _, scored = rating.leaderboard(list(player_totals(con, "all").values()), "all", prior=pri,
-                                       guests=[t for _, t in guests])
+    if guests:  # on the period's scale: 1.00 = the period's average
+        pri = get_meta(con, "priors", {}) or {}
+        _, scored = rating.leaderboard(list(player_totals(con, period).values()), period,
+                                       prior=pri.get(period) or pri.get("all"), guests=[t for _, t in guests])
         for (s, _), r in zip(guests, scored):
             s["points"] = r["points"]
     for g in both:
@@ -320,8 +321,9 @@ def duo(con, a, b):
             f"SELECT DISTINCT game_id FROM duels WHERE game_id IN ({gq})", [g["id"] for g in both])}
         pa, pb = ",".join("?" * len(ia)), ",".join("?" * len(ib))
         for r in con.execute(f"""SELECT killer, SUM(kills) AS n, SUM(hs) AS hs, SUM(openings) AS op FROM duels
-                                 WHERE (killer IN ({pa}) AND victim IN ({pb})) OR (killer IN ({pb}) AND victim IN ({pa}))
-                                 GROUP BY killer""", (*ia, *ib, *ib, *ia)):
+                                 WHERE game_id IN ({gq}) AND
+                                   ((killer IN ({pa}) AND victim IN ({pb})) OR (killer IN ({pb}) AND victim IN ({pa})))
+                                 GROUP BY killer""", (*[g["id"] for g in both], *ia, *ib, *ib, *ia)):
             x = h["a" if r["killer"] in sa else "b"]
             x["n"] += r["n"] or 0
             x["hs"] += r["hs"] or 0
@@ -331,19 +333,24 @@ def duo(con, a, b):
     return out
 
 
-DUO_MIN_WITH, DUO_MIN_VS = 20, 15  # games a pair needs together / against each other for the fun facts
+# games a pair needs in the period for the fun facts: (as teammates, as opponents, in the same game at all)
+DUO_MIN = {"all": (20, 15, 30), "90d": (10, 8, 15), "30d": (5, 4, 8), "7d": (3, 3, 4)}
 
 
-def duo_facts(con, top=3):
-    """İkili's opening page: the extremes over every pair of players, all time.
-    lift: pairs whose Skor rises most when they're teammates (both players' change vs their overall Skor);
+def duo_facts(con, period="all", top=3):
+    """İkili's opening page: the extremes over every pair of players in the period.
+    lift: pairs whose Skor rises most when they're teammates (both players' change vs their period Skor);
     sink: the opposite; dom: rivalries one player dominates (wins as opponents, then Skor gap);
-    rival: the pairs that met most as opponents. Skor without the small-sample shrink here, so a pair's games
-    compare fairly with the player's whole history; the pair page shows the shrunk value."""
+    rival: the pairs that end up on opposite teams most often, as a share of the games they're both in.
+    Skor without the small-sample shrink here, so a pair's games compare fairly with the player's whole
+    period; the pair page shows the shrunk value."""
+    min_with, min_vs, min_both = DUO_MIN[period]
+    cond, cargs = period_where(con, period, "g.")
     mm = merge_map(con)
     base = {r["steamid"]: json.loads(r["totals"]) for r in con.execute("SELECT steamid, totals FROM baseline")}
     games = {}
-    for r in con.execute("""SELECT gp.*, g.rounds FROM game_players gp JOIN games g ON g.id = gp.game_id"""):
+    for r in con.execute(f"""SELECT gp.*, g.rounds FROM game_players gp JOIN games g ON g.id = gp.game_id
+                             WHERE {cond}""", cargs):
         sid = mm.get(r["steamid"], r["steamid"])
         c = json.loads(r["counters"]) if r["counters"] else _estimate(r, base.get(r["steamid"], {}))
         games.setdefault(r["game_id"], {})[sid] = (r["side"], r["won"], c)
@@ -359,11 +366,21 @@ def duo_facts(con, top=3):
                 x["b_wins"] += wb
                 _add(x["a"], ca)
                 _add(x["b"], cb)
-    keep = [(k, x) for k, x in acc.items() if x["n"] >= (DUO_MIN_WITH if k[2] == "with" else DUO_MIN_VS)]
-    if not keep:
+    keep = [(k, x) for k, x in acc.items() if x["n"] >= (min_with if k[2] == "with" else min_vs)]
+    # rivals: share of their shared games on opposite teams
+    rival = []
+    for a, b in {(k[0], k[1]) for k in acc}:
+        w, v = acc.get((a, b, "with"), {}).get("n", 0), acc.get((a, b, "vs"), {"n": 0})
+        if w + v["n"] >= min_both and v["n"]:
+            x = v if v["b_wins"] <= v["a_wins"] else {**v, "a_wins": v["b_wins"], "b_wins": v["a_wins"]}
+            rival.append({"a": a if x is v else b, "b": b if x is v else a, "n": v["n"], "both": w + v["n"],
+                          "share": v["n"] / (w + v["n"]), "a_wins": x["a_wins"], "b_wins": x["b_wins"]})
+    rival.sort(key=lambda r: (-r["share"], -r["n"]))
+    if not keep and not rival:
         return None
-    pri = (get_meta(con, "priors", {}) or {}).get("all")
-    board, scored = rating.leaderboard(list(player_totals(con, "all").values()), "all", prior=pri,
+    pri = get_meta(con, "priors", {}) or {}
+    board, scored = rating.leaderboard(list(player_totals(con, period).values()), period,
+                                       prior=pri.get(period) or pri.get("all"),
                                        guests=[t for _, x in keep for t in (x["a"], x["b"])])
     overall = {r["steamid64"]: rating.points(r["PowerScore"]) for r in board}
     rows = []
@@ -382,8 +399,7 @@ def duo_facts(con, top=3):
     return {"lift": [r for r in sorted(with_, key=lambda r: -min(r["da"], r["db"])) if min(r["da"], r["db"]) > 0][:top],
             "sink": [r for r in sorted(with_, key=lambda r: max(r["da"], r["db"])) if max(r["da"], r["db"]) < 0][:top],
             "dom": sorted(vs, key=lambda r: (-r["share"], -(r["pa"] - r["pb"])))[:top],
-            "rival": sorted(vs, key=lambda r: -r["n"])[:top],
-            "min_with": DUO_MIN_WITH, "min_vs": DUO_MIN_VS}
+            "rival": rival[:top], "min_with": min_with, "min_vs": min_vs, "min_both": min_both}
 
 
 def remove_demo(con, match_key):

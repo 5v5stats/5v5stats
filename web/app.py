@@ -486,21 +486,25 @@ def duo_page():
     mm = statsdb.merge_map(c)
     a = mm.get(request.args.get("a", ""), request.args.get("a", ""))
     b = mm.get(request.args.get("b", ""), request.args.get("b", ""))
+    period = request.args.get("p", DEFAULT_PERIOD)
+    if period not in PERIODS:
+        period = DEFAULT_PERIOD
     plist = statsdb.duo_players(c)
     names = {s: n for s, n, _ in plist}
     ppl = people(c)
     tiers = player_tiers(c)
-    d = statsdb.duo(c, a, b) if a and b and a != b and a in names and b in names else None
+    d = statsdb.duo(c, a, b, period) if a and b and a != b and a in names and b in names else None
     # who-killed-whom comes only from our demos: say since when there is any
     since, n_demos = c.execute("SELECT MIN(g.date), COUNT(*) FROM games g "
                                "WHERE EXISTS (SELECT 1 FROM duels d WHERE d.game_id = g.id)").fetchone()
-    facts = statsdb.duo_facts(c) if d is None else None  # the opening page: the extremes over all pairs
+    facts = statsdb.duo_facts(c, period) if d is None else None  # the opening page: the extremes over all pairs
     if facts:
         for s in {r[k] for rows in (facts["lift"], facts["sink"], facts["dom"], facts["rival"]) for r in rows
                   for k in ("a", "b")}:
             names.setdefault(s, (ppl.get(s) or {}).get("name") or s)
     c.close()
     return render_template("duo.html", a=a, b=b, d=d, plist=plist, names=names, people=ppl, tiers=tiers,
+                           period=period, periods=PERIODS,
                            demo_since=since, n_demos=n_demos, facts=facts)
 
 

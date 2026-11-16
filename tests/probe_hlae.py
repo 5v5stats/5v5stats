@@ -1,5 +1,5 @@
 """Test HLAE with the current CS2: launch, load demo, survive playback, optionally record a clip.
-Usage: python tests/test_hlae.py <hlae folder> [--record]"""
+Usage: python tests/probe_hlae.py <hlae folder> [--record]"""
 import os
 import subprocess
 import sys

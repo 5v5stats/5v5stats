@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% from "_macros.html" import avatar %}
 {% block title %}{% if d %}{{ names[a] }} vs {{ names[b] }}{% else %}İkili karşılaştırma{% endif %} // 5v5 Turkish Server{% endblock %}
+{% block periods %}
+<div class="periods">{% for key, label in periods.items() %}<a href="{{ url_for('duo_page', a=a or None, b=b or None, p=key if key != default_period else None) }}" class="{{ 'on' if key == period }}">{{ label }}</a>{% endfor %}</div>
+{% endblock %}
 {% block body %}
+{% set pq = period if period != default_period else None %}
+{% set plabel = {'all': 'Tüm zamanlar', '90d': 'Son 3 ay', '30d': 'Son 30 gün', '7d': 'Bu hafta'}[period] %}
 {% macro pick(name, cur) -%}
 <select name="{{ name }}" aria-label="Oyuncu"><option value="">Oyuncu seç&hellip;</option>
   {% for s, n, g in plist %}<option value="{{ s }}" {{ 'selected' if s == cur }}>{{ n }} ({{ g }} maç)</option>{% endfor %}</select>
@@ -11,9 +16,9 @@
 {%- endmacro %}
 
 <section class="hero">
-  <div class="eyebrow">Oyuncular // ikili karşılaştırma</div>
+  <div class="eyebrow">Oyuncular // ikili karşılaştırma // {{ plabel|lower }}</div>
   <div class="display xl">İkili <i>istatistik.</i></div>
-  <form class="duo-sel" action="{{ url_for('duo_page') }}">{{ pick('a', a) }}<span class="x">vs</span>{{ pick('b', b) }}<button>Karşılaştır</button></form>
+  <form class="duo-sel" action="{{ url_for('duo_page') }}">{{ pick('a', a) }}<span class="x">vs</span>{{ pick('b', b) }}{% if pq %}<input type="hidden" name="p" value="{{ pq }}">{% endif %}<button>Karşılaştır</button></form>
 </section>
 
 {% if not d %}
@@ -28,12 +33,12 @@
   ('lift', 'Birlikte uçanlar', 'aynı takımdayken ikisinin de skoru kendi ortalamasından yükseliyor // en az ' ~ facts.min_with ~ ' maç'),
   ('sink', 'Birlikte batanlar', 'aynı takımdayken ikisinin de skoru düşüyor // en az ' ~ facts.min_with ~ ' maç'),
   ('dom', 'Domine edenler', 'karşı karşıya oynayınca biri açık ara kazanıyor // en az ' ~ facts.min_vs ~ ' maç'),
-  ('rival', 'En büyük rekabet', 'en çok karşı karşıya gelenler')] %}
+  ('rival', 'Hep karşı karşıya', 'aynı maçta oldukları zaman en sık rakip takıma düşenler // en az ' ~ facts.min_both ~ ' ortak maç')] %}
 {% for key, title, sub in sections %}{% if facts[key] %}
 <div class="sec"><h2>{{ title }}</h2><small>// {{ sub }}</small></div>
 <div class="fpairs">
   {% for r in facts[key] %}
-  <a class="fpair {{ key }}" href="{{ url_for('duo_page', a=r.a, b=r.b) }}">
+  <a class="fpair {{ key }}" href="{{ url_for('duo_page', a=r.a, b=r.b, p=pq) }}">
     <span class="no">#{{ loop.index }}</span>
     {{ pair(r) }}
     {% if key in ('lift', 'sink') %}
@@ -43,8 +48,8 @@
       <span class="fp-big"><span class="pos">{{ r.a_wins }}</span> <i>-</i> <span class="neg">{{ r.b_wins }}</span></span>
       <span class="fp-d">{{ names[r.a] }} {{ r.n }} maçın %{{ (r.share * 100)|round|int }}'ini kazanmış &middot; skor {{ '%.2f'|format(r.pa) }} vs {{ '%.2f'|format(r.pb) }}</span>
     {% else %}
-      <span class="fp-big">{{ r.n }} <i>maç</i></span>
-      <span class="fp-d">galibiyet {{ r.a_wins }} - {{ r.b_wins }} &middot; skor {{ '%.2f'|format(r.pa) }} vs {{ '%.2f'|format(r.pb) }}</span>
+      <span class="fp-big">%{{ (r.share * 100)|round|int }} <i>rakip</i></span>
+      <span class="fp-d">{{ r.both }} ortak maçın {{ r.n }}'inde karşı karşıya &middot; galibiyet {{ r.a_wins }} - {{ r.b_wins }}</span>
     {% endif %}
   </a>
   {% endfor %}
@@ -60,7 +65,7 @@
   <a class="fo b" href="{{ url_for('player_page', steamid=b) }}">{{ avatar(people, b, names[b]) }}
     <span style="min-width:0"><span class="nm">{{ names[b] }}</span><span class="sub">{{ level_ring(tb.tier, 26) }}{% if tb.points is not none and tb.points is defined %}{{ '%.2f'|format(tb.points) }}{% endif %}</span></span></a>
 </div>
-<div class="meta-line"><span><b>{{ d.total }}</b> ortak maç</span><span><b>{{ d.with.n }}</b> aynı takımda</span><span><b>{{ d.vs.n }}</b> rakip</span></div>
+<div class="meta-line"><span>{{ plabel }}:</span><span><b>{{ d.total }}</b> ortak maç</span><span><b>{{ d.with.n }}</b> aynı takımda</span><span><b>{{ d.vs.n }}</b> rakip</span></div>
 
 {% set h = d.h2h %}
 <div class="sec"><h2>Birbirlerini öldürme</h2><small>// {{ h.games }} demo maçından</small></div>
@@ -84,7 +89,7 @@
 <p class="dim small" style="margin:10px 0 22px">Karşı karşıya oynadıkları demo maçı yok: kim kimi öldürdü sadece bizim demolarımızda var.</p>
 {% endif %}
 
-<div class="sec"><h2>Maçlar</h2><small>// tüm maçlar (5v5stats + demolar)</small></div>
+<div class="sec"><h2>Maçlar</h2><small>// {{ plabel|lower }} (5v5stats + demolar)</small></div>
 <div class="duo-modes">
   {% for mode, title in [('with', 'Aynı takımda'), ('vs', 'Rakip olarak')] %}
   {% set m = d[mode] %}
