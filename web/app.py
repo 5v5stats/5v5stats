@@ -250,6 +250,8 @@ AWARDS = [  # (slug, title, metric, unit, format, description, detail) - titles 
      lambda r: f"{_n(r['total_util_damage'])} util hasarı"),
     ("klip-adami", "Klip Adamı", "MK_per_match", "3K+/M", "{:.2f}", "Maç başına en çok multi-kill round",
      lambda r: f"{_n(r['total_multi'])} multi-kill round"),
+    ("sessiz-adim", "Sessiz Adım", "WALK_PCT", "% shift", "pct", "Hayattayken en çok shift'le yürüyen (demolardan)",
+     lambda r: f"{r['demo_matches']:.0f} demo maç · {_n(r['walk_presses'])} kez shift"),
     ("en-cok-gelisen", "En Çok Gelişen", "FORM", "skor farkı", "{:+.2f}", "Tüm zamanlara göre skoru en çok artan",
      lambda r: f"tüm zamanlar {r['FORM_FROM']:.2f} → bu dönem {r['FORM_TO']:.2f}"),
 ]
@@ -273,6 +275,8 @@ ANTI_AWARDS = [
      lambda r: f"{_n(r['total_entry_wins'])} / {_n(r['total_entry_count'])} açılış düellosu"),
     ("utilsiz", "Utilsiz Adam", "UDR_PER_ROUND", "util/r", "{:.1f}", "Round başına en az util hasarı",
      lambda r: f"{_n(r['total_util_damage'])} util hasarı"),
+    ("ayak-sesi", "Ayak Sesi", "WALK_PCT", "% shift", "pct", "Hayattayken en az shift'le yürüyen (demolardan)",
+     lambda r: f"{r['demo_matches']:.0f} demo maç · {_n(r['walk_presses'])} kez shift"),
     ("ilk-kurban", "İlk Kurban", "OPEN_DPR", "ilk ölüm/r", "{:.3f}", "Round'un ilk ölen oyuncusu en sık olan",
      lambda r: f"{_n(r['OPEN_DEATHS'])} kez ilk ölen · {_n(r['total_entry_count'])} açılış düellosu"),
     ("formsuz", "Formsuz", "FORM", "skor farkı", "{:+.2f}", "Tüm zamanlara göre skoru en çok düşen",
@@ -281,6 +285,7 @@ ANTI_AWARDS = [
 ANTI_HIGH = {"yem", "ilk-kurban"}  # anti-awards where the worst is the highest value (the rest: lowest)
 
 
+WALK_MIN_DEMOS = 3  # demo matches a player needs for the shift awards (only our demos record walking)
 FORM_MIN_ALL = 30  # all-time matches a player needs for "En Çok Gelişen" / "Formsuz" (a real baseline)
 
 
@@ -294,6 +299,8 @@ def award_board(c, period):
         rounds = r.get("estimated_rounds") or 0
         lost = (r.get("total_entry_count") or 0) - (r.get("total_entry_wins") or 0)
         r["OPEN_DEATHS"], r["OPEN_DPR"] = lost, (lost / rounds if rounds else None)
+        alive = r.get("alive_ticks") or 0
+        r["WALK_PCT"] = (r.get("walk_ticks") or 0) / alive if alive and (r.get("demo_matches") or 0) >= WALK_MIN_DEMOS else None
     if period != "all":
         base = {r["steamid64"]: r for r in statsdb.leaderboard(c, "all")}
         for r in board:

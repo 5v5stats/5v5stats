@@ -30,6 +30,7 @@ def counters(demo_path):
             if col in df.columns:
                 df[col] = df[col].astype(str)
 
+    walk = walking(demo_path)
     c = collections.defaultdict(lambda: collections.Counter())
     active = [s for s in players if players[s]["rounds"]]
     team_score = {}  # final result per player: did their team win the match?
@@ -99,7 +100,30 @@ def counters(demo_path):
                   **{k: int(x.get(k, 0)) for k in ("total_shots_fired", "total_shots_on_tgt", "total_v1_count",
                                                     "total_v1_wins", "total_v2_count", "total_v2_wins",
                                                     "total_entry_count", "total_entry_wins", "total_util_damage",
-                                                    "total_flashes", "t_rounds", "ct_rounds")}}
+                                                    "total_flashes", "t_rounds", "ct_rounds")},
+                  "demo_matches": 1, **walking_of(walk, s)}
+    return out
+
+
+def walking_of(walk, sid):
+    w = walk.get(sid) or {}
+    return {k: int(w.get(k, 0)) for k in ("alive_ticks", "walk_ticks", "walk_presses")}
+
+
+def walking(demo_path):
+    """{steamid: {alive_ticks, walk_ticks, walk_presses}}: how much of their time alive (freeze time and warmup
+    left out) players walked with shift, and how often they pressed it."""
+    from demoparser2 import DemoParser
+    df = DemoParser(demo_path).parse_ticks(["is_walking", "is_alive", "team_num", "is_freeze_period",
+                                            "is_warmup_period"])
+    df = df[(df["is_alive"] == True) & (df["team_num"].isin([2, 3]))  # noqa: E712
+            & (df["is_freeze_period"] != True) & (df["is_warmup_period"] != True)]  # noqa: E712
+    out = {}
+    for sid, g in df.sort_values("tick").groupby("steamid"):
+        w = g["is_walking"].fillna(False).astype(bool)
+        # a press: walking now, not walking on the player's previous counted tick (gaps reset it)
+        prev = w.shift(fill_value=False) & (g["tick"].diff().fillna(99) <= 2)
+        out[str(sid)] = {"alive_ticks": len(w), "walk_ticks": int(w.sum()), "walk_presses": int((w & ~prev).sum())}
     return out
 
 
