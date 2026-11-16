@@ -267,7 +267,7 @@ ANTI_AWARDS = [
      lambda r: f"{_n(r['total_deaths'])} ölüm"),
     ("mermi-savurgan", "Mermi Savurgan", "ACC_PCT", "% isabet", "pct1", "En düşük isabet oranı",
      lambda r: f"{_n(r['total_shots_on_tgt'])} / {_n(r['total_shots_fired'])} mermi isabet"),
-    ("ayak-avcisi", "Ayak Avcısı", "HS_PCT", "% kafa", "pct", "En düşük kafa atışı oranı",
+    ("ayak-avcisi", "Ayak Fetişçisi", "HS_PCT", "% kafa", "pct", "En düşük kafa atışı oranı",
      lambda r: f"{_n(r['total_hs_kills'])} / {_n(r['total_kills'])} kill kafadan"),
     ("clutch-kacagi", "Clutch Kaçağı", "CLUTCH_WR", "% clutch", "pct", "En kötü clutch kazanma oranı",
      lambda r: f"1v1 {_n(r['total_v1_wins'])}/{_n(r['total_v1_count'])} · 1v2 {_n(r['total_v2_wins'])}/{_n(r['total_v2_count'])}"),
