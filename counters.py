@@ -105,7 +105,8 @@ def counters(demo_path):
                                                     "total_flashes", "t_rounds", "ct_rounds")},
                   "demo_matches": 1, "demo_rounds": pl["rounds"], **walking_of(walk, s),
                   **{k: int(blind.get(s, {}).get(k, 0)) for k in ("enemy_blinds", "enemy_blind_ms", "team_blind_ms")},
-                  **{k: int(kw.get(s, {}).get(k, 0)) for k in ("demo_kills", "awp_kills", "pistol_kills")}}
+                  **{k: int(kw.get(s, {}).get(k, 0)) for k in ("demo_kills", "awp_kills", "pistol_kills",
+                                                                     "deagle_kills", "revolver_kills")}}
     return out
 
 
@@ -118,8 +119,8 @@ PISTOLS = {"glock", "usp_silencer", "hkp2000", "p250", "deagle", "elite", "fives
 
 
 def kill_weapons(deaths):
-    """{steamid: {demo_kills, awp_kills, pistol_kills}} from a player_death table (or a demo path): kills of
-    enemies, and how many with the AWP / a pistol."""
+    """{steamid: {demo_kills, awp_kills, pistol_kills, deagle_kills, revolver_kills}} from a player_death table
+    (or a demo path): kills of enemies, and how many with the AWP / any pistol / the Deagle / the R8 revolver."""
     if isinstance(deaths, str):
         from demoparser2 import DemoParser
         deaths = DemoParser(deaths).parse_event("player_death", player=["team_num"])
@@ -135,6 +136,8 @@ def kill_weapons(deaths):
         out[a]["demo_kills"] += 1
         out[a]["awp_kills"] += w == "awp"
         out[a]["pistol_kills"] += w in PISTOLS
+        out[a]["deagle_kills"] += w == "deagle"
+        out[a]["revolver_kills"] += "revolver" in w
     return out
 
 

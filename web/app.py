@@ -309,7 +309,8 @@ def award_board(c, period):
         r["TEAMFLASH"] = tm / (tm + en) if demos and tm + en >= 10000 else None  # 10 s+ of blinding in total
         dk = r.get("demo_kills") or 0
         r["AWP_SHARE"] = (r.get("awp_kills") or 0) / dk if demos and dk >= FACT_MIN_KILLS else None
-        r["PISTOL_SHARE"] = (r.get("pistol_kills") or 0) / dk if demos and dk >= FACT_MIN_KILLS else None
+        for col, k in (("PISTOL_SHARE", "pistol_kills"), ("DEAGLE_SHARE", "deagle_kills"), ("REVOLVER_SHARE", "revolver_kills")):
+            r[col] = (r.get(k) or 0) / dk if demos and dk >= FACT_MIN_KILLS else None
         alive = r.get("alive_ticks") or 0
         r["WALK_PCT"] = (r.get("walk_ticks") or 0) / alive if alive and (r.get("demo_matches") or 0) >= WALK_MIN_DEMOS else None
     if period != "all":
@@ -328,7 +329,12 @@ FACTS = [
      lambda r: f"{_n(r['awp_kills'])} / {_n(r['demo_kills'])} kill AWP ile"),
     ("tabancaci", "Tabancacı", "PISTOL_SHARE", "% tabanca", "pct", "Kill'lerinin en büyük kısmı tabancadan (demolardan)",
      lambda r: f"{_n(r['pistol_kills'])} / {_n(r['demo_kills'])} kill tabancayla"),
+    ("deagle-hastasi", "Deagle Hastası", "DEAGLE_SHARE", "% deagle", "pct1", "Kill'lerinin en büyük kısmı Deagle'dan (demolardan)",
+     lambda r: f"{_n(r['deagle_kills'])} / {_n(r['demo_kills'])} kill Deagle ile"),
+    ("mesut-komiser", "Mesut Komiser", "REVOLVER_SHARE", "% R8", "pct1", "Kill'lerinin en büyük kısmı R8 revolverdan (demolardan)",
+     lambda r: f"{_n(r['revolver_kills'])} / {_n(r['demo_kills'])} kill revolverla"),
 ]
+FACT_SLUGS = {a[0] for a in FACTS}
 FACT_MIN_KILLS = 20  # demo kills a player needs for the weapon facts
 KINDS = {"award": AWARDS, "anti": ANTI_AWARDS, "fact": FACTS}
 
@@ -358,6 +364,8 @@ def awards(board, anti=False):
         if not cand:
             continue
         w = (max if desc_order else min)(cand, key=lambda r: r[key])
+        if slug in FACT_SLUGS and not w[key]:
+            continue
         out.append({"slug": slug, "title": title, "unit": unit, "value": award_value(fmt, w.get(key)), "desc": desc,
                     "sid": w["steamid64"], "name": w["name"]})
     return out
@@ -377,7 +385,7 @@ def awards_page():
         for slug, title, key, unit, fmt, desc, detail in lst:
             _, _, desc_order = award_order(slug)
             top = sorted((r for r in q if r.get(key) is not None), key=lambda r: r[key], reverse=desc_order)[:3]
-            if not top:
+            if not top or (slug in FACT_SLUGS and not top[0][key]):
                 continue
             out.append({"slug": slug, "title": title, "unit": unit, "desc": desc,
                         "top": [{"sid": r["steamid64"], "name": r["name"], "value": award_value(fmt, r.get(key)),

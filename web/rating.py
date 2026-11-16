@@ -59,7 +59,8 @@ TOTALS = ["total_matches", "estimated_rounds", "wins", "losses", "total_kills", 
           "total_entry_wins", "total_util_damage", "total_flashes", "t_rounds", "ct_rounds",
           # demo-only counters (5v5stats has none: 0 there), not used by the rating: walking with shift, flashes
           "demo_matches", "demo_rounds", "alive_ticks", "walk_ticks", "walk_presses",
-          "enemy_blinds", "enemy_blind_ms", "team_blind_ms", "demo_kills", "awp_kills", "pistol_kills"]
+          "enemy_blinds", "enemy_blind_ms", "team_blind_ms", "demo_kills", "awp_kills", "pistol_kills",
+          "deagle_kills", "revolver_kills"]
 
 
 def _div(a, b):
