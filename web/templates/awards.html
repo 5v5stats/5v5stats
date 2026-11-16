@@ -38,5 +38,7 @@
 {{ grid(cards) }}
 <div class="sec"><h2>Anti-ödüller</h2><small>// kategorinin en kötüsü // sıralamadakiler arasında</small></div>
 {{ grid(anti, 'anti') }}
+{% if facts %}<div class="sec"><h2>Oyun tarzı</h2><small>// ödül değil, sadece bilgi // demolardan</small></div>
+{{ grid(facts, 'fact') }}{% endif %}
 {% endif %}
 {% endblock %}

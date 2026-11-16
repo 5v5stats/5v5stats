@@ -22,7 +22,7 @@ def counters(demo_path):
     res = stats.analyse(demo_path)
     players, rounds = res["players"], res["rounds"]
     p = DemoParser(demo_path)
-    deaths = p.parse_event("player_death")
+    deaths = p.parse_event("player_death", player=["team_num"])
     hurts = p.parse_event("player_hurt").sort_values("tick")
     fires = p.parse_event("weapon_fire")
     for df in (deaths, hurts, fires):
@@ -32,6 +32,7 @@ def counters(demo_path):
 
     walk = walking(demo_path)
     blind = blinding(demo_path)
+    kw = kill_weapons(deaths)
     c = collections.defaultdict(lambda: collections.Counter())
     active = [s for s in players if players[s]["rounds"]]
     team_score = {}  # final result per player: did their team win the match?
@@ -103,13 +104,38 @@ def counters(demo_path):
                                                     "total_entry_count", "total_entry_wins", "total_util_damage",
                                                     "total_flashes", "t_rounds", "ct_rounds")},
                   "demo_matches": 1, "demo_rounds": pl["rounds"], **walking_of(walk, s),
-                  **{k: int(blind.get(s, {}).get(k, 0)) for k in ("enemy_blinds", "enemy_blind_ms", "team_blind_ms")}}
+                  **{k: int(blind.get(s, {}).get(k, 0)) for k in ("enemy_blinds", "enemy_blind_ms", "team_blind_ms")},
+                  **{k: int(kw.get(s, {}).get(k, 0)) for k in ("demo_kills", "awp_kills", "pistol_kills")}}
     return out
 
 
 def walking_of(walk, sid):
     w = walk.get(sid) or {}
     return {k: int(w.get(k, 0)) for k in ("alive_ticks", "walk_ticks", "walk_presses")}
+
+
+PISTOLS = {"glock", "usp_silencer", "hkp2000", "p250", "deagle", "elite", "fiveseven", "tec9", "cz75a", "revolver"}
+
+
+def kill_weapons(deaths):
+    """{steamid: {demo_kills, awp_kills, pistol_kills}} from a player_death table (or a demo path): kills of
+    enemies, and how many with the AWP / a pistol."""
+    if isinstance(deaths, str):
+        from demoparser2 import DemoParser
+        deaths = DemoParser(deaths).parse_event("player_death", player=["team_num"])
+    out = collections.defaultdict(collections.Counter)
+    for _, d in deaths.iterrows():
+        a, v = str(d.get("attacker_steamid")), str(d.get("user_steamid"))
+        if not a or a in ("None", "nan", "0") or a == v:
+            continue
+        ta, tv = d.get("attacker_team_num"), d.get("user_team_num")
+        if ta is not None and tv is not None and ta == tv:  # teamkill
+            continue
+        w = str(d.get("weapon") or "").lower()
+        out[a]["demo_kills"] += 1
+        out[a]["awp_kills"] += w == "awp"
+        out[a]["pistol_kills"] += w in PISTOLS
+    return out
 
 
 def blinding(demo_path):

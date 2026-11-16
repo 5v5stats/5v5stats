@@ -521,3 +521,9 @@ code { font-family:var(--mono); font-size:12px; color:#ffb38a; }
 .awgrid.anti .awc:hover { border-color:#ff5a5a; }
 .awgrid.anti .awc li.p1 { --c:#ff5a5a; }
 .podium.anti .pod.p1 { --c:#ff5a5a; } .podium.anti .pod.p2 { --c:#ff8a6a; } .podium.anti .pod.p3 { --c:#ffb08a; }
+/* fact cards (play style): blue, neither award nor anti-award */
+.awards.fact .award .who, .awards.fact .award:hover .rank-go { color:#7b9cff; }
+.awards.fact .award { background:linear-gradient(180deg, rgba(123,156,255,.06), transparent 60%), var(--panel); }
+.awgrid.fact .awc:hover { border-color:#7b9cff; }
+.awgrid.fact .awc li.p1 { --c:#7b9cff; }
+.podium.fact .pod.p1 { --c:#7b9cff; } .podium.fact .pod.p2 { --c:#9db4ff; } .podium.fact .pod.p3 { --c:#bccbff; }

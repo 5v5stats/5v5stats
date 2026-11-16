@@ -267,7 +267,7 @@ ANTI_AWARDS = [
      lambda r: f"{_n(r['total_damage'])} hasar"),
     ("yem", "Yem", "DPR", "ölüm/r", "{:.2f}", "Round başına en çok ölüm",
      lambda r: f"{_n(r['total_deaths'])} ölüm"),
-    ("mermi-savurgan", "Mermi Savurgan", "ACC_PCT", "% isabet", "pct1", "En düşük isabet oranı",
+    ("mermi-savurgan", "Kurşun 2 Lira", "ACC_PCT", "% isabet", "pct1", "En düşük isabet oranı",
      lambda r: f"{_n(r['total_shots_on_tgt'])} / {_n(r['total_shots_fired'])} mermi isabet"),
     ("ayak-avcisi", "Ayak Fetişçisi", "HS_PCT", "% kafa", "pct", "En düşük kafa atışı oranı",
      lambda r: f"{_n(r['total_hs_kills'])} / {_n(r['total_kills'])} kill kafadan"),
@@ -307,6 +307,9 @@ def award_board(c, period):
         dr, en, tm = r.get("demo_rounds") or 0, r.get("enemy_blind_ms") or 0, r.get("team_blind_ms") or 0
         r["BLIND_PR"] = en / 1000 / dr if demos and dr else None
         r["TEAMFLASH"] = tm / (tm + en) if demos and tm + en >= 10000 else None  # 10 s+ of blinding in total
+        dk = r.get("demo_kills") or 0
+        r["AWP_SHARE"] = (r.get("awp_kills") or 0) / dk if demos and dk >= FACT_MIN_KILLS else None
+        r["PISTOL_SHARE"] = (r.get("pistol_kills") or 0) / dk if demos and dk >= FACT_MIN_KILLS else None
         alive = r.get("alive_ticks") or 0
         r["WALK_PCT"] = (r.get("walk_ticks") or 0) / alive if alive and (r.get("demo_matches") or 0) >= WALK_MIN_DEMOS else None
     if period != "all":
@@ -319,15 +322,24 @@ def award_board(c, period):
     return board
 
 
+# facts: play-style cards shown with the awards, neither good nor bad (same shape as AWARDS)
+FACTS = [
+    ("awpci", "AWP'ci", "AWP_SHARE", "% AWP", "pct", "Kill'lerinin en büyük kısmı AWP'den (demolardan)",
+     lambda r: f"{_n(r['awp_kills'])} / {_n(r['demo_kills'])} kill AWP ile"),
+    ("tabancaci", "Tabancacı", "PISTOL_SHARE", "% tabanca", "pct", "Kill'lerinin en büyük kısmı tabancadan (demolardan)",
+     lambda r: f"{_n(r['pistol_kills'])} / {_n(r['demo_kills'])} kill tabancayla"),
+]
+FACT_MIN_KILLS = 20  # demo kills a player needs for the weapon facts
+KINDS = {"award": AWARDS, "anti": ANTI_AWARDS, "fact": FACTS}
+
+
 def award_order(slug):
-    """(the award's tuple, is it an anti-award, sort best-of-the-category first descending?)"""
-    for a in AWARDS:
-        if a[0] == slug:
-            return a, False, True
-    for a in ANTI_AWARDS:
-        if a[0] == slug:
-            return a, True, a[0] in ANTI_HIGH
-    return None, False, True
+    """(the card's tuple, kind: 'award' / 'anti' / 'fact', sort best-of-the-category first descending?)"""
+    for kind, lst in KINDS.items():
+        for a in lst:
+            if a[0] == slug:
+                return a, kind, (a[0] in ANTI_HIGH) if kind == "anti" else True
+    return None, "award", True
 
 
 def award_value(fmt, v):
@@ -338,7 +350,7 @@ def award_value(fmt, v):
 def awards(board, anti=False):
     q = [r for r in board if r["qualified"]]
     out = []
-    for slug, title, key, unit, fmt, desc, _ in (ANTI_AWARDS if anti else AWARDS):
+    for slug, title, key, unit, fmt, desc, _ in KINDS[anti if isinstance(anti, str) else ("anti" if anti else "award")]:
         if not q:
             break
         _, _, desc_order = award_order(slug)
@@ -371,7 +383,7 @@ def awards_page():
                         "top": [{"sid": r["steamid64"], "name": r["name"], "value": award_value(fmt, r.get(key)),
                                  "tier": r.get("rating"), "detail": detail(r)} for r in top]})
         return out
-    ctx = dict(cards=cards_of(AWARDS), anti=cards_of(ANTI_AWARDS), period=period, periods=PERIODS, people=people(c), ranked=len(q),
+    ctx = dict(cards=cards_of(AWARDS), anti=cards_of(ANTI_AWARDS), facts=cards_of(FACTS), period=period, periods=PERIODS, people=people(c), ranked=len(q),
                minm=rating.MIN_MATCHES.get(period))
     c.close()
     return render_template("awards.html", **ctx)
@@ -380,7 +392,7 @@ def awards_page():
 @app.route("/odul/<slug>")
 def award_page(slug):
     """One award's full ranking: every ranked player of the period sorted by the award's stat, top 3 on a podium."""
-    found, anti, desc_order = award_order(slug)
+    found, kind, desc_order = award_order(slug)
     if not found:
         abort(404)
     slug, title, key, unit, fmt, desc, detail = found
@@ -397,8 +409,8 @@ def award_page(slug):
     rows = [{"pos": i + 1, "sid": r["steamid64"], "name": r["name"], "value": award_value(fmt, r.get(key)),
              "frac": (0.12 + 0.88 * ((r.get(key) or 0) - last) / span) if span else 1, "tier": r.get("rating"), "matches": r["total_matches"],
              "detail": detail(r)} for i, r in enumerate(q)]
-    ctx = dict(rows=rows, title=title, unit=unit, desc=desc, slug=slug, period=period, periods=PERIODS, anti=anti,
-               people=people(c), others=[(a[0], a[1]) for a in (ANTI_AWARDS if anti else AWARDS)], unranked=len(board) - len(q),
+    ctx = dict(rows=rows, title=title, unit=unit, desc=desc, slug=slug, period=period, periods=PERIODS, anti=kind == "anti", fact=kind == "fact",
+               people=people(c), others=[(a[0], a[1]) for a in KINDS[kind]], unranked=len(board) - len(q),
                minm=rating.MIN_MATCHES.get(period))
     c.close()
     return render_template("award.html", **ctx)
@@ -427,7 +439,7 @@ def stats_home():
         best = top_clips(c, period)
     cb = None if best else statsdb.comeback(c, period)  # the comeback story only when there are no clips
     ctx = dict(board=board, period=period, periods=PERIODS, ov=ov, people=people(c), win=win, newer=newer,
-               awards=awards(board), anti_awards=awards(board, anti=True), min_matches=rating.MIN_MATCHES.get(period, 3), comeback=cb, best_clips=best, clip_title=clip_title, months=statsdb.activity_by_month(c),
+               awards=awards(board), anti_awards=awards(board, anti=True), facts=awards(board, "fact"), min_matches=rating.MIN_MATCHES.get(period, 3), comeback=cb, best_clips=best, clip_title=clip_title, months=statsdb.activity_by_month(c),
                weeks=statsdb.weekly_counts(c), seen=statsdb.last_seen(c), ref=statsdb.latest_date(c),
                month30=statsdb.overview(c, "30d")["matches"],
                sync_date=sync_date,  # newest 5v5stats match we have; later games are our demos only
