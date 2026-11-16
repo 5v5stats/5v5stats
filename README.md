@@ -177,16 +177,16 @@ The website only stores **results**: rendering stays on this PC, and finished ma
 Demos are never uploaded, and the site never runs CS2.
 
 ```bat
-python upload.py de_inferno_2026-11-05_02-31-19            :: send one rendered match (hidden until you publish it)
-python upload.py de_inferno_2026-11-05_02-31-19 --public   :: ... and make it public right away
+python upload.py de_inferno_2026-11-05_02-31-19            :: send one rendered match (public right away)
+python upload.py de_inferno_2026-11-05_02-31-19 --hidden   :: ... but keep it hidden (publish it in Admin)
 python upload.py --all                                     :: every rendered match in output\
-python render.py match.dem --upload --public               :: render and upload in one go
+python render.py match.dem --upload                        :: render and upload in one go
 python upload.py <match> --zip-only                        :: just make the package, to upload by hand in Admin
 ```
 
 - A **package** is one zip: `match_data.json` (stats), the clips, thumbnails and profile pictures. The site
   checks it (only those file types, no paths outside the match folder) and ignores anything else.
-- **Uploading the same match again** updates it: same link, title and public/hidden setting.
+- **Uploading the same match again** updates it: same link and title (and makes it public, unless you pass `--hidden`).
 - **Admin:** publish / hide each match, give it a title, delete it, see its clips, players and the upload log.
   Hidden matches and their files are visible only to the admin, with a bar on the page saying so.
 - **Storage:** `web\data\site.db` (SQLite: matches, players, clips, uploads) and `web\data\media\<id>\`
@@ -253,7 +253,7 @@ the zip as before. The admin page's "upload a package" works too, but on Vercel 
    UPLOAD_TOKEN=(the same token as in Vercel)
    ```
 
-   then `python upload.py --all --public`.
+   then `python upload.py --all`.
 
 Notes: Python packages for the site are in `requirements.txt` (Flask, psycopg). `.vercelignore` keeps the
 renderer, tools and local data out of the deployment. Video traffic is served by R2 (no egress fees), not by

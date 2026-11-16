@@ -1,7 +1,7 @@
 """Upload rendered matches (highlights + stats) to the website.
 
     python upload.py de_inferno_2026-11-05_02-31-19             upload one match from output\\
-    python upload.py de_inferno_2026-11-05_02-31-19 --public    ... and make it public right away
+    python upload.py de_inferno_2026-11-05_02-31-19 --hidden    ... but keep it hidden (public by default)
     python upload.py de_inferno_2026-11-05_02-31-19 --zip-only  only make the package (to upload by hand in Admin)
     python upload.py --all                                       every rendered match in output\\
 
@@ -113,7 +113,7 @@ class Progress:
         return self.size
 
 
-def upload(folder, public=False, zip_only=False, url=None, token=None, clips=None):
+def upload(folder, public=True, zip_only=False, url=None, token=None, clips=None):
     name = os.path.basename(os.path.normpath(folder))
     if not os.path.isdir(folder):
         raise SystemExit(f"No such render folder: {folder}")
@@ -142,7 +142,7 @@ def upload(folder, public=False, zip_only=False, url=None, token=None, clips=Non
         res = upload_direct(folder, begin, sizes, auth, params, data, url)
     else:
         res = upload_zip(folder, auth, params, url, clips)
-    state = "public" if res.get("published") else "hidden (make it public in Admin, or use --public)"
+    state = "public" if res.get("published") else "hidden (make it public in Admin)"
     print(f"  {'added' if res['created'] else 'updated'}: {res['url']}  [{state}]")
     for note in res.get("notes", []):
         print(f"  note: {note}")
@@ -229,7 +229,8 @@ def main():
     ap = argparse.ArgumentParser(description="Upload rendered matches (highlights + stats) to the website.")
     ap.add_argument("matches", nargs="*", help="render folder names in output\\ (or paths)")
     ap.add_argument("--all", action="store_true", help="every rendered match in output\\")
-    ap.add_argument("--public", action="store_true", help="make the match public right away")
+    ap.add_argument("--hidden", dest="public", action="store_false", help="keep the match hidden (default: public)")
+    ap.add_argument("--public", dest="public", action="store_true", help=argparse.SUPPRESS)  # the default now
     ap.add_argument("--zip-only", action="store_true", help="only write the package zip next to the folder")
     ap.add_argument("--no-clips", dest="clips", action="store_const", const=False, default=None,
                     help="stats only: no clips/pictures (default: UPLOAD_CLIPS in upload.env, on if not set)")

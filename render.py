@@ -756,7 +756,8 @@ def main():
     ap.add_argument("--keep-raw", action="store_true", help=argparse.SUPPRESS)  # debugging
     ap.add_argument("--list", action="store_true", help="only list the highlights, record nothing")
     ap.add_argument("--upload", action="store_true", help="upload the clips and stats to the website afterwards")
-    ap.add_argument("--public", action="store_true", help="with --upload: make the match public right away")
+    ap.add_argument("--hidden", dest="public", action="store_false", help="with --upload: keep the match hidden (default: public)")
+    ap.add_argument("--public", dest="public", action="store_true", help=argparse.SUPPRESS)  # the default now
     ap.add_argument("--out", default=os.path.join(ROOT, "output"))
     a = ap.parse_args()
 
