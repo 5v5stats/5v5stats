@@ -65,32 +65,7 @@ main.wrap { max-width:1480px; }  /* this page uses the extra width for the playe
 </style>
 {% endblock %}
 {% block body %}
-<style>
-  .how { margin-top:10px; max-width:640px; color:var(--muted); font-size:13px; }
-  .how summary { cursor:pointer; color:var(--accent); font:700 11px var(--mono); letter-spacing:.12em; text-transform:uppercase;
-    list-style:none; display:inline-flex; align-items:center; gap:6px; }
-  .how summary::-webkit-details-marker { display:none; }
-  .how summary::before { content:"+"; font-size:14px; } .how[open] summary::before { content:"−"; }
-  .how ul { margin:8px 0 0; padding-left:18px; } .how li { margin:4px 0; }
-</style>
-<section class="hero">
-  <div class="eyebrow">Araçlar // Takım kur</div>
-  <div class="display xl">Eşit takımlar.<br>Hızlı.</div>
-  <div class="dim" style="max-width:640px">10 oyuncu seç, en dengeli iki takımı kuralım. Güç: <span class="acc">1.00 = sunucu ortalaması</span>.</div>
-  <details class="how">
-    <summary>Nasıl çalışır?</summary>
-    <ul>
-      <li>Güç skoru oyuncunun tüm maç geçmişinden gelir; son 30 günün formu da biraz etki eder. Kimse 0'ın altına düşmez.</li>
-      <li>Harita seçersen o haritadaki performans da hesaba katılır.</li>
-      <li>10 oyuncunun 5'e 5 bölünebileceği 252 yolun hepsi denenir. Sadece toplam güce değil, en iyiyle en iyinin,
-        ikinciyle ikincinin (ve devamı) ne kadar denk olduğuna da bakılır.</li>
-    </ul>
-  </details>
-  <div class="meta-line" style="margin-top:14px"><span>Havuz: <b>{{ pool|length }}</b> oyuncu (son 30 günde en çok oynayanlar üstte).</span>
-    <a class="acc" href="{{ url_for('stats_home') }}" style="text-decoration:none">&larr; Sıralamaya dön</a></div>
-</section>
-
-<div class="sec"><h2>10 kişi seç</h2><small>// en iyi bölünmeyi bul</small></div>
+<div class="sec" style="margin-top:26px"><h2>10 kişi seç</h2><small>// en iyi bölünmeyi bul</small></div>
 <div class="mapbar box">
   <label for="map" class="lbl acc">Harita</label>
   <select id="map" onchange="if (last) build()">
