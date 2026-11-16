@@ -17,7 +17,40 @@
 </section>
 
 {% if not d %}
-<p class="dim" style="margin:26px 0">{% if a and b and a == b %}İki farklı oyuncu seç.{% else %}İki oyuncu seç: birlikte ve karşı karşıya oynadıkları maçlar, birbirlerini kaç kez öldürdükleri.{% endif %}</p>
+<p class="dim" style="margin:26px 0 6px">{% if a and b and a == b %}İki farklı oyuncu seç.{% else %}İki oyuncu seç ya da aşağıdaki ikililerden birine tıkla.{% endif %}</p>
+{% if facts %}
+{% macro pair(r) -%}
+  <span class="fp-who">{{ avatar(people, r.a, names[r.a]) }}{{ avatar(people, r.b, names[r.b]) }}</span>
+  <span class="fp-nm"><b>{{ names[r.a] }}</b><i>&amp;</i><b>{{ names[r.b] }}</b></span>
+{%- endmacro %}
+{% macro delta(x) -%}<span class="{{ 'pos' if x > 0 else 'neg' }}">{{ '%+.2f'|format(x) }}</span>{%- endmacro %}
+{% set sections = [
+  ('lift', 'Birlikte uçanlar', 'aynı takımdayken ikisinin de skoru kendi ortalamasından yükseliyor // en az ' ~ facts.min_with ~ ' maç'),
+  ('sink', 'Birlikte batanlar', 'aynı takımdayken ikisinin de skoru düşüyor // en az ' ~ facts.min_with ~ ' maç'),
+  ('dom', 'Domine edenler', 'karşı karşıya oynayınca biri açık ara kazanıyor // en az ' ~ facts.min_vs ~ ' maç'),
+  ('rival', 'En büyük rekabet', 'en çok karşı karşıya gelenler')] %}
+{% for key, title, sub in sections %}{% if facts[key] %}
+<div class="sec"><h2>{{ title }}</h2><small>// {{ sub }}</small></div>
+<div class="fpairs">
+  {% for r in facts[key] %}
+  <a class="fpair {{ key }}" href="{{ url_for('duo_page', a=r.a, b=r.b) }}">
+    <span class="no">#{{ loop.index }}</span>
+    {{ pair(r) }}
+    {% if key in ('lift', 'sink') %}
+      <span class="fp-big">{{ delta(r.da) }} <i>/</i> {{ delta(r.db) }}</span>
+      <span class="fp-d">birlikte skor {{ '%.2f'|format(r.pa) }} &middot; {{ '%.2f'|format(r.pb) }} &middot; {{ r.n }} maç, %{{ (r.a_wins * 100 / r.n)|round|int }} galibiyet</span>
+    {% elif key == 'dom' %}
+      <span class="fp-big"><span class="pos">{{ r.a_wins }}</span> <i>-</i> <span class="neg">{{ r.b_wins }}</span></span>
+      <span class="fp-d">{{ names[r.a] }} {{ r.n }} maçın %{{ (r.share * 100)|round|int }}'ini kazanmış &middot; skor {{ '%.2f'|format(r.pa) }} vs {{ '%.2f'|format(r.pb) }}</span>
+    {% else %}
+      <span class="fp-big">{{ r.n }} <i>maç</i></span>
+      <span class="fp-d">galibiyet {{ r.a_wins }} - {{ r.b_wins }} &middot; skor {{ '%.2f'|format(r.pa) }} vs {{ '%.2f'|format(r.pb) }}</span>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}{% endfor %}
+{% endif %}
 {% else %}
 {% set ta, tb = tiers.get(a) or {}, tiers.get(b) or {} %}
 <div class="faceoff">
@@ -64,10 +97,10 @@
       {% endif %}
       <table>
         <tr><td>{{ names[a] }}</td><td class="k"></td><td>{{ names[b] }}</td></tr>
+        <tr title="Sadece bu maçlardaki skor ortalaması (1.00 = sunucu ortalaması)"><td>{{ better(m.a.points, m.b.points) }}</td><td class="k">Skor</td><td>{{ better(m.b.points, m.a.points) }}</td></tr>
         <tr><td>{{ better(m.a.kd, m.b.kd) }}</td><td class="k">K/D</td><td>{{ better(m.b.kd, m.a.kd) }}</td></tr>
         <tr><td>{{ better(m.a.kpm, m.b.kpm, '%.1f') }}</td><td class="k">Kill / maç</td><td>{{ better(m.b.kpm, m.a.kpm, '%.1f') }}</td></tr>
         <tr><td>{{ better(m.a.adr, m.b.adr, '%.0f') }}</td><td class="k">ADR</td><td>{{ better(m.b.adr, m.a.adr, '%.0f') }}</td></tr>
-        <tr><td>{{ m.a.kills }}</td><td class="k">Toplam kill</td><td>{{ m.b.kills }}</td></tr>
       </table>
     {% else %}<p class="dim small">Hiç {{ 'birlikte' if mode == 'with' else 'karşı karşıya' }} oynamamışlar.</p>{% endif %}
   </div>

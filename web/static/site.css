@@ -501,3 +501,17 @@ code { font-family:var(--mono); font-size:12px; color:#ffb38a; }
 .demo-note b { color:var(--text); margin-right:4px; }
 /* stats page: the period's top 3 (same podium as the award pages, a little tighter) */
 .podium.hp { margin:14px 0 8px; }
+/* İkili opening page: fun facts over all pairs */
+.fpairs { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; }
+.fpair { --c:var(--accent); position:relative; display:flex; flex-direction:column; gap:8px; padding:16px 18px 18px; text-decoration:none;
+  color:var(--text); background:var(--panel); border:1px solid var(--line); border-top:3px solid var(--c); transition:transform .15s, border-color .15s; }
+.fpair:hover { transform:translateY(-2px); border-color:var(--c); }
+.fpair.lift { --c:var(--win); } .fpair.sink { --c:#ff5a5a; } .fpair.dom { --c:var(--accent); } .fpair.rival { --c:#7b9cff; }
+.fpair .no { position:absolute; top:12px; right:14px; font:10px var(--mono); color:var(--faint); }
+.fp-who { display:flex; } .fp-who .av, .fp-who .ini { width:44px; height:44px; border-radius:50%; border:2px solid var(--panel); object-fit:cover; }
+.fp-who > :nth-child(2) { margin-left:-12px; }
+.fp-nm { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px; font-size:14px; min-width:0; }
+.fp-nm b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; } .fp-nm i { color:var(--faint); font-style:normal; }
+.fp-big { font:34px var(--display); line-height:1; } .fp-big i { color:var(--faint); font-style:normal; font-size:.6em; }
+.fp-d { font:11px var(--mono); color:var(--muted); line-height:1.5; }
+@media (max-width: 900px) { .fpairs { grid-template-columns:1fr; } }

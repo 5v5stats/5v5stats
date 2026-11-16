@@ -494,9 +494,14 @@ def duo_page():
     # who-killed-whom comes only from our demos: say since when there is any
     since, n_demos = c.execute("SELECT MIN(g.date), COUNT(*) FROM games g "
                                "WHERE EXISTS (SELECT 1 FROM duels d WHERE d.game_id = g.id)").fetchone()
+    facts = statsdb.duo_facts(c) if d is None else None  # the opening page: the extremes over all pairs
+    if facts:
+        for s in {r[k] for rows in (facts["lift"], facts["sink"], facts["dom"], facts["rival"]) for r in rows
+                  for k in ("a", "b")}:
+            names.setdefault(s, (ppl.get(s) or {}).get("name") or s)
     c.close()
     return render_template("duo.html", a=a, b=b, d=d, plist=plist, names=names, people=ppl, tiers=tiers,
-                           demo_since=since, n_demos=n_demos)
+                           demo_since=since, n_demos=n_demos, facts=facts)
 
 
 @app.route("/balancer")

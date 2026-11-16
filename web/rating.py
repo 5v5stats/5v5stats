@@ -120,10 +120,12 @@ def implied_priors(site_players):
     return out
 
 
-def leaderboard(players, period="all", min_matches=None, prior=None):
+def leaderboard(players, period="all", min_matches=None, prior=None, guests=None):
     """players: list of dicts with 'steamid64', 'name' and raw TOTALS. Returns new dicts with metrics,
     z-scores, PowerScore, AdjustedPowerScore, qualified, rank and rating (tier), best first.
-    prior: smoothing priors (implied_priors() of the site's data); default: pooled rates."""
+    prior: smoothing priors (implied_priors() of the site's data); default: pooled rates.
+    guests: extra totals (e.g. one player's games with a friend) scored on the same scale without
+    changing it or being ranked; then returns (leaderboard, scored guests)."""
     need = MIN_MATCHES.get(period, 3) if min_matches is None else min_matches
     pri = {**priors(players), **(prior or {})}
     rows = []
@@ -132,6 +134,12 @@ def leaderboard(players, period="all", min_matches=None, prior=None):
         row.update(metrics(p, pri))
         row["qualified"] = p.get("total_matches", 0) >= need
         rows.append(row)
+    extra = []
+    for p in guests or ():
+        row = dict(p)
+        row.update(metrics(p, pri))
+        row["qualified"] = False
+        extra.append(row)
     q = [r for r in rows if r["qualified"]]
     # z-scores use the ranked (qualified) players' average and spread; unranked players get a score on the
     # same scale (5v5stats uses it, e.g. in the team builder) but no rank or tier
@@ -143,7 +151,7 @@ def leaderboard(players, period="all", min_matches=None, prior=None):
         mean = sum(vals) / n if n else 0.0
         sd = math.sqrt(sum((v - mean) ** 2 for v in vals) / (n - 1)) if n > 1 else 0.0
         norm[key] = (src, mean, sd)
-    for r in rows:
+    for r in rows + extra:
         z = {key: ((r[src] - mean) / sd if sd else 0.0) for key, (src, mean, sd) in norm.items()}
         for key in Z_SOURCE:
             r["z_" + key] = z[key]
@@ -156,7 +164,8 @@ def leaderboard(players, period="all", min_matches=None, prior=None):
     q.sort(key=lambda r: -r["AdjustedPowerScore"])
     for i, r in enumerate(q, 1):
         r["rank"], r["rating"] = i, tier_for(i, len(q))
-    return q + sorted((r for r in rows if not r["qualified"]), key=lambda r: -r.get("total_matches", 0))
+    board = q + sorted((r for r in rows if not r["qualified"]), key=lambda r: -r.get("total_matches", 0))
+    return (board, extra) if guests is not None else board
 
 
 def validate(site_period_players, period):

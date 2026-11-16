@@ -265,7 +265,7 @@ def duo(con, a, b):
     sa, sb = set(ia), set(ib)
     q = ",".join("?" * (len(ia) + len(ib)))
     games = {}
-    for r in con.execute(f"""SELECT gp.game_id, gp.steamid, gp.side, gp.won, gp.kills, gp.deaths, gp.adr, g.date, g.map,
+    for r in con.execute(f"""SELECT gp.*, g.date, g.map, g.rounds,
                              g.score_a, g.score_b, g.source FROM game_players gp JOIN games g ON g.id = gp.game_id
                              WHERE gp.steamid IN ({q})""", (*ia, *ib)):
         g = games.setdefault(r["game_id"], {"id": r["game_id"], "date": r["date"], "map": r["map"],
@@ -282,13 +282,33 @@ def duo(con, a, b):
         return {"kills": k, "deaths": d, "kd": k / d if d else float(k), "kpm": k / n if n else 0,
                 "adr": sum(adr) / len(adr) if adr else None}
 
-    out = {}
+    # Skor over just these games, on the all-time scale (1.00 = server average), like the leaderboard: demo games
+    # exact, 5v5stats games with their detail counters estimated from the player's all-time rates
+    base = {r["steamid"]: json.loads(r["totals"]) for r in con.execute(
+        f"SELECT steamid, totals FROM baseline WHERE steamid IN ({q})", (*ia, *ib))}
+
+    def totals(rows, who):
+        t = {}
+        for g in rows:
+            r = g[who]
+            _add(t, json.loads(r["counters"]) if r["counters"] else _estimate(r, base.get(r["steamid"], {})))
+        return t
+
+    out, guests = {}, []
     for mode, rows in (("with", [g for g in both if g["a"]["side"] == g["b"]["side"]]),
                        ("vs", [g for g in both if g["a"]["side"] != g["b"]["side"]])):
         aw = sum(1 for g in rows if g["a"]["won"])
         bw = sum(1 for g in rows if g["b"]["won"])
         out[mode] = {"n": len(rows), "a_wins": aw, "b_wins": bw, "draws": len(rows) - (aw if mode == "with" else aw + bw),
                      "a": side(rows, "a"), "b": side(rows, "b")}
+        if rows:
+            guests += [(out[mode]["a"], totals(rows, "a")), (out[mode]["b"], totals(rows, "b"))]
+    if guests:
+        pri = (get_meta(con, "priors", {}) or {}).get("all")
+        _, scored = rating.leaderboard(list(player_totals(con, "all").values()), "all", prior=pri,
+                                       guests=[t for _, t in guests])
+        for (s, _), r in zip(guests, scored):
+            s["points"] = r["points"]
     for g in both:
         g["mode"] = "with" if g["a"]["side"] == g["b"]["side"] else "vs"
     # head to head, from the duels table (only our demo games have it)
@@ -309,6 +329,61 @@ def duo(con, a, b):
     h["games"] = sum(1 for g in both if g["mode"] == "vs" and g["id"] in games_with_duels)
     out.update(games=both, h2h=h, total=len(both))
     return out
+
+
+DUO_MIN_WITH, DUO_MIN_VS = 20, 15  # games a pair needs together / against each other for the fun facts
+
+
+def duo_facts(con, top=3):
+    """İkili's opening page: the extremes over every pair of players, all time.
+    lift: pairs whose Skor rises most when they're teammates (both players' change vs their overall Skor);
+    sink: the opposite; dom: rivalries one player dominates (wins as opponents, then Skor gap);
+    rival: the pairs that met most as opponents. Skor without the small-sample shrink here, so a pair's games
+    compare fairly with the player's whole history; the pair page shows the shrunk value."""
+    mm = merge_map(con)
+    base = {r["steamid"]: json.loads(r["totals"]) for r in con.execute("SELECT steamid, totals FROM baseline")}
+    games = {}
+    for r in con.execute("""SELECT gp.*, g.rounds FROM game_players gp JOIN games g ON g.id = gp.game_id"""):
+        sid = mm.get(r["steamid"], r["steamid"])
+        c = json.loads(r["counters"]) if r["counters"] else _estimate(r, base.get(r["steamid"], {}))
+        games.setdefault(r["game_id"], {})[sid] = (r["side"], r["won"], c)
+    acc = {}  # (a, b, mode) -> {"n", "a_wins", "b_wins", "a": totals, "b": totals}
+    for players in games.values():
+        sids = sorted(players)
+        for i, a in enumerate(sids):
+            for b in sids[i + 1:]:
+                (sa, wa, ca), (sb, wb, cb) = players[a], players[b]
+                x = acc.setdefault((a, b, "with" if sa == sb else "vs"), {"n": 0, "a_wins": 0, "b_wins": 0, "a": {}, "b": {}})
+                x["n"] += 1
+                x["a_wins"] += wa
+                x["b_wins"] += wb
+                _add(x["a"], ca)
+                _add(x["b"], cb)
+    keep = [(k, x) for k, x in acc.items() if x["n"] >= (DUO_MIN_WITH if k[2] == "with" else DUO_MIN_VS)]
+    if not keep:
+        return None
+    pri = (get_meta(con, "priors", {}) or {}).get("all")
+    board, scored = rating.leaderboard(list(player_totals(con, "all").values()), "all", prior=pri,
+                                       guests=[t for _, x in keep for t in (x["a"], x["b"])])
+    overall = {r["steamid64"]: rating.points(r["PowerScore"]) for r in board}
+    rows = []
+    for i, ((a, b, mode), x) in enumerate(keep):
+        pa, pb = rating.points(scored[2 * i]["PowerScore"]), rating.points(scored[2 * i + 1]["PowerScore"])
+        rows.append({"a": a, "b": b, "mode": mode, "n": x["n"], "a_wins": x["a_wins"], "b_wins": x["b_wins"],
+                     "pa": pa, "pb": pb, "da": pa - overall.get(a, pa), "db": pb - overall.get(b, pb)})
+    with_ = [r for r in rows if r["mode"] == "with"]
+    vs = [r for r in rows if r["mode"] == "vs"]
+    for r in vs:  # the dominant one first
+        if (r["b_wins"], r["pb"]) > (r["a_wins"], r["pa"]):
+            r.update(a=r["b"], b=r["a"], a_wins=r["b_wins"], b_wins=r["a_wins"], pa=r["pb"], pb=r["pa"],
+                     da=r["db"], db=r["da"])
+        r["share"] = r["a_wins"] / r["n"]
+    # lift / sink: both players have to move, so the smaller change of the two decides
+    return {"lift": [r for r in sorted(with_, key=lambda r: -min(r["da"], r["db"])) if min(r["da"], r["db"]) > 0][:top],
+            "sink": [r for r in sorted(with_, key=lambda r: max(r["da"], r["db"])) if max(r["da"], r["db"]) < 0][:top],
+            "dom": sorted(vs, key=lambda r: (-r["share"], -(r["pa"] - r["pb"])))[:top],
+            "rival": sorted(vs, key=lambda r: -r["n"])[:top],
+            "min_with": DUO_MIN_WITH, "min_vs": DUO_MIN_VS}
 
 
 def remove_demo(con, match_key):
