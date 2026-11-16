@@ -122,9 +122,22 @@ def top_clips(c, period, n=5, since=None):
     if not is_admin():
         cond.append("m.published = 1")
     where = ("WHERE " + " AND ".join(cond)) if cond else ""
-    return c.execute(f"""SELECT cl.*, m.slug, m.media_rev, m.map AS mmap, m.date AS mdate FROM clips cl
+    rows = c.execute(f"""SELECT cl.*, m.slug, m.media_rev, m.map AS mmap, m.date AS mdate FROM clips cl
                          JOIN matches m ON m.id = cl.match_id {where} ORDER BY cl.score DESC, m.date DESC LIMIT ?""",
                      args + [n]).fetchall()
+    return clip_people(c, rows)
+
+
+def clip_people(c, rows, mm=None, ppl=None):
+    """Clip rows as dicts with who = the merged (main) account and player = that person's name."""
+    mm = statsdb.merge_map(c) if mm is None else mm
+    ppl = people(c) if ppl is None else ppl
+    out = []
+    for cl in rows:
+        who = mm.get(cl["steamid"], cl["steamid"])
+        name = (ppl.get(who) or {}).get("name") if who != cl["steamid"] else None
+        out.append(dict(cl, who=who, player=name or cl["player"]))
+    return out
 
 
 def highlight_links(c):
@@ -520,7 +533,7 @@ def home():
         min_score = int(f["s"] or 0)
     except ValueError:
         min_score = 0
-    items = [dict(cl, who=mm.get(cl["steamid"], cl["steamid"]), kinds=clip_type_of(cl["label"])) for cl in clips]
+    items = [dict(cl, kinds=clip_type_of(cl["label"])) for cl in clip_people(None, clips, mm, ppl)]
 
     def keep(x, skip=None):
         return ((not f["p"] or x["who"] == f["p"]) and (not f["m"] or x["slug"] == f["m"])
@@ -591,6 +604,7 @@ def player_page(steamid):
                       ("" if is_admin() else " AND matches.published = 1") + " ORDER BY clips.score DESC",
                       ids).fetchall()
     ppl, links = people(c), highlight_links(c)
+    clips = clip_people(c, clips, ppl=ppl)
     rel = statsdb.relations(c, steamid)
     duo_list = statsdb.duo_players(c)
     ref = statsdb.latest_date(c)
@@ -730,6 +744,31 @@ def player_tiers(c):
     return out
 
 
+def merged_names(c, data):
+    """A match page's players under their merged identity: an alt account shows its main account's name and
+    avatar (in the scoreboard and on its clips), so a merge needs no later fixing on newly uploaded matches."""
+    mm = statsdb.merge_map(c)
+    alts = {s: mm[s] for s in data.get("players", {}) if s in mm}
+    if not alts:
+        return data
+    q = ",".join("?" * len(alts))
+    ppl = {r["steamid"]: r for r in c.execute(f"SELECT steamid, name, avatar FROM people WHERE steamid IN ({q})",
+                                                list(set(alts.values())))}
+    pics = data.setdefault("pics", {})
+    for alt, main in alts.items():
+        p = ppl.get(main)
+        if not p:
+            continue
+        if p["name"]:
+            data["players"][alt]["name"] = p["name"]
+            for cl in data.get("clips") or []:
+                if str(cl.get("steamid", "")) == alt:
+                    cl["player"] = p["name"]
+        if p["avatar"]:
+            pics[alt] = p["avatar"]
+    return data
+
+
 @app.route("/g/<int:gid>")
 def game_page(gid):
     """Any match: the highlight page if we have one, otherwise the same FACEIT-style page from its stats."""
@@ -742,7 +781,7 @@ def game_page(gid):
     if slug:
         c.close()
         return redirect(url_for("match_page", slug=slug))
-    data = statsdb.game_data(c, gid)
+    data = merged_names(c, statsdb.game_data(c, gid))
     data["tiers"] = player_tiers(c)
     c.close()
     label = f"Maç #{g['ext_id']}" if g["ext_id"] else "Demo maçı"
@@ -766,6 +805,7 @@ def match_page(slug):
     m = get_match(slug)
     data = json.loads(m["data_json"])
     c = con()
+    data = merged_names(c, data)
     data["tiers"] = player_tiers(c)
     c.close()
     banner = ""
