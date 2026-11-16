@@ -13,5 +13,5 @@
 {% for msg in get_flashed_messages() %}<div class="flash">{{ msg }}</div>{% endfor %}
 {% block body %}{% endblock %}
 </main>
-<footer class="ftr"><div class="wrap">İstatistikler: 5v5stats.com (yapımcı NERO イゲットカラ) + kendi demolarımız &middot; puan formülü 5v5stats ile aynı &middot; harita görselleri &copy; Valve &middot; {% if admin %}<a href="{{ url_for('merge_page') }}" class="dim">Hesap birleştir</a> &middot; <a href="{{ url_for('admin') }}" class="dim">Yönetim</a>{% else %}<a href="{{ url_for('login') }}" class="dim">Yönetici girişi</a>{% endif %}</div></footer>
+<footer class="ftr"><div class="wrap">Yapımcılar: NERO &middot; unsel &middot; abraXas &middot; {% if admin %}<a href="{{ url_for('merge_page') }}" class="dim">Hesap birleştir</a> &middot; <a href="{{ url_for('admin') }}" class="dim">Yönetim</a>{% else %}<a href="{{ url_for('login') }}" class="dim">Yönetici girişi</a>{% endif %}</div></footer>
 </body></html>
