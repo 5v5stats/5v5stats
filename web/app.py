@@ -254,6 +254,14 @@ AWARDS = [  # (slug, title, metric, unit, format, description, detail) - titles 
      lambda r: f"{_n(r['total_multi'])} multi-kill round"),
     ("sessiz-adim", "Sessiz Adım", "WALK_PCT", "% shift", "pct", "Hayattayken en çok shift'le yürüyen (demolardan)",
      lambda r: f"{r['demo_matches']:.0f} demo maç · {_n(r['walk_presses'])} kez shift"),
+    ("durdurulamaz", "Durdurulamaz", "WIN_STREAK", "maç seri", "{:.0f}", "Üst üste en çok maç kazanan",
+     lambda r: f"en uzun galibiyet serisi · {_n(r['total_matches'])} maç"),
+    ("intikamci", "İntikamcı", "TRADE_PM", "trade/M", "{:.2f}", "Ölen takım arkadaşının intikamını 5 sn içinde en çok alan (demolardan)",
+     lambda r: f"{_n(r['trade_kills'])} trade kill · {r['demo_matches']:.0f} demo maç"),
+    ("flas-asistcisi", "Flaş Asistçisi", "FLASH_AST_PM", "asist/M", "{:.2f}", "Flaşıyla takım arkadaşına en çok kill aldıran (demolardan)",
+     lambda r: f"{_n(r['flash_assists'])} flaş asisti · {r['demo_matches']:.0f} demo maç"),
+    ("bombaci", "Bombacı", "PLANTS_PM", "bomba/M", "{:.2f}", "Maç başına en çok bomba kuran (demolardan)",
+     lambda r: f"{_n(r['bomb_plants'])} bomba kurdu · {r['demo_matches']:.0f} demo maç"),
     ("en-cok-gelisen", "En Çok Gelişen", "FORM", "skor farkı", "{:+.2f}", "Tüm zamanlara göre skoru en çok artan",
      lambda r: f"tüm zamanlar {r['FORM_FROM']:.2f} → bu dönem {r['FORM_TO']:.2f}"),
 ]
@@ -283,13 +291,20 @@ ANTI_AWARDS = [
      lambda r: f"takım {_n(r['team_blind_ms'] / 1000)} sn · rakip {_n(r['enemy_blind_ms'] / 1000)} sn kör"),
     ("ilk-kurban", "İlk Kurban", "OPEN_DPR", "ilk ölüm/r", "{:.3f}", "Round'un ilk ölen oyuncusu en sık olan",
      lambda r: f"{_n(r['OPEN_DEATHS'])} kez ilk ölen · {_n(r['total_entry_count'])} açılış düellosu"),
+    ("kara-seri", "Kara Seri", "LOSS_STREAK", "maç seri", "{:.0f}", "Üst üste en çok maç kaybeden",
+     lambda r: f"en uzun mağlubiyet serisi · {_n(r['total_matches'])} maç"),
+    ("flasi-bosa-atan", "Flaşı Boşa Atan", "WASTED_PCT", "% boşa", "pct", "Attığı flaşların en çoğu hiçbir rakibi kör etmeyen (demolardan)",
+     lambda r: f"{_n(r['flashes_wasted'])} / {_n(r['flashes_thrown'])} flaş boşa"),
+    ("hain", "Hain", "TEAM_DMG_PR", "takım hasarı/r", "{:.1f}", "Round başına takım arkadaşlarına en çok hasar veren (demolardan)",
+     lambda r: f"{_n(r['team_damage'])} takım hasarı · {_n(r['team_kills'])} takım kill"),
     ("formsuz", "Formsuz", "FORM", "skor farkı", "{:+.2f}", "Tüm zamanlara göre skoru en çok düşen",
      lambda r: f"tüm zamanlar {r['FORM_FROM']:.2f} → bu dönem {r['FORM_TO']:.2f}"),
 ]
-ANTI_HIGH = {"yem", "ilk-kurban", "takim-flascisi"}  # anti-awards where the worst is the highest value (the rest: lowest)
+ANTI_HIGH = {"yem", "ilk-kurban", "takim-flascisi", "kara-seri", "flasi-bosa-atan", "hain"}  # anti-awards where the worst is the highest value (the rest: lowest)
 
 
 WALK_MIN_DEMOS = 3  # demo matches a player needs for the shift awards (only our demos record walking)
+FLASH_MIN_THROWN = 15  # flashbangs a player needs to have thrown for "Flaşı Boşa Atan"
 FORM_MIN_ALL = 30  # all-time matches a player needs for "En Çok Gelişen" / "Formsuz" (a real baseline)
 
 
@@ -299,6 +314,7 @@ def award_board(c, period):
     all-time view and for players without FORM_MIN_ALL matches in total.
     Also OPEN_DPR: opening deaths (lost opening duels: the first death of the round) per round."""
     board = statsdb.leaderboard(c, period)
+    streak = statsdb.streaks(c, period)
     for r in board:
         rounds = r.get("estimated_rounds") or 0
         lost = (r.get("total_entry_count") or 0) - (r.get("total_entry_wins") or 0)
@@ -311,6 +327,15 @@ def award_board(c, period):
         r["AWP_SHARE"] = (r.get("awp_kills") or 0) / dk if demos and dk >= FACT_MIN_KILLS else None
         for col, k in (("PISTOL_SHARE", "pistol_kills"), ("DEAGLE_SHARE", "deagle_kills"), ("REVOLVER_SHARE", "revolver_kills")):
             r[col] = (r.get(k) or 0) / dk if demos and dk >= FACT_MIN_KILLS else None
+        dm = r.get("demo_matches") or 0
+        for col, k in (("TRADE_PM", "trade_kills"), ("FLASH_AST_PM", "flash_assists"), ("PLANTS_PM", "bomb_plants")):
+            r[col] = (r.get(k) or 0) / dm if demos else None
+        r["TEAM_DMG_PR"] = (r.get("team_damage") or 0) / dr if demos and dr else None
+        thrown = r.get("flashes_thrown") or 0
+        r["WASTED_PCT"] = (r.get("flashes_wasted") or 0) / thrown if demos and thrown >= FLASH_MIN_THROWN else None
+        for col, k in (("KNIFE_KILLS", "knife_kills"), ("ZEUS_KILLS", "zeus_kills"), ("BLIND_KILLS", "blind_kills")):
+            r[col] = (r.get(k) or 0) if demos else None
+        r["WIN_STREAK"], r["LOSS_STREAK"] = streak.get(r["steamid64"], (0, 0))
         alive = r.get("alive_ticks") or 0
         r["WALK_PCT"] = (r.get("walk_ticks") or 0) / alive if alive and (r.get("demo_matches") or 0) >= WALK_MIN_DEMOS else None
     if period != "all":
@@ -333,6 +358,12 @@ FACTS = [
      lambda r: f"{_n(r['deagle_kills'])} / {_n(r['demo_kills'])} kill Deagle ile"),
     ("mesut-komiser", "Mesut Komiser", "REVOLVER_SHARE", "% R8", "pct1", "Kill'lerinin en büyük kısmı R8 revolverdan (demolardan)",
      lambda r: f"{_n(r['revolver_kills'])} / {_n(r['demo_kills'])} kill revolverla"),
+    ("bicakci", "Bıçakçı", "KNIFE_KILLS", "bıçak kill", "{:.0f}", "En çok bıçakla kill alan (demolardan)",
+     lambda r: f"{_n(r['knife_kills'])} bıçak kill · {r['demo_matches']:.0f} demo maç"),
+    ("zeuscu", "Zeus'çu", "ZEUS_KILLS", "zeus kill", "{:.0f}", "En çok Zeus ile kill alan (demolardan)",
+     lambda r: f"{_n(r['zeus_kills'])} zeus kill · {r['demo_matches']:.0f} demo maç"),
+    ("korlemesine", "Körlemesine", "BLIND_KILLS", "kör kill", "{:.0f}", "Flaşlanmış, kör haldeyken en çok kill alan (demolardan)",
+     lambda r: f"{_n(r['blind_kills'])} kill kör haldeyken · {r['demo_matches']:.0f} demo maç"),
 ]
 FACT_SLUGS = {a[0] for a in FACTS}
 FACT_MIN_KILLS = 20  # demo kills a player needs for the weapon facts

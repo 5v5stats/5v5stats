@@ -684,6 +684,29 @@ def leaderboard(con, period="all"):
     return rating.leaderboard(list(totals.values()), period, prior=priors)
 
 
+def streaks(con, period="all"):
+    """{steamid: (longest win streak, longest losing streak)} over the period's games in date order (a draw
+    ends both); merged accounts count as their main account."""
+    cond, args = period_where(con, period, "g.")
+    mm = merge_map(con)
+    cur, best = {}, {}
+    for r in con.execute(f"""SELECT gp.steamid, gp.won, g.score_a, g.score_b FROM game_players gp
+                             JOIN games g ON g.id = gp.game_id WHERE {cond}
+                             ORDER BY g.date, COALESCE(g.played_at, ''), g.id""", args):
+        sid = mm.get(r["steamid"], r["steamid"])
+        w, l = cur.get(sid, (0, 0))
+        if r["score_a"] == r["score_b"]:
+            w, l = 0, 0
+        elif r["won"]:
+            w, l = w + 1, 0
+        else:
+            w, l = 0, l + 1
+        cur[sid] = (w, l)
+        bw, bl = best.get(sid, (0, 0))
+        best[sid] = (max(bw, w), max(bl, l))
+    return best
+
+
 MAP_MIN_MATCHES = 5  # players with this many matches on a map set its average (1.00) and spread
 
 

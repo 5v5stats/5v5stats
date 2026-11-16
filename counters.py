@@ -33,6 +33,7 @@ def counters(demo_path):
     walk = walking(demo_path)
     blind = blinding(demo_path)
     kw = kill_weapons(deaths)
+    ex = extras(demo_path)
     c = collections.defaultdict(lambda: collections.Counter())
     active = [s for s in players if players[s]["rounds"]]
     team_score = {}  # final result per player: did their team win the match?
@@ -106,7 +107,76 @@ def counters(demo_path):
                   "demo_matches": 1, "demo_rounds": pl["rounds"], **walking_of(walk, s),
                   **{k: int(blind.get(s, {}).get(k, 0)) for k in ("enemy_blinds", "enemy_blind_ms", "team_blind_ms")},
                   **{k: int(kw.get(s, {}).get(k, 0)) for k in ("demo_kills", "awp_kills", "pistol_kills",
-                                                                     "deagle_kills", "revolver_kills")}}
+                                                                     "deagle_kills", "revolver_kills")},
+                  **extras_of(ex, s)}
+    return out
+
+
+EXTRAS = ("flashes_thrown", "flashes_wasted", "flash_assists", "knife_kills", "zeus_kills", "team_damage",
+          "team_kills", "trade_kills", "blind_kills", "bomb_plants")
+TRADE_TICKS = 5 * 64  # a kill counts as a trade when its victim killed the killer's teammate in the last 5 s
+
+
+def extras_of(ex, sid):
+    e = ex.get(sid) or {}
+    return {k: int(e.get(k, 0)) for k in EXTRAS}
+
+
+def extras(demo_path):
+    """{steamid: EXTRAS} outside warmup: flashbangs thrown and those that blinded no enemy for 1 s+, kills a
+    player's flash set up for a teammate, knife and zeus kills, damage and kills on teammates, trade kills
+    (killing the enemy who just killed a teammate), kills while blind, bombs planted."""
+    from demoparser2 import DemoParser
+    p = DemoParser(demo_path)
+    out = collections.defaultdict(collections.Counter)
+    sid = lambda x: str(x) if x is not None and str(x) not in ("None", "nan", "0", "") else None  # noqa: E731
+    warm = lambda df: df[df["is_warmup_period"] != True] if "is_warmup_period" in df.columns else df  # noqa: E712,E731
+
+    # flashes: a detonation is wasted when no enemy of the thrower was blinded 1 s+ by it
+    det = warm(p.parse_event("flashbang_detonate", other=["is_warmup_period"]))
+    blind = p.parse_event("player_blind", player=["team_num"])
+    hit = set()
+    for _, e in blind.iterrows():
+        ta, tv = e.get("attacker_team_num"), e.get("user_team_num")
+        if ta in (2, 3) and tv in (2, 3) and ta != tv and float(e.get("blind_duration") or 0) >= 1.0:
+            hit.add((sid(e.get("attacker_steamid")), int(e["entityid"])))
+    for _, e in det.iterrows():
+        s = sid(e.get("user_steamid"))
+        if s:
+            out[s]["flashes_thrown"] += 1
+            out[s]["flashes_wasted"] += (s, int(e["entityid"])) not in hit
+
+    deaths = warm(p.parse_event("player_death", player=["team_num"], other=["is_warmup_period"])).sort_values("tick")
+    recent = []  # (tick, killer, killer's team, victim's team) of enemy kills
+    for _, d in deaths.iterrows():
+        a, v, t = sid(d.get("attacker_steamid")), sid(d.get("user_steamid")), int(d["tick"])
+        ta, tv = d.get("attacker_team_num"), d.get("user_team_num")
+        if not a or a == v:
+            continue
+        if ta == tv:
+            out[a]["team_kills"] += 1
+            continue
+        w = str(d.get("weapon") or "").lower()
+        out[a]["knife_kills"] += "knife" in w or "bayonet" in w
+        out[a]["zeus_kills"] += w == "taser"
+        out[a]["blind_kills"] += bool(d.get("attackerblind"))
+        f = sid(d.get("assister_steamid"))
+        if f and d.get("assistedflash") and d.get("assister_team_num") == ta:
+            out[f]["flash_assists"] += 1
+        if any(k == v and vt == ta and t - kt <= TRADE_TICKS for kt, k, _, vt in recent):
+            out[a]["trade_kills"] += 1
+        recent = [x for x in recent if t - x[0] <= TRADE_TICKS] + [(t, a, ta, tv)]
+
+    hurt = warm(p.parse_event("player_hurt", player=["team_num"], other=["is_warmup_period"]))
+    for _, h in hurt.iterrows():
+        a, v = sid(h.get("attacker_steamid")), sid(h.get("user_steamid"))
+        if a and a != v and h.get("attacker_team_num") == h.get("user_team_num") and h.get("attacker_team_num") in (2, 3):
+            out[a]["team_damage"] += int(h.get("dmg_health") or 0)
+
+    for _, b in warm(p.parse_event("bomb_planted", other=["is_warmup_period"])).iterrows():
+        s = sid(b.get("user_steamid"))
+        if s:
+            out[s]["bomb_plants"] += 1
     return out
 
 
