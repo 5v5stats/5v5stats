@@ -647,31 +647,23 @@ def media(slug, path):
 
 
 # ---------------------------------------------------------------- merged accounts ----
-# /birlestir: count a player's second account as the same person. Behind MERGE_PASSWORD (env var or
-# admin.env) or the admin login; every merge is listed there and can be undone ("Ayır").
+# /birlestir: count a player's second account as the same person. Admins only (the admin login);
+# every merge is listed there and can be undone ("Ayır").
 
 def merge_allowed():
-    return is_admin() or session.get("merge") is True
+    return is_admin()
 
 
 @app.route("/birlestir", methods=["GET", "POST"])
 def merge_page():
+    if not merge_allowed():
+        return redirect(url_for("login", next=request.path))
     c = con()
     try:
         if request.method == "POST":
             if request.form.get("csrf") != session.get("csrf"):
                 abort(400, "Form expired, go back and try again.")
             action = request.form.get("action")
-            if action == "login":
-                pw = os.environ.get("MERGE_PASSWORD", "")
-                if pw and secrets.compare_digest(request.form.get("password", ""), pw):
-                    session["merge"] = True
-                else:
-                    time.sleep(1)
-                    flash("Şifre yanlış.")
-                return redirect(url_for("merge_page"))
-            if not merge_allowed():
-                abort(403)
             names = {r["steamid"]: r["name"] for r in c.execute("SELECT steamid, name FROM people")}
             if action == "merge":
                 main, alt = request.form.get("main", ""), request.form.get("alt", "")

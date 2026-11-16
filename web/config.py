@@ -5,7 +5,6 @@ environment variables in the project settings; a real environment variable alway
 
     ADMIN_PASSWORD, SECRET_KEY, UPLOAD_TOKEN      admin login, session cookies, upload.py's token
     DATABASE_URL                                  postgresql://... (Neon); empty = SQLite in web/data
-    MERGE_PASSWORD                                password for /birlestir (merging a player's accounts)
     R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,              Cloudflare R2 bucket for clips, thumbnails, avatars;
     R2_SECRET_ACCESS_KEY, R2_BUCKET, MEDIA_URL    empty = files on this PC in web/data/media
 """

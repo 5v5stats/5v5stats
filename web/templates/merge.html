@@ -12,13 +12,8 @@
 
 {% if not allowed %}
 <div class="panel login" style="max-width:360px">
-  <h2>Şifre</h2>
-  <form method="post">
-    <input type="hidden" name="csrf" value="{{ csrf }}">
-    <input type="hidden" name="action" value="login">
-    <p><input type="password" name="password" autofocus placeholder="Şifre"></p>
-    <button class="btn primary">Giriş</button>
-  </form>
+  <h2>Yönetici girişi gerekli</h2>
+  <p><a class="btn primary" href="{{ url_for('login', next=request.path) }}">Giriş yap</a></p>
 </div>
 {% else %}
 
