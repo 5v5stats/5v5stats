@@ -325,54 +325,51 @@ static class Program
         IAudioCaptureClient cap = (IAudioCaptureClient)capObj;
 
         long totalFrames = (long)(seconds * RATE);
+        // Every packet is written at the position its capture time stamp says (time since our start, both on
+        // the performance counter), not appended: while the game is paused or silent Windows may deliver no
+        // packets and later deliver several late at once, which appended would stretch the file's timeline.
+        byte[] pcm = new byte[totalFrames * BLOCK];
         long written = 0;
+        Stopwatch sw = Stopwatch.StartNew();
+        client.Start();
+        double t0 = (double)Stopwatch.GetTimestamp() / Stopwatch.Frequency;
+        // the wav's time 0 on the system's performance counter (same clock as Python's time.perf_counter)
+        Console.WriteLine("start " + Stopwatch.GetTimestamp() + " " + Stopwatch.Frequency);
+        Console.Out.Flush();
+        long placed = 0, late = 0;
+        while (sw.Elapsed.TotalSeconds < seconds + 0.25)
+        {
+            uint packet;
+            cap.GetNextPacketSize(out packet);
+            while (packet > 0)
+            {
+                IntPtr data; uint frames, flags; ulong dp, qp;
+                cap.GetBuffer(out data, out frames, out flags, out dp, out qp);
+                long pos = (long)Math.Round((qp * 1e-7 - t0) * RATE);  // qp: 100 ns units of the same counter
+                if (qp == 0 || (flags & 0x4) != 0) pos = written;        // no time stamp: right after the last one
+                if (pos < 0) pos = 0;
+                long n = Math.Min((long)frames, totalFrames - pos);
+                if (n > 0 && (flags & 0x2) == 0)                         // AUDCLNT_BUFFERFLAGS_SILENT: leave zeros
+                    Marshal.Copy(data, pcm, (int)(pos * BLOCK), (int)(n * BLOCK));
+                if (n > 0) { written = Math.Max(written, pos + n); placed++; }
+                if (Math.Abs(pos - written + n) > RATE / 50) late++;
+                cap.ReleaseBuffer(frames);
+                cap.GetNextPacketSize(out packet);
+            }
+            Thread.Sleep(5);
+        }
+        client.Stop();
+        Console.WriteLine("packets " + placed + " out_of_order " + late);
         using (FileStream fs = new FileStream(outPath, FileMode.Create))
         using (BinaryWriter w = new BinaryWriter(fs))
         {
-            w.Write(new byte[44]); // header written at the end
-            byte[] buf = new byte[RATE * BLOCK];
-            Stopwatch sw = Stopwatch.StartNew();
-            client.Start();
-            while (written < totalFrames)
-            {
-                uint packet;
-                cap.GetNextPacketSize(out packet);
-                while (packet > 0 && written < totalFrames)
-                {
-                    IntPtr data; uint frames, flags; ulong dp, qp;
-                    cap.GetBuffer(out data, out frames, out flags, out dp, out qp);
-                    int n = (int)Math.Min(frames, totalFrames - written);
-                    int bytes = n * BLOCK;
-                    if (bytes > buf.Length) buf = new byte[bytes];
-                    if ((flags & 0x2) != 0) Array.Clear(buf, 0, bytes);   // AUDCLNT_BUFFERFLAGS_SILENT
-                    else Marshal.Copy(data, buf, 0, bytes);
-                    w.Write(buf, 0, bytes);
-                    written += n;
-                    cap.ReleaseBuffer(frames);
-                    cap.GetNextPacketSize(out packet);
-                }
-                // the process sent nothing (silent / paused): pad with silence so we stay on the wall clock
-                long expected = (long)(sw.Elapsed.TotalSeconds * RATE);
-                if (expected - written > RATE / 20)
-                {
-                    int n = (int)Math.Min(expected - written - RATE / 100, totalFrames - written);
-                    if (n > 0)
-                    {
-                        byte[] z = new byte[n * BLOCK];
-                        w.Write(z);
-                        written += n;
-                    }
-                }
-                Thread.Sleep(5);
-            }
-            client.Stop();
-            long dataBytes = written * BLOCK;
-            w.Seek(0, SeekOrigin.Begin);
+            long dataBytes = totalFrames * BLOCK;
             w.Write(new char[] { 'R', 'I', 'F', 'F' }); w.Write((int)(36 + dataBytes));
             w.Write(new char[] { 'W', 'A', 'V', 'E', 'f', 'm', 't', ' ' }); w.Write(16);
             w.Write((short)1); w.Write((short)CH); w.Write(RATE); w.Write(RATE * BLOCK);
             w.Write((short)BLOCK); w.Write((short)BITS);
             w.Write(new char[] { 'd', 'a', 't', 'a' }); w.Write((int)dataBytes);
+            w.Write(pcm, 0, (int)dataBytes);
         }
         return 0;
     }

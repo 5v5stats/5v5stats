@@ -70,6 +70,15 @@ def route_pending():
     return os.path.isfile(MARKER)
 
 
+def start_stamp(out):
+    """The capture's time 0 (time.perf_counter() clock) from proccap's 'start <ticks> <frequency>' line."""
+    for line in (out or b"").decode(errors="replace").splitlines():
+        parts = line.split()
+        if len(parts) == 3 and parts[0] == "start":
+            return int(parts[1]) / int(parts[2])
+    return None
+
+
 def start_capture(pid, seconds, wav_path):
     return subprocess.Popen([PROCCAP, "capture", str(pid), f"{seconds:.3f}", wav_path],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)

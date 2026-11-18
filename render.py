@@ -45,6 +45,12 @@ PORT = 2121
 AUDIO_START_LATENCY = 0.03  # seconds from starting proccap to its first captured sample
 VIDEO_PIPELINE_LATENCY = 0.22  # fallback only: capture+encoder delay before FFmpeg reports a frame
 AV_FINE_TUNE = 0.02  # frames reach the screen ~2 frames after the sound (measured on 94 shots)
+# From sending demo_resume to the game's sound / moving picture in the captures (measured 2026-11-17 on 9 takes:
+# sound 0.05-0.12 s, picture 0.20-0.23 s). The clock gives the resume moment even when the game stays silent
+# or still for a while after resuming; the first sound / movement only refines it when it's close.
+RESUME_SOUND_LATENCY = 0.06
+RESUME_VIDEO_LATENCY = 0.215
+ONSET_AGREE = 0.08  # the detected first sound / movement counts only this close to the clock's moment
 PRE_ROLL = 1.5        # seconds captured before the demo resumes (trimmed off)
 MIN_FPS_RATIO = 0.85  # re-record a segment if fewer unique frames than this share of the target fps
 WINDOW_TITLE = "Counter-Strike 2"
@@ -471,6 +477,7 @@ def record_segment(con, clip, seg, path, a, gaps=()):
     total = PRE_ROLL + duration + 0.5
     cap = capture(raw, a.fps, a.height, total)
     aud, audio_delay = None, 0.0
+    t_video = None
     if a.audio_pid:
         t_video = wait_first_frame(cap)
         t_audio = time.perf_counter()
@@ -481,7 +488,7 @@ def record_segment(con, clip, seg, path, a, gaps=()):
         time.sleep(PRE_ROLL)
     windows, out_t = [], 0.0
     con.send("demo_timescale 1", "demo_resume")
-    t0 = time.perf_counter()
+    t0 = time.perf_counter()  # the resume command left (same clock as the audio capture's start stamp)
     for ticks, speed in pieces:
         secs = ticks / TICKRATE / speed
         if speed != 1:
@@ -496,12 +503,21 @@ def record_segment(con, clip, seg, path, a, gaps=()):
     cap.wait(timeout=90)
     if cap.returncode != 0 or not os.path.isfile(raw):
         raise RenderError(f"Window capture failed: {''.join(cap.err_lines).strip()[:300]}")
+    audio_resume = None
     if aud:
-        _, aerr = aud.communicate(timeout=60)
+        aout, aerr = aud.communicate(timeout=60)
         if aud.returncode != 0 or not os.path.isfile(wav):
             raise RenderError(f"Audio capture failed: {aerr.decode(errors='replace').strip()[:300]}")
+        t_wav0 = audio.start_stamp(aout)
+        if a.keep_raw:
+            log("    audio capture: " + " ".join(aout.decode(errors="replace").split()))
+        if t_wav0 is not None:  # where the resume command lands in the wav, by the clock (game silence can't fool it)
+            audio_resume = t0 - t_wav0 + RESUME_SOUND_LATENCY
     fps = live_fps(cap, PRE_ROLL + 0.3)
-    return {"raw": raw, "wav": wav if aud else None, "audio_delay": audio_delay, "windows": windows,
+    video_resume = (t0 - cap.first_frame_t) if cap.first_frame_t is not None else None
+    return {"raw": raw, "wav": wav if aud else None, "audio_delay": audio_delay, "audio_resume": audio_resume,
+            "video_resume": video_resume,
+            "windows": windows,
             "fps": fps if fps is not None else float(a.fps), "path": path}
 
 
@@ -509,17 +525,34 @@ def process_take(take, a):
     """Cut the raw recording at the resume moment, align and mux the audio. Returns unique fps."""
     raw, wav, path, audio_delay = take["raw"], take["wav"], take["path"], take["audio_delay"]
     venc = ["-c:v", "h264_nvenc", "-preset", "p5", "-cq", "18", "-pix_fmt", "yuv420p"]
-    # Cut where playback actually resumed (the picture starts moving), not at a guessed time.
+    # Cut where playback actually resumed: by the clock, refined by the first movement in the picture.
     v_on = sync.video_onset(FFMPEG, raw, PRE_ROLL)
-    v_ss = v_on - 1 / 60 if v_on is not None and PRE_ROLL - 0.3 <= v_on <= PRE_ROLL + 1.2 else PRE_ROLL
+    v_res = take.get("video_resume")
+    if v_res is not None:
+        v_res += RESUME_VIDEO_LATENCY
+        if v_on is not None and abs(v_on - v_res) <= ONSET_AGREE:
+            v_res = v_on
+    elif v_on is not None and PRE_ROLL - 0.3 <= v_on <= PRE_ROLL + 1.2:
+        v_res = v_on
+    v_ss = v_res - 1 / 60 if v_res is not None else PRE_ROLL
     if wav:
-        # Align audio on the same resume moment (silence -> game sound). Fallback: timing estimate.
+        # Align audio on the resume moment. In the wav it comes from the clock (when the resume command was
+        # sent, on the same clock as the capture's start); the first sound after the silent pause only refines
+        # it, since the game can stay quiet for a while after resuming (a player waiting in silence).
         a_on = sync.audio_onset(FFMPEG, wav, PRE_ROLL)
-        if v_on is not None and a_on is not None and v_ss != PRE_ROLL:
-            a_ss = a_on - (v_on - v_ss) - AV_FINE_TUNE
+        a_res = take.get("audio_resume")
+        if a_res is not None and a_on is not None and abs(a_on - a_res) <= ONSET_AGREE:
+            a_res = a_on
+        elif a_res is None:
+            a_res = a_on
+        if v_res is not None and a_res is not None:
+            a_ss = a_res - (v_res - v_ss) - AV_FINE_TUNE
         else:
             a_ss = v_ss - audio_delay
             log("    note: resume moment not detected, audio aligned by timing estimate")
+        if a.keep_raw:
+            log(f"    sync: v_on={v_on} a_on={a_on} a_clock={take.get('audio_resume')} v_clock={take.get('video_resume')} "
+                f"v_ss={v_ss:.3f} a_ss={a_ss:.3f}")
         ain = ["-ss", f"{a_ss:.3f}", "-i", wav] if a_ss >= 0 else ["-i", wav]
         af = "apad" if a_ss >= 0 else f"adelay={int(-a_ss * 1000)}:all=1,apad"
         ff("-ss", f"{v_ss:.3f}", "-i", raw, *ain, "-map", "0:v", "-map", "1:a", *venc,
