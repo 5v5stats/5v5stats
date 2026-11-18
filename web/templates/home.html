@@ -5,7 +5,7 @@
 {% block body %}
 {% macro q() -%}
   {%- set args = {} -%}
-  {%- for k in ['p', 'm', 'map', 't', 's', 'o'] -%}{%- set v = kwargs[k] if k in kwargs else f[k] -%}{%- if v -%}{%- set _ = args.update({k: v}) -%}{%- endif -%}{%- endfor -%}
+  {%- for k in ['p', 'm', 'map', 't', 's', 'o', 'd'] -%}{%- set v = kwargs[k] if k in kwargs else f[k] -%}{%- if v -%}{%- set _ = args.update({k: v}) -%}{%- endif -%}{%- endfor -%}
   {{- url_for('home', **args) -}}
 {%- endmacro %}
 <section class="hero">
@@ -21,6 +21,8 @@
     {% for m in matches %}<option value="{{ m.slug }}" {{ 'selected' if m.slug == f.m }}>{{ m.date|day }} &middot; {{ m.map }} {{ m.score1 }}-{{ m.score2 }}</option>{% endfor %}</select></label>
   <label><span class="lbl">Harita</span><select name="map" onchange="this.form.submit()"><option value="">Hepsi</option>
     {% for mp in maps %}<option value="{{ mp }}" {{ 'selected' if mp == f.map }}>{{ mp }}</option>{% endfor %}</select></label>
+  <label><span class="lbl">Dönem</span><select name="d" onchange="this.form.submit()"><option value="">Tüm zamanlar</option>
+    {% for k, label in periods.items() %}<option value="{{ k }}" {{ 'selected' if k == f.d }}>{{ label }}</option>{% endfor %}</select></label>
   <label><span class="lbl">Puan</span><select name="s" onchange="this.form.submit()"><option value="">Hepsi</option>
     {% for s in min_scores %}<option value="{{ s }}" {{ 'selected' if s|string == f.s }}>{{ s }}+</option>{% endfor %}</select></label>
   <label><span class="lbl">Sırala</span><select name="o" onchange="this.form.submit()">
@@ -34,10 +36,10 @@
   {% if filtered %}<a class="reset" href="{{ url_for('home', o=f.o or None) }}">&times; Filtreleri temizle</a>{% endif %}
 </div>
 
-<div class="sec"><h2>{{ 'Bulunan klipler' if filtered else 'Tüm klipler' }}</h2><small>// {{ clips|length }} klip &middot; {{ 'en yeni ilk' if f.o == 'new' else 'puana göre' }}</small></div>
-{% if clips %}
+{% macro grid(list, empty) -%}
+{% if list %}
 <div class="tclips grid">
-  {% for c in clips %}
+  {% for c in list %}
   <a class="tclip" href="{{ url_for('match_page', slug=c.slug) }}#clip{{ c.idx }}"
      data-src="{{ media_url(c.slug, c.media_rev, c.file) }}" data-poster="{{ media_url(c.slug, c.media_rev, c.thumb) if c.thumb else '' }}"
      data-title="{{ c.player }} · {{ c.label }}" data-sub="{{ c.mmap }} · {{ c.round }}. round · {{ c.mdate|day }}">
@@ -51,6 +53,16 @@
   {% endfor %}
 </div>
 {% else %}
+<p class="empty">{{ empty }}</p>
+{% endif %}
+{%- endmacro %}
+{% set order = 'en yeni ilk' if f.o == 'new' else 'puana göre' %}
+{% if week is not none %}
+<div class="sec"><h2>Son hafta</h2><small>// son 7 günün maçları &middot; {{ week|length }} klip &middot; {{ order }}</small></div>
+{{ grid(week, 'Son 7 günde ' ~ ('bu filtrelere uyan ' if filtered else '') ~ 'klip yok.') }}
+{% endif %}
+<div class="sec"><h2>{{ periods[f.d] if f.d else 'Tüm zamanlar' }}</h2><small>// {{ clips|length }} klip &middot; {{ order }}</small></div>
+{% if clips %}{{ grid(clips, '') }}{% else %}
 <p class="empty">Bu filtrelere uyan klip yok. <a class="acc" href="{{ url_for('home') }}">Filtreleri temizle</a></p>
 {% endif %}
 

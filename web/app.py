@@ -517,6 +517,9 @@ def clip_type_of(label):
     return kinds - {""}
 
 
+CLIP_PERIODS = {"7d": "Son hafta", "30d": "Son 30 gün"}  # the clips page's period filter (empty: all time)
+
+
 @app.route("/highlights")
 def home():
     """Klipler: every clip, filterable by player, match, map, kind and points; the match cards below."""
@@ -527,8 +530,11 @@ def home():
                           FROM clips cl JOIN matches m ON m.id = cl.match_id{pub}""").fetchall()
     mm = statsdb.merge_map(c)
     ppl = people(c)
+    since = {k: statsdb.window(c, k)[0] for k in CLIP_PERIODS}
     c.close()
-    f = {k: request.args.get(k, "") for k in ("p", "m", "map", "t", "s", "o")}
+    f = {k: request.args.get(k, "") for k in ("p", "m", "map", "t", "s", "o", "d")}
+    if f["d"] not in CLIP_PERIODS:
+        f["d"] = ""
     try:
         min_score = int(f["s"] or 0)
     except ValueError:
@@ -538,7 +544,8 @@ def home():
     def keep(x, skip=None):
         return ((not f["p"] or x["who"] == f["p"]) and (not f["m"] or x["slug"] == f["m"])
                 and (not f["map"] or x["mmap"] == f["map"]) and (x["score"] or 0) >= min_score
-                and (skip == "t" or not f["t"] or f["t"] in x["kinds"]))
+                and (skip == "t" or not f["t"] or f["t"] in x["kinds"])
+                and (not f["d"] or (x["mdate"] or "") >= since[f["d"]]))
     type_counts = {k: sum(1 for x in items if keep(x, "t") and k in x["kinds"]) for k, _ in CLIP_TYPES}
     shown = [x for x in items if keep(x)]
     if f["o"] == "new":
@@ -551,9 +558,12 @@ def home():
     players = sorted(((sid, (ppl.get(sid) or {}).get("name") or next(x["player"] for x in items if x["who"] == sid), n)
                       for sid, n in pcount.items()), key=lambda t: (-t[2], t[1].lower()))
     maps = sorted({x["mmap"] for x in items if x["mmap"]})
-    return render_template("home.html", matches=matches, clips=shown, total=len(items), f=f, players=players,
+    # without a period filter: this week's clips first, then all of them
+    week = [x for x in shown if (x["mdate"] or "") >= since["7d"]] if not f["d"] else None
+    return render_template("home.html", matches=matches, clips=shown, week=week, periods=CLIP_PERIODS,
+                           total=len(items), f=f, players=players,
                            maps=maps, types=CLIP_TYPES, type_counts=type_counts, min_scores=CLIP_MIN_SCORES,
-                           people=ppl, filtered=any(f[k] for k in ("p", "m", "map", "t", "s")))
+                           people=ppl, filtered=any(f[k] for k in ("p", "m", "map", "t", "s", "d")))
 
 
 @app.route("/players/<steamid>")
