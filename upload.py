@@ -50,7 +50,7 @@ def settings():
 
 
 def clips_enabled():
-    """UPLOAD_CLIPS=0 in upload.env: send stats only (no clips, thumbnails or pictures, nothing to storage)."""
+    """UPLOAD_CLIPS=0 in upload.env: send stats and profile pictures only (no clips or thumbnails)."""
     v = read_env(os.path.join(ROOT, "upload.env")).get("UPLOAD_CLIPS", "1")
     return v.strip().lower() not in ("0", "no", "false", "off")
 
@@ -74,13 +74,13 @@ def match_data(folder):
 
 
 def package_files(folder, clips=True):
-    """(match data, files of the package that exist, as relative paths with /). clips=False: no files."""
+    """(match data, files of the package that exist, as relative paths with /). clips=False: only the
+    players' profile pictures (small), no clips or thumbnails."""
     data = match_data(folder)
-    if not clips:
-        return data, []
     files = []
-    for c in data["clips"]:
-        files += [c["file"]] + [c[k] for k in ("thumb", "thumb2") if c.get(k)]
+    if clips:
+        for c in data["clips"]:
+            files += [c["file"]] + [c[k] for k in ("thumb", "thumb2") if c.get(k)]
     files += list(data["pics"].values())
     return data, [f for f in dict.fromkeys(files) if os.path.isfile(os.path.join(folder, *f.split("/")))]
 
@@ -233,7 +233,7 @@ def main():
     ap.add_argument("--public", dest="public", action="store_true", help=argparse.SUPPRESS)  # the default now
     ap.add_argument("--zip-only", action="store_true", help="only write the package zip next to the folder")
     ap.add_argument("--no-clips", dest="clips", action="store_const", const=False, default=None,
-                    help="stats only: no clips/pictures (default: UPLOAD_CLIPS in upload.env, on if not set)")
+                    help="stats and profile pictures only, no clips (default: UPLOAD_CLIPS in upload.env, on if not set)")
     ap.add_argument("--clips", dest="clips", action="store_const", const=True, help="send clips even if UPLOAD_CLIPS=0")
     ap.add_argument("--demo", action="append", metavar="FILE.dem",
                     help="stats only: analyse this demo and upload its stats without rendering clips "
