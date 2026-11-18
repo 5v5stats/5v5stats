@@ -36,7 +36,7 @@
   {% if filtered %}<a class="reset" href="{{ url_for('home', o=f.o or None) }}">&times; Filtreleri temizle</a>{% endif %}
 </div>
 
-{% macro grid(list, empty) -%}
+{% macro grid(list, empty, ranks=true) -%}
 {% if list %}
 <div class="tclips grid">
   {% for c in list %}
@@ -44,7 +44,7 @@
      data-src="{{ media_url(c.slug, c.media_rev, c.file) }}" data-poster="{{ media_url(c.slug, c.media_rev, c.thumb) if c.thumb else '' }}"
      data-title="{{ c.player }} · {{ c.label }}" data-sub="{{ c.mmap }} · {{ c.round }}. round · {{ c.mdate|day }}">
     <span class="th"{% if c.thumb %} style="background-image:url('{{ media_url(c.slug, c.media_rev, c.thumb) }}')"{% endif %}>
-      {% if f.o != 'new' %}<span class="rk num">#{{ loop.index }}</span>{% endif %}<span class="pts num">{{ c.score }} puan</span><span class="play">&#9654;</span>
+      {% if ranks and f.o != 'new' %}<span class="rk num">#{{ loop.index }}</span>{% endif %}<span class="pts num">{{ c.score }} puan</span><span class="play">&#9654;</span>
     </span>
     <span class="tx">{{ avatar(people, c.who, c.player) }}
       <span class="t"><b>{{ c.player }}</b><span class="lbl">{{ c.label }}</span>
@@ -57,9 +57,9 @@
 {% endif %}
 {%- endmacro %}
 {% set order = 'en yeni ilk' if f.o == 'new' else 'puana göre' %}
-{% if week is not none %}
-<div class="sec"><h2>Son hafta</h2><small>// son 7 günün maçları &middot; {{ week|length }} klip &middot; {{ order }}</small></div>
-{{ grid(week, 'Son 7 günde ' ~ ('bu filtrelere uyan ' if filtered else '') ~ 'klip yok.') }}
+{% if latest %}
+<div class="sec"><h2>En son klipler</h2><small>// son {{ latest|length }} klip &middot; en yeni ilk</small></div>
+{{ grid(latest, 'Bu filtrelere uyan klip yok.', ranks=false) }}
 {% endif %}
 <div class="sec"><h2>{{ periods[f.d] if f.d else 'Tüm zamanlar' }}</h2><small>// {{ clips|length }} klip &middot; {{ order }}</small></div>
 {% if clips %}{{ grid(clips, '') }}{% else %}

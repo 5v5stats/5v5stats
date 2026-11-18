@@ -518,6 +518,7 @@ def clip_type_of(label):
 
 
 CLIP_PERIODS = {"7d": "Son hafta", "30d": "Son 30 gün"}  # the clips page's period filter (empty: all time)
+LATEST_CLIPS = 10  # "En son klipler" at the top of the clips page
 
 
 @app.route("/highlights")
@@ -558,9 +559,9 @@ def home():
     players = sorted(((sid, (ppl.get(sid) or {}).get("name") or next(x["player"] for x in items if x["who"] == sid), n)
                       for sid, n in pcount.items()), key=lambda t: (-t[2], t[1].lower()))
     maps = sorted({x["mmap"] for x in items if x["mmap"]})
-    # without a period filter: this week's clips first, then all of them
-    week = [x for x in shown if (x["mdate"] or "") >= since["7d"]] if not f["d"] else None
-    return render_template("home.html", matches=matches, clips=shown, week=week, periods=CLIP_PERIODS,
+    # without a period filter: the 10 newest clips first (by time, not points), then all of them
+    latest = sorted(shown, key=lambda x: (x["mdate"] or "", x["match_id"], x["round"] or 0), reverse=True)[:LATEST_CLIPS]         if not f["d"] else None
+    return render_template("home.html", matches=matches, clips=shown, latest=latest, periods=CLIP_PERIODS,
                            total=len(items), f=f, players=players,
                            maps=maps, types=CLIP_TYPES, type_counts=type_counts, min_scores=CLIP_MIN_SCORES,
                            people=ppl, filtered=any(f[k] for k in ("p", "m", "map", "t", "s", "d")))
