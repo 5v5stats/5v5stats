@@ -66,9 +66,9 @@ Every player's round gets **points**, and each point comes with a reason. `--lis
 | Round impact | **swing**: +0.5 per 1% the player changed their team's chance to win the round (at most −10 if negative); see *Player stats* below |
 | Penalty | victim had 20 HP or less −4 |
 
-The opening kill of a round gets no bonus of its own. The default threshold is **100 points** (`--min-score`),
+The opening kill of a round gets no bonus of its own. The default threshold is **130 points** (`--min-score`),
 and each match gets at most 5 clips (`--max-clips`), the best ones first. With round impact counted, an ordinary
-3K lands around 90-120 and a 4K or clutch well above, so 100 keeps the standout plays: a quiet match gets fewer
+3K lands around 90-120 and a 4K or clutch well above, so 130 keeps the standout plays: a quiet match gets fewer
 than 5 clips instead of filler. `--min-score 45` brings back every 3K. All weights are in `POINTS` at the top of
 `highlights.py`.
 
