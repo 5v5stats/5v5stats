@@ -21,6 +21,7 @@ from demoparser2 import DemoParser
 
 TICKRATE = 64
 LEAD_IN = 4 * TICKRATE    # shown before the first action of a segment
+MATCH_END_MARGIN = TICKRATE // 8  # clips stop this long after the last round ends (before the victory screen)
 TAIL = 3 * TICKRATE       # shown after the last action (the last ~2 s carry the end badge and fade-out)
 MAX_GAP = 10 * TICKRATE   # quieter stretches longer than this are cut out of the clip
 T, CT = 2, 3
@@ -77,8 +78,8 @@ WIN_ROUNDS = 13
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 
-def _segments(events, round_end):
-    """Group action ticks into segments; gaps longer than MAX_GAP are skipped."""
+def _segments(events, round_end, limit=None):
+    """Group action ticks into segments; gaps longer than MAX_GAP are skipped. limit: no segment runs past it."""
     events = sorted(events)
     segs, cur = [], [events[0], events[0]]
     for t in events[1:]:
@@ -88,7 +89,7 @@ def _segments(events, round_end):
         else:
             cur[1] = t
     segs.append(cur)
-    return [[max(1, s - LEAD_IN), min(e + TAIL, round_end + TAIL)] for s, e in segs]
+    return [[max(1, s - LEAD_IN), min(e + TAIL, round_end + TAIL, limit or 10 ** 9)] for s, e in segs]
 
 
 def _angle_delta(y1, p1, y2, p2):
@@ -162,11 +163,21 @@ def find_highlights(demo_path, player=None, min_kills=1, min_score=135):
                        "winner": {"CT": CT, "T": T}.get(str(e["winner"]))}
     if not rounds:
         return []
+    # the match's end: once demo playback reaches the victory screen, CS2 keeps showing it even after seeking
+    # back, so no clip may run into it (the last round's clip ends a second before)
+    panel = _safe_event(p, "cs_win_panel_match")
+    match_end = None
+    if len(panel):  # the victory screen comes up about half a second after the last round ends
+        last = ends[ends["tick"] <= int(panel["tick"].min())]
+        if len(last):
+            match_end = int(last["tick"].max()) + MATCH_END_MARGIN
 
     # ---- player state at each round start: team, alive, equipment value
-    st = p.parse_ticks(["team_num", "is_alive", "name", "current_equip_value"],
+    st = p.parse_ticks(["team_num", "is_alive", "name", "current_equip_value", "user_id"],
                        ticks=[r["start"] for r in rounds.values()])
     st["steamid"] = st["steamid"].astype(str)
+    # the player's user id at each round start (spec_player takes it + 1, for names a console can't take)
+    user_ids = {(int(t), s): int(u) for t, s, u in zip(st["tick"], st["steamid"], st["user_id"]) if u == u}
     wins = {}  # roster key -> rounds won (teams swap sides, so identify a team by its players)
     for rnd in sorted(rounds):
         r = rounds[rnd]
@@ -350,13 +361,14 @@ def find_highlights(demo_path, player=None, min_kills=1, min_score=135):
         if not c.events:
             continue
         out.append({
-            "player": c.name, "steamid": sid, "round": rnd + 1,
+            "player": c.name, "steamid": sid, "round": rnd + 1, "user_id": user_ids.get((r["start"], sid)),
             "kills": c.kills, "clutch_vs": c.clutch_vs, "headshots": c.headshots,
             "weapons": sorted(c.weapons), "label": _label(c), "score": c.points,
             "reasons": c.reason_text(),
             "start_tick": max(1, min(c.events) - LEAD_IN),
-            "end_tick": min(max(c.events) + TAIL, r["end"] + TAIL),
-            "segments": _segments(c.events, r["end"]),
+            "end_tick": min(max(c.events) + TAIL, r["end"] + TAIL, match_end or 10 ** 9),
+            "segments": _segments(c.events, r["end"], match_end),
+            "match_end": match_end,
         })
 
     clips = [c for c in out if (player is None or c["player"] == player) and c["score"] >= min_score]

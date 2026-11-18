@@ -468,11 +468,15 @@ def award_page(slug):
     return render_template("award.html", **ctx)
 
 
+HOME_PERIOD = "7d"  # the front page opens on the last week (the other stats pages on DEFAULT_PERIOD)
+RECENT_CLIP_DAYS = 3  # the week's clips on the front page: the last 3 days' first, then the rest of the week
+
+
 @app.route("/")
 def stats_home():
-    period = request.args.get("p", DEFAULT_PERIOD)
+    period = request.args.get("p", HOME_PERIOD)
     if period not in PERIODS:
-        period = DEFAULT_PERIOD
+        period = HOME_PERIOD
     c = con()
     board = award_board(c, period)
     ov = statsdb.overview(c, period)
@@ -487,6 +491,12 @@ def stats_home():
         clip_title = "Bu ayın klipleri"
         if not best:
             best, clip_title = top_clips(c, period), "En iyi klipler"
+    elif period == "7d":  # the last 3 days' best clips first, then the rest of the week's
+        recent_since = (datetime.date.fromisoformat(statsdb.today())
+                        - datetime.timedelta(days=RECENT_CLIP_DAYS - 1)).isoformat()
+        best = top_clips(c, period, since=recent_since)
+        seen_ids = {x["id"] for x in best}
+        best += [x for x in top_clips(c, period, n=10) if x["id"] not in seen_ids][:5 - len(best)]
     else:
         best = top_clips(c, period)
     cb = None if best else statsdb.comeback(c, period)  # the comeback story only when there are no clips

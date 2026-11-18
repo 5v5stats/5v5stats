@@ -40,7 +40,7 @@
 
 {% if best_clips %}
 <div class="sec" style="margin-top:26px"><h2>{{ clip_title }}</h2>
-  <small>// puana göre en iyi {{ best_clips|length }}</small><a class="more" href="{{ url_for('home') }}">Tüm klipler &rarr;</a></div>
+  <small>// {% if period == '7d' %}önce son 3 gün, sonra haftanın geri kalanı &middot; puana göre{% else %}puana göre en iyi {{ best_clips|length }}{% endif %}</small><a class="more" href="{{ url_for('home') }}">Tüm klipler &rarr;</a></div>
 <div class="tclips n{{ best_clips|length }}">
   {% for c in best_clips %}
   <a class="tclip" href="{{ url_for('match_page', slug=c.slug) }}#clip{{ c.idx }}"

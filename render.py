@@ -448,21 +448,30 @@ def ff_speed(gap_ticks):
     return int(max(4, min(16, round(gap_ticks / TICKRATE / 5))))
 
 
+def spec_commands(clip):
+    """Console commands that put the camera on the clip's player: spec_player by name, or by the player's
+    number (user id + 1) when the console can't take the name (quotes, apostrophes like Kaya'S, semicolons)."""
+    name = clip["player"]
+    if any(ch in name for ch in "\"';") and clip.get("user_id") is not None:
+        return [f"spec_player {int(clip['user_id']) + 1}"]
+    return [f'spec_player "{name}"']
+
+
 def record_segment(con, clip, seg, path, a, gaps=()):
     """Record demo ticks seg=(start, end). Ticks inside `gaps` play fast-forwarded.
     Only records; process_take() turns the raw files into `path` later (in the background).
     Returns a take dict with the raw files, the fast-forward windows and the measured frame rate."""
     start, end = seg
     setup = max(1, start - 2 * TICKRATE)
-    spec = f'spec_player "{clip["player"]}"'
+    spec = spec_commands(clip)
     con.send(f"demo_gototick {setup}")
     con.wait_for("Demo Skipping finished", 30)
-    con.send("demo_pause", spec, f"demo_gototick {start}")
+    con.send("demo_pause", *spec, f"demo_gototick {start}")
     con.wait_for("Demo Skipping finished", 30)
     # after a seek CS2 sometimes doesn't draw the spectated player's weapon; switching away and back fixes it
     con.send("demo_pause", "spec_next")
     time.sleep(0.5)
-    con.send(spec)
+    con.send(*spec)
     ensure_not_minimized()
     time.sleep(2.0)
     # timeline: (ticks, speed) pieces
@@ -674,7 +683,10 @@ def render_demo(demo_arg, a, out_root):
                 part = os.path.join(out_dir, f"{base}.part{j}.mp4")
                 for attempt in (1, 2):
                     take = record_segment(con, c, seg, part, a, gaps)
-                    if take["fps"] >= a.fps * MIN_FPS_RATIO or attempt == 2:
+                    # a take that played up to the match's end can't be redone: CS2 would show the victory
+                    # screen from then on, even after seeking back
+                    at_end = c.get("match_end") is not None and seg[1] >= c["match_end"] - 2 * TICKRATE
+                    if take["fps"] >= a.fps * MIN_FPS_RATIO or attempt == 2 or at_end:
                         break
                     log(f"    part {j + 1} was choppy ({take['fps']:.0f} fps), recording again...")
                     for f in (take["raw"], take["wav"]):
