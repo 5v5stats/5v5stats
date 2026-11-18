@@ -771,8 +771,8 @@ def main():
     ap.add_argument("demos", nargs="*", help="path(s) to .dem files, or names of demos already in the csgo folder")
     ap.add_argument("--player", action="append", help="only this player (repeat for several)")
     ap.add_argument("--min-kills", type=int, default=1, help="ignore plays with fewer kills (unless clutch/defuse/etc.)")
-    ap.add_argument("--min-score", type=int, default=130,
-                    help="minimum highlight points (default 130: a 4K, ace, big clutch or an outstanding 3K; 45 = any 3K)")
+    ap.add_argument("--min-score", type=int, default=135,
+                    help="minimum highlight points (default 135: a 4K, ace, big clutch or an outstanding 3K; 45 = any 3K)")
     ap.add_argument("--max-clips", type=int, default=5, help="per demo (default 5)")
     ap.add_argument("--fps", type=int, default=60)
     ap.add_argument("--height", type=int, default=1080, help="output height (0 = native window size)")
