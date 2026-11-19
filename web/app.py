@@ -42,7 +42,7 @@ app = Flask(__name__, template_folder=os.path.join(HERE, "templates"), static_fo
 app.secret_key = SECRETS["SECRET_KEY"]
 TR_TZ = datetime.timezone(datetime.timedelta(hours=3))  # Turkey (no DST); Vercel runs on UTC
 DEFAULT_PERIOD = "30d"  # the site opens on the last 30 days; ?p=all for all time
-AWARD_PERIOD = "7d"  # the awards pages (and the front page) open on the last week
+AWARD_PERIOD = "7d"  # the front page, the awards pages and İkili open on the last week
 app.jinja_env.globals.update(map_img=lambda m: map_img(m), map_thumb=lambda m, cls="mthumb": map_thumb(m, cls),
                              default_period=DEFAULT_PERIOD, award_period=AWARD_PERIOD, cos=math.cos, sin=math.sin, media_url=storage.url,
                              level_ring=lambda t, size=28: Markup(matchpage.level_ring(t, size)))
@@ -660,9 +660,9 @@ def duo_page():
     mm = statsdb.merge_map(c)
     a = mm.get(request.args.get("a", ""), request.args.get("a", ""))
     b = mm.get(request.args.get("b", ""), request.args.get("b", ""))
-    period = request.args.get("p", DEFAULT_PERIOD)
+    period = request.args.get("p", AWARD_PERIOD)
     if period not in PERIODS:
-        period = DEFAULT_PERIOD
+        period = AWARD_PERIOD
     plist = statsdb.duo_players(c)
     names = {s: n for s, n, _ in plist}
     ppl = people(c)

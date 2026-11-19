@@ -2,10 +2,10 @@
 {% from "_macros.html" import avatar %}
 {% block title %}{% if d %}{{ names[a] }} vs {{ names[b] }}{% else %}İkili karşılaştırma{% endif %} // 5v5 Turkish Server{% endblock %}
 {% block periods %}
-<div class="periods">{% for key, label in periods.items() %}<a href="{{ url_for('duo_page', a=a or None, b=b or None, p=key if key != default_period else None) }}" class="{{ 'on' if key == period }}">{{ label }}</a>{% endfor %}</div>
+<div class="periods">{% for key, label in periods.items() %}<a href="{{ url_for('duo_page', a=a or None, b=b or None, p=key if key != award_period else None) }}" class="{{ 'on' if key == period }}">{{ label }}</a>{% endfor %}</div>
 {% endblock %}
 {% block body %}
-{% set pq = period if period != default_period else None %}
+{% set pq = period if period != award_period else None %}
 {% set plabel = {'all': 'Tüm zamanlar', '90d': 'Son 3 ay', '30d': 'Son 30 gün', '7d': 'Bu hafta'}[period] %}
 {% macro pick(name, cur) -%}
 <select name="{{ name }}" aria-label="Oyuncu"><option value="">Oyuncu seç&hellip;</option>
