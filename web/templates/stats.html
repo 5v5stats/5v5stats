@@ -104,7 +104,7 @@
 <div class="sec"><h2>{{ {'7d': 'Bu haftanın', '30d': 'Bu ayın', '90d': 'Son 3 ayın', 'all': 'Tüm zamanların'}[period] }} ödülleri</h2><small>// {{ awards|length }} kategori</small></div>
 <div class="awards">
   {% for a in awards %}
-  <div class="award"><a class="cover" href="{{ url_for('award_page', slug=a.slug, p=period if period != default_period else None) }}" aria-label="{{ a.title }} sıralaması"></a>
+  <div class="award"><a class="cover" href="{{ url_for('award_page', slug=a.slug, p=period if period != award_period else None) }}" aria-label="{{ a.title }} sıralaması"></a>
     <span class="lbl">Ödül {{ '%02d'|format(loop.index) }}</span><span class="no">#{{ '%02d'|format(loop.index) }}</span>
     <h3>{{ a.title }}</h3>
     <span class="who">{{ avatar(people, a.sid, a.name) }}{{ a.name }}</span>
@@ -118,7 +118,7 @@
 <div class="sec"><h2>{{ {'7d': 'Bu haftanın', '30d': 'Bu ayın', '90d': 'Son 3 ayın', 'all': 'Tüm zamanların'}[period] }} anti-ödülleri</h2><small>// kategorinin en kötüsü // sıralamadakiler arasında</small></div>
 <div class="awards anti">
   {% for a in anti_awards %}
-  <div class="award"><a class="cover" href="{{ url_for('award_page', slug=a.slug, p=period if period != default_period else None) }}" aria-label="{{ a.title }} sıralaması"></a>
+  <div class="award"><a class="cover" href="{{ url_for('award_page', slug=a.slug, p=period if period != award_period else None) }}" aria-label="{{ a.title }} sıralaması"></a>
     <span class="lbl">Anti-ödül {{ '%02d'|format(loop.index) }}</span><span class="no">#{{ '%02d'|format(loop.index) }}</span>
     <h3>{{ a.title }}</h3>
     <span class="who">{{ avatar(people, a.sid, a.name) }}{{ a.name }}</span>
@@ -132,7 +132,7 @@
 <div class="sec"><h2>{{ {'7d': 'Bu haftanın', '30d': 'Bu ayın', '90d': 'Son 3 ayın', 'all': 'Tüm zamanların'}[period] }} oyun tarzı</h2><small>// ödül değil, sadece bilgi // demolardan</small></div>
 <div class="awards fact">
   {% for a in facts %}
-  <div class="award"><a class="cover" href="{{ url_for('award_page', slug=a.slug, p=period if period != default_period else None) }}" aria-label="{{ a.title }} sıralaması"></a>
+  <div class="award"><a class="cover" href="{{ url_for('award_page', slug=a.slug, p=period if period != award_period else None) }}" aria-label="{{ a.title }} sıralaması"></a>
     <span class="lbl">Bilgi {{ '%02d'|format(loop.index) }}</span><span class="no">#{{ '%02d'|format(loop.index) }}</span>
     <h3>{{ a.title }}</h3>
     <span class="who">{{ avatar(people, a.sid, a.name) }}{{ a.name }}</span>

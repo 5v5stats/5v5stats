@@ -42,8 +42,9 @@ app = Flask(__name__, template_folder=os.path.join(HERE, "templates"), static_fo
 app.secret_key = SECRETS["SECRET_KEY"]
 TR_TZ = datetime.timezone(datetime.timedelta(hours=3))  # Turkey (no DST); Vercel runs on UTC
 DEFAULT_PERIOD = "30d"  # the site opens on the last 30 days; ?p=all for all time
+AWARD_PERIOD = "7d"  # the awards pages (and the front page) open on the last week
 app.jinja_env.globals.update(map_img=lambda m: map_img(m), map_thumb=lambda m, cls="mthumb": map_thumb(m, cls),
-                             default_period=DEFAULT_PERIOD, cos=math.cos, sin=math.sin, media_url=storage.url,
+                             default_period=DEFAULT_PERIOD, award_period=AWARD_PERIOD, cos=math.cos, sin=math.sin, media_url=storage.url,
                              level_ring=lambda t, size=28: Markup(matchpage.level_ring(t, size)))
 TICKETS = URLSafeTimedSerializer(SECRETS["SECRET_KEY"], salt="upload")
 db.init()  # tables (CREATE ... IF NOT EXISTS); cheap, and a fresh hosted database needs it before the first page
@@ -418,9 +419,9 @@ def awards(board, anti=False):
 @app.route("/oduller")
 def awards_page():
     """All awards of a period, each with its top 3; a card opens the award's full ranking."""
-    period = request.args.get("p", DEFAULT_PERIOD)
+    period = request.args.get("p", AWARD_PERIOD)
     if period not in PERIODS:
-        period = DEFAULT_PERIOD
+        period = AWARD_PERIOD
     c = con()
     board = award_board(c, period)
     q = [r for r in board if r["qualified"]]
@@ -448,9 +449,9 @@ def award_page(slug):
     if not found:
         abort(404)
     slug, title, key, unit, fmt, desc, detail = found
-    period = request.args.get("p", DEFAULT_PERIOD)
+    period = request.args.get("p", AWARD_PERIOD)
     if period not in PERIODS:
-        period = DEFAULT_PERIOD
+        period = AWARD_PERIOD
     c = con()
     board = award_board(c, period)
     q = sorted((r for r in board if r["qualified"] and r.get(key) is not None), key=lambda r: r[key],
@@ -468,7 +469,7 @@ def award_page(slug):
     return render_template("award.html", **ctx)
 
 
-HOME_PERIOD = "7d"  # the front page opens on the last week (the other stats pages on DEFAULT_PERIOD)
+HOME_PERIOD = AWARD_PERIOD  # the front page opens on the last week, like the awards
 RECENT_CLIP_DAYS = 3  # the week's clips on the front page: the last 3 days' first, then the rest of the week
 
 

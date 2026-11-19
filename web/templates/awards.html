@@ -6,7 +6,7 @@
 {% endblock %}
 {% block body %}
 {% set plabel = {'all': 'Tüm zamanların', '90d': 'Son 3 ayın', '30d': 'Bu ayın', '7d': 'Bu haftanın'}[period] %}
-{% set pq = period if period != default_period else None %}
+{% set pq = period if period != award_period else None %}
 <section class="hero">
   <div class="eyebrow">Ödüller // {{ plabel|lower }} en iyileri</div>
   <div class="display xl">{{ plabel }} <i>ödülleri.</i></div>
