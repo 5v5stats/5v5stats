@@ -70,8 +70,25 @@ def video_restore(snap, only_if_windowed=False):
 FILE_ONLY_KEYS = ["sound_device_override$1"]
 
 
+def steam_active_user():
+    """32-bit account id of the account signed in to Steam right now (Steam keeps it in the registry), or None."""
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam\ActiveProcess") as k:
+            uid = int(winreg.QueryValueEx(k, "ActiveUser")[0])
+        return uid or None
+    except (OSError, ValueError, ImportError):
+        return None
+
+
 def active_cfg_file():
-    """cs2_machine_convars.vcfg of the most recently used Steam account."""
+    """cs2_machine_convars.vcfg of the account signed in to Steam (CS2 runs on it); if Steam can't tell, the
+    most recently used one. (By file time alone, switching Steam accounts picked the wrong one.)"""
+    uid = steam_active_user()
+    if uid:
+        f = os.path.join(STEAM_USERDATA, str(uid), "730", "local", "cfg", "cs2_machine_convars.vcfg")
+        if os.path.isfile(f):
+            return f
     files = glob.glob(os.path.join(STEAM_USERDATA, "*", "730", "local", "cfg", "cs2_machine_convars.vcfg"))
     if not files:
         return None
