@@ -31,6 +31,40 @@ TOUCHED = {
 }
 
 
+# Display settings in cs2_video.txt (next to the convars file). render.py launches CS2 in a window at the
+# recording size (-sw -width -height) and CS2 saves that as your display mode; these are put back after.
+VIDEO_KEYS = ["setting.defaultres", "setting.defaultresheight", "setting.refreshrate_numerator",
+              "setting.refreshrate_denominator", "setting.fullscreen", "setting.nowindowborder",
+              "setting.coop_fullscreen"]
+
+
+def video_file(cfg_path):
+    return os.path.join(os.path.dirname(cfg_path), "cs2_video.txt") if cfg_path else None
+
+
+def video_snapshot():
+    """(file, {key: value}) of the active account's display settings, or None."""
+    f = video_file(active_cfg_file())
+    return (f, read_values(f, VIDEO_KEYS)) if f and os.path.isfile(f) else None
+
+
+def video_restore(snap, only_if_windowed=False):
+    """Put display settings back from video_snapshot(); returns the keys fixed. only_if_windowed: only when
+    the file now shows the renderer's windowed mode (after an interrupted run you may have changed them)."""
+    if not snap:
+        return []
+    f, values = snap
+    if not os.path.isfile(f):
+        return []
+    now = read_values(f, values)
+    if only_if_windowed and not (now.get("setting.fullscreen") == "0" and values.get("setting.fullscreen") != "0"):
+        return []
+    fixed = [k for k in values if values[k] is not None and now.get(k) != values[k]]
+    if fixed:
+        write_values(f, {k: values[k] for k in fixed})
+    return fixed
+
+
 # Settings changed in other ways (launch options / file edits) whose file key differs from the console name.
 # They are snapshotted and restored through the file only.
 FILE_ONLY_KEYS = ["sound_device_override$1"]
@@ -91,9 +125,11 @@ def snapshot():
     if not path:
         return {}
     original = read_values(path, list(TOUCHED) + FILE_ONLY_KEYS)
+    video = video_snapshot()
     os.makedirs(os.path.dirname(PENDING), exist_ok=True)
     with open(PENDING, "w", encoding="utf-8") as f:
-        json.dump({"file": path, "values": original, "time": time.time()}, f, indent=1)
+        json.dump({"file": path, "values": original, "video": list(video) if video else None, "time": time.time()},
+                  f, indent=1)
     return original
 
 
@@ -125,5 +161,7 @@ def restore_pending(stale=False):
             fixed = [k for k in fixed if k in TOUCHED and ours(k)]
         if fixed:
             write_values(path, {k: values[k] for k in fixed})
+    if snap.get("video"):
+        fixed += video_restore(tuple(snap["video"]), only_if_windowed=stale)
     os.remove(PENDING)
     return fixed

@@ -235,6 +235,7 @@ def repair_audio_route():
         state["ok"], _ = audio.route(pid, "default")
         return state["ok"] or final
 
+    video = settings_guard.video_snapshot()  # this launch is windowed too: keep your display mode
     for attempt in range(3):  # right after a crash Steam may still think CS2 is running for a while
         if attempt:
             log("    retrying in 30 s...")
@@ -248,6 +249,7 @@ def repair_audio_route():
             close_cs2(con, {})
         if state["ok"]:
             break
+    settings_guard.video_restore(video)
     if state["ok"]:
         log("    CS2 audio output is back to your default device.")
     else:
