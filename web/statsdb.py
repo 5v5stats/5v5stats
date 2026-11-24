@@ -88,12 +88,14 @@ def merge_accounts(con, main, alt, note=""):
     con.execute("""INSERT INTO merges(alt, main, created_at, note) VALUES (?,?,?,?) ON CONFLICT(alt) DO UPDATE
                    SET main = excluded.main, created_at = excluded.created_at, note = excluded.note""",
                 (alt, main, time.time(), note))
+    bump_rev(con)
     con.commit()
     return main
 
 
 def unmerge_account(con, alt):
     con.execute("DELETE FROM merges WHERE alt = ?", (alt,))
+    bump_rev(con)
     con.commit()
 
 
@@ -109,6 +111,39 @@ def set_meta(con, key, value):
 
 def map_label(m):
     return MAP_NAMES.get(m, (m or "").replace("de_", "").capitalize())
+
+
+# ---------------------------------------------------------------- reuse between requests ----
+# The baseline table (~200 KB) and the per-map ratings (built from every player's row in every match, ~600 KB)
+# were read from the database on nearly every page view, and Neon's free plan counts that data transfer.
+# They change only when the stats change: an import, a demo upload, an account merge. Each of those bumps
+# meta 'data_rev', so a warm server keeps its copy and reads just that one small value per page.
+_memo = {}
+
+
+def bump_rev(con):
+    set_meta(con, "data_rev", time.time())
+
+
+def _remember(con, name, build):
+    rev = get_meta(con, "data_rev")
+    hit = _memo.get(name)
+    if rev is not None and hit and hit[0] == rev:
+        return hit[1]
+    value = build()
+    _memo[name] = (rev, value)
+    return value
+
+
+def _baseline_rows(con):
+    """[(steamid, totals json, map_stats json)]: kept as text, so no caller can change the shared copy."""
+    return _remember(con, "baseline", lambda: [(r["steamid"], r["totals"], r["map_stats"]) for r in
+                                               con.execute("SELECT steamid, totals, map_stats FROM baseline")])
+
+
+def baseline_totals(con):
+    """{steamid: all-time totals from the last import}."""
+    return {sid: json.loads(t) for sid, t, _ in _baseline_rows(con)}
 
 
 # ---------------------------------------------------------------- 5v5stats import ----
@@ -165,6 +200,7 @@ def import_5v5(con, site, players, matches):
                                     for per in site["byPeriod"] if per != "all"})
     set_meta(con, "priors", {per: rating.implied_priors(site["byPeriod"][per]["players"]) for per in site["byPeriod"]})
     merged = merge_duplicates(con)
+    bump_rev(con)
     con.commit()
     return merged
 
@@ -222,6 +258,7 @@ def add_demo(con, match_key, data):
         if existing and existing["source"] == "demo":  # it was counted before this check existed
             con.execute("DELETE FROM game_players WHERE game_id = ?", (existing["id"],))
             con.execute("DELETE FROM games WHERE id = ?", (existing["id"],))
+            bump_rev(con)
         return None
     if existing and existing["source"] == "5v5stats":
         set_duels(con, existing["id"], data.get("duels"))  # 5v5stats has the totals, but not who killed whom
@@ -251,6 +288,7 @@ def add_demo(con, match_key, data):
                     (sid, c["name"]))
     set_duels(con, gid, data.get("duels"))
     merge_duplicates(con)
+    bump_rev(con)
     return gid
 
 
@@ -362,7 +400,7 @@ def duo_facts(con, period="all", top=3):
     min_with, min_vs, min_both = DUO_MIN[period]
     cond, cargs = period_where(con, period, "g.")
     mm = merge_map(con)
-    base = {r["steamid"]: json.loads(r["totals"]) for r in con.execute("SELECT steamid, totals FROM baseline")}
+    base = baseline_totals(con)
     games = {}
     for r in con.execute(f"""SELECT gp.*, g.rounds FROM game_players gp JOIN games g ON g.id = gp.game_id
                              WHERE {cond}""", cargs):
@@ -420,6 +458,7 @@ def duo_facts(con, period="all", top=3):
 def remove_demo(con, match_key):
     con.execute("DELETE FROM games WHERE source = 'demo' AND match_key = ?", (match_key,))
     con.execute("UPDATE games SET match_key = NULL WHERE match_key = ?", (match_key,))
+    bump_rev(con)
 
 
 # ---------------------------------------------------------------- leaderboards ----
@@ -448,7 +487,7 @@ def player_totals(con, period="all", now=None):
     """{steamid: totals} for a period: 'all' (exact: 5v5stats totals + newer demos), or the 7 / 30 / 90 days up
     to today: summed per match (demo matches exact; 5v5stats matches: K/D/A, damage, HS and wins exact, detail
     counters estimated from each player's all-time rates), or 5v5stats' exact period totals when its data ends today."""
-    base = {r["steamid"]: json.loads(r["totals"]) for r in con.execute("SELECT * FROM baseline")}
+    base = baseline_totals(con)
     names = {r["steamid"]: r["name"] for r in con.execute("SELECT steamid, name FROM people")}
     mm = merge_map(con)
     who = lambda sid: mm.get(sid, sid)  # noqa: E731  merged accounts count as their main account
@@ -583,9 +622,9 @@ def relations(con, sid, min_games=10):
 def player_maps(con):
     """{steamid: {map: {"matches": n, "adr": x}}} from the 5v5stats per-map stats plus our demo matches."""
     out, mm = {}, merge_map(con)
-    for r in con.execute("SELECT steamid, map_stats FROM baseline"):
-        mine = out.setdefault(mm.get(r["steamid"], r["steamid"]), {})
-        for m in json.loads(r["map_stats"] or "[]"):
+    for sid, _, map_stats in _baseline_rows(con):
+        mine = out.setdefault(mm.get(sid, sid), {})
+        for m in json.loads(map_stats or "[]"):
             t = mine.setdefault(m["map"], {"matches": 0, "rounds": 0, "damage": 0})
             for k in t:
                 t[k] += m.get(k) or 0
@@ -729,8 +768,13 @@ def map_points(con):
     """{map label: {steamid: (Skor on that map, matches)}}, all time. Each map is rated on its own, with the
     same formula as the leaderboard: 1.00 = the average of the players with MAP_MIN_MATCHES+ matches there.
     Built from the per-match rows: demo matches exact; 5v5stats matches have exact K/D/A, damage, HS and
-    wins, their detail counters (clutches, entries, utility, accuracy) estimated from all-time rates."""
-    base = {r["steamid"]: json.loads(r["totals"]) for r in con.execute("SELECT steamid, totals FROM baseline")}
+    wins, their detail counters (clutches, entries, utility, accuracy) estimated from all-time rates.
+    Reads every match row, so it is kept between requests until the stats change (callers only read it)."""
+    return _remember(con, "map_points", lambda: _map_points(con))
+
+
+def _map_points(con):
+    base = baseline_totals(con)
     mm = merge_map(con)
     per = {}
     for r in con.execute("""SELECT gp.*, g.map, g.rounds FROM game_players gp JOIN games g ON g.id = gp.game_id"""):
