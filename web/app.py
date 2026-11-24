@@ -589,7 +589,11 @@ def home():
     """Klipler: every clip, filterable by player, match, map, kind and points; the match cards below."""
     c = con()
     pub = "" if is_admin() else " WHERE m.published = 1"
-    matches = c.execute("SELECT * FROM matches m" + pub + " ORDER BY date DESC, id DESC").fetchall()
+    # the cards' fields only: data_json (each match's full page data) would be sent from the database for
+    # every uploaded match on every view of this page
+    matches = c.execute("""SELECT m.id, m.slug, m.title, m.map, m.date, m.team1, m.score1, m.team2, m.score2,
+                           m.mvp_name, m.mvp_avatar, m.thumb, m.clip_count, m.media_rev, m.published
+                           FROM matches m""" + pub + " ORDER BY date DESC, id DESC").fetchall()
     clips = c.execute(f"""SELECT cl.*, m.slug, m.media_rev, m.map AS mmap, m.date AS mdate, m.score1, m.score2
                           FROM clips cl JOIN matches m ON m.id = cl.match_id{pub}""").fetchall()
     mm = statsdb.merge_map(c)
