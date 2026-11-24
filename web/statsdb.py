@@ -202,12 +202,27 @@ def merge_duplicates(con):
 
 # ---------------------------------------------------------------- demo matches ----
 
+def finished(score1, score2):
+    """True for a match that was played to the end: 13 with a 2-round lead (MR12), or a won overtime (MR3: 16-12
+    to 16-14, 19-15 to 19-17, ...). Abandoned games (people left at 6-7, warm-ups at 0-0, an overtime cut off at
+    14-12) are False. Checked on the server's round backup: all 646 finished matches pass, all 51 abandoned fail."""
+    w, l = max(score1 or 0, score2 or 0), min(score1 or 0, score2 or 0)
+    return (w == 13 and l <= 11) or (w >= 16 and (w - 16) % 3 == 0 and w - 4 <= l <= w - 2)
+
+
 def add_demo(con, match_key, data):
-    """Add / update one of our demo matches (from an uploaded package's match_data.json)."""
+    """Add / update one of our demo matches (from an uploaded package's match_data.json).
+    An unfinished match is left out of the stats (its highlight page can still be uploaded)."""
     counters = data.get("counters") or {}
     if not counters:
         return None
     existing = con.execute("SELECT * FROM games WHERE match_key = ?", (match_key,)).fetchone()
+    teams = data.get("teams") or []
+    if not finished(*(t.get("score") for t in (teams + [{}, {}])[:2])):
+        if existing and existing["source"] == "demo":  # it was counted before this check existed
+            con.execute("DELETE FROM game_players WHERE game_id = ?", (existing["id"],))
+            con.execute("DELETE FROM games WHERE id = ?", (existing["id"],))
+        return None
     if existing and existing["source"] == "5v5stats":
         set_duels(con, existing["id"], data.get("duels"))  # 5v5stats has the totals, but not who killed whom
         return existing["id"]

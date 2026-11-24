@@ -14,7 +14,7 @@ How the site rates players (reverse-engineered):
   PowerScore   0.09 KPR - 0.04 DPR + 0.10 ADR + 0.20 KAST + 0.09 KPM - 0.04 DPM + 0.10 ADM + 0.04 MK
                + 0.02 HS + 0.03 ACC + 0.05 CLUTCH + 0.13 ENTRY + 0.07 UTIL   (all as z-scores)
   Adjusted     PowerScore * rounds / (rounds + 200)
-  rank, tier   by Adjusted; tier 10..1 from the rank percentile (rank - 0.5) / qualified players
+  rank, tier   by Adjusted; tier 10..1 from the top percentile (rank - 1) / qualified players
 """
 import math
 
@@ -28,7 +28,9 @@ ADJUST_ROUNDS = 200
 V_STRENGTH, ENTRY_STRENGTH = 5, 20
 SITE_MIN_MATCHES = {"all": 30, "90d": 20, "30d": 15, "7d": 3}  # 5v5stats' own rules (inferred), for validate()
 MIN_MATCHES = {**SITE_MIN_MATCHES, "30d": 9}   # ours: the last 30 days ranks everyone with 9+ matches
-TIER_CUTS = [0.059, 0.173, 0.272, 0.41, 0.566, 0.716, 0.827, 0.923, 0.98]  # rank percentile -> tier 10..2, else 1
+# top percentile (rank - 1) / ranked players, below each cut -> tier 10..2, else 1. These are the old site's
+# exact rules (percentileToRating in its src/lib/ratings.ts); the earlier inferred cuts disagreed on small boards.
+TIER_CUTS = [0.05, 0.15, 0.25, 0.4, 0.55, 0.7, 0.8, 0.9, 0.95]
 
 # Our own display scale (not on 5v5stats): a FACEIT/HLTV-style rating where 1.00 is the server average and
 # nobody goes below 0. points = e^(0.5 * adjusted score): same order and tiers, but the bottom is compressed
@@ -107,9 +109,9 @@ def _z(values):
 
 
 def tier_for(rank, n):
-    pct = (rank - 0.5) / n
+    pct = (rank - 1) / n
     for i, cut in enumerate(TIER_CUTS):
-        if pct <= cut:
+        if pct < cut:
             return 10 - i
     return 1
 

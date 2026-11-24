@@ -34,6 +34,7 @@ import rating  # noqa: E402
 import statsdb  # noqa: E402
 import storage  # noqa: E402
 
+from flask.sessions import SecureCookieSessionInterface  # noqa: E402
 from itsdangerous import BadSignature, URLSafeTimedSerializer  # noqa: E402
 from werkzeug.security import check_password_hash, generate_password_hash  # noqa: E402
 
@@ -47,12 +48,64 @@ app.jinja_env.globals.update(map_img=lambda m: map_img(m), map_thumb=lambda m, c
                              default_period=DEFAULT_PERIOD, award_period=AWARD_PERIOD, cos=math.cos, sin=math.sin, media_url=storage.url,
                              level_ring=lambda t, size=28: Markup(matchpage.level_ring(t, size)))
 TICKETS = URLSafeTimedSerializer(SECRETS["SECRET_KEY"], salt="upload")
-db.init()  # tables (CREATE ... IF NOT EXISTS); cheap, and a fresh hosted database needs it before the first page
 app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 ** 3
+_db_ready = False
 
 
 def con():
+    """The tables (CREATE ... IF NOT EXISTS) are made on the first use, not at start-up: a request that needs no
+    data (a static file, a bot probing for /wp-admin) must not wake the hosted database."""
+    global _db_ready
+    if not _db_ready:
+        db.init()
+        _db_ready = True
     return db.connect()
+
+
+# Vercel's CDN keeps public pages, so most visits, and nearly all bot traffic, never reach the database.
+# In November 2026 every page view woke Neon and the free plan's monthly compute ran out, which took the site down.
+# Admin responses are never shared: admins see unpublished matches. The CDN ignores cookies, so an admin can be
+# served the public copy of a public page (up to PAGE_CACHE old); the admin panel itself is never cached.
+PAGE_CACHE = "s-maxage=1800, stale-while-revalidate=86400, stale-if-error=604800"
+STATIC_CACHE = "s-maxage=86400, stale-while-revalidate=604800"
+PRIVATE_PATHS = ("/admin", "/api", "/birlestir")
+
+
+@app.after_request
+def shared_cache(resp):
+    if is_admin() or request.path.startswith(PRIVATE_PATHS):
+        resp.headers["Cache-Control"] = "private, no-store"
+    elif request.method == "GET" and resp.status_code == 200 and not session.modified:
+        resp.headers["Vercel-CDN-Cache-Control"] = STATIC_CACHE if request.path.startswith("/static/") else PAGE_CACHE
+    return resp
+
+
+class SessionInterface(SecureCookieSessionInterface):
+    def save_session(self, app, session, response):
+        super().save_session(app, session, response)
+        if "Vercel-CDN-Cache-Control" in response.headers:
+            if "Set-Cookie" in response.headers:  # never share a page that hands out a cookie
+                del response.headers["Vercel-CDN-Cache-Control"]
+            else:  # Flask adds this whenever the session is read; Vercel will not cache a page that has it
+                response.vary.discard("Cookie")
+
+
+app.session_interface = SessionInterface()
+
+
+def database_down(e):
+    if request.path.startswith("/api/"):
+        return jsonify(error="database unavailable"), 503, {"Cache-Control": "no-store", "Retry-After": "600"}
+    return ('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
+            '<link rel="stylesheet" href="/static/site.css"><title>5v5stats</title>'
+            '<main style="max-width:560px;margin:18vh auto;padding:0 16px;text-align:center">'
+            '<h1>Kısa bir ara verdik</h1><p>Site birazdan geri gelecek.</p></main>',
+            503, {"Cache-Control": "no-store", "Retry-After": "600"})
+
+
+if db.IS_PG:  # the hosted database refused or is unreachable (Neon's free plan pauses it when the month runs out)
+    import psycopg  # noqa: E402
+    app.register_error_handler(psycopg.OperationalError, database_down)
 
 
 def is_admin():
@@ -72,9 +125,8 @@ def admin_required(f):
 
 @app.context_processor
 def inject():
-    if "csrf" not in session:
-        session["csrf"] = secrets.token_hex(16)
-    return {"csrf": session["csrf"], "admin": is_admin()}
+    # Admins get their form token when they log in. Visitors get none, so their pages set no cookie and can be cached.
+    return {"csrf": session.get("csrf", ""), "admin": is_admin()}
 
 
 @app.template_filter("ago")
