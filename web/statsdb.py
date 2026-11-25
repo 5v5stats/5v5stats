@@ -557,12 +557,12 @@ def activity_by_month(con, months=12):
 
 
 def weekly_counts(con, weeks=8):
-    """Matches per week, Monday to Sunday, the last `weeks` weeks up to this one (the front page's bars)."""
-    monday = week_start()
+    """Matches per 7 days, the last `weeks` blocks ending today (the front page's bars; the last one is "Bu Hafta")."""
+    end = datetime.date.fromisoformat(today())
     out = []
     for i in range(weeks - 1, -1, -1):
-        a = monday - datetime.timedelta(days=7 * i)
-        b = a + datetime.timedelta(days=6)
+        b = end - datetime.timedelta(days=7 * i)
+        a = b - datetime.timedelta(days=6)
         out.append(con.execute("SELECT COUNT(*) FROM games WHERE date BETWEEN ? AND ?",
                                (a.isoformat(), b.isoformat())).fetchone()[0])
     return out
@@ -721,19 +721,11 @@ def today():
     return datetime.datetime.now(SITE_TZ).date().isoformat()
 
 
-def week_start(day=None):
-    """The Monday of the week that `day` (default today) is in."""
-    d = datetime.date.fromisoformat(day or today())
-    return d - datetime.timedelta(days=d.weekday())
-
-
 def window(con, period):
-    """(first day, last day) of a period, in the players' time. "7d" ("Bu Hafta") is this week, Monday to Sunday:
-    it resets every Monday (Yigit's choice, as on the old site). 30 / 90 days are the days up to today."""
-    if period == "7d":
-        monday = week_start()
-        return monday.isoformat(), (monday + datetime.timedelta(days=6)).isoformat()
-    days = {"90d": 90, "30d": 30}[period]
+    """(first day, last day) of a period, in the players' time: the 7 / 30 / 90 days up to today.
+    "7d" ("Bu Hafta") is the last 7 days, not Monday to Sunday: Yigit tried a Monday reset on 2026-11-24 and
+    chose the rolling week the same day, because a fresh week shows nothing until its first matches."""
+    days = {"90d": 90, "30d": 30, "7d": 7}[period]
     until = today()
     since = (datetime.date.fromisoformat(until) - datetime.timedelta(days=days - 1)).isoformat()
     return since, until

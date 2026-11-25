@@ -214,7 +214,7 @@ def build_stats_db(site, players, matches, path, counters):
     statsdb.import_5v5(con, site, players, dict(sorted(matches.items())))
     # Every match row carries its exact numbers from the MatchZy CSVs, so a week, a month or a map is summed
     # exactly. The pipeline's own period totals are not used: its windows (a UTC Monday, now minus 30 days)
-    # are not this site's (Monday to Sunday and the last 30 days, in the players' time).
+    # are not this site's (the last 7 / 30 / 90 days by date, in the players' time).
     statsdb.set_meta(con, "period_totals", {})
     gid = {r["ext_id"]: r["id"] for r in con.execute("SELECT id, ext_id FROM games")}
     con.executemany("UPDATE game_players SET counters = ? WHERE game_id = ? AND steamid = ?",

@@ -1,16 +1,16 @@
-{# "Bu Hafta" (Monday to Sunday) has nothing to show yet: early in the week, before its matches are added.
-   week_matches: the week's matches so far; minm: the matches a player needs to be ranked. #}
+{# "Bu Hafta" (the last 7 days) has nothing to show: no matches in those days, or nobody with enough of them yet.
+   week_matches: the period's matches; minm: the matches a player needs to be ranked. #}
 <div class="offline-box empty-week">
   <span class="offline-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none"
     stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5"
     width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
   <div>
     {% if week_matches %}
-    <b>Bu hafta henüz kimse {{ minm }} maça ulaşmadı.</b>
-    <span class="dim">Bu hafta {{ week_matches }} maç oynandı; sıralama ve ödüller {{ minm }} maçtan sonra başlar.</span>
+    <b>Son 7 günde henüz kimse {{ minm }} maça ulaşmadı.</b>
+    <span class="dim">Son 7 günde {{ week_matches }} maç oynandı; sıralama ve ödüller {{ minm }} maçtan sonra başlar.</span>
     {% else %}
-    <b>Bu hafta henüz maç oynanmadı.</b>
-    <span class="dim">Hafta her pazartesi yeniden başlar. Bu haftanın maçları eklendiğinde burada olacak.</span>
+    <b>Son 7 günde maç oynanmadı.</b>
+    <span class="dim">Yeni maçlar eklendiğinde burada olacak.</span>
     {% endif %}
   </div>
   <div class="offline-links">
