@@ -539,3 +539,19 @@ code { font-family:var(--mono); font-size:12px; color:#ffb38a; }
 .offline .display { font-size:clamp(28px, 4.6vw, 44px); margin:10px 0 14px; }
 .offline p { margin:0 auto 24px; max-width:520px; }
 .offline-links { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+
+/* phones: a section heading's subtitle (and the player page's compare picker) wraps under the title instead of
+   forcing one long line, which made pages wider than the screen (measured: up to 875px on a 375px phone) */
+@media (max-width: 700px) {
+  .sec { flex-wrap:wrap; row-gap:6px; }
+  .sec small { white-space:normal; min-width:0; flex-basis:100%; padding-left:19px; }
+  .sec::after { display:none; }
+  .sec .duo-pick { margin-left:19px; max-width:calc(100% - 19px); }
+  .sec .duo-pick select { max-width:100%; }
+}
+@media (max-width: 700px) {
+  .duo-games { display:block; overflow-x:auto; }  /* İkili's match list scrolls sideways inside its box */
+  .months { grid-auto-columns:minmax(0, 1fr); gap:3px; } .months span { font-size:9px; }  /* 16 months on 320px */
+}
+@media (max-width: 380px) { .sec h2 { white-space:normal; } }  /* long titles ("Tüm zamanların en iyi 3") on 320px */
+@media (max-width: 700px) { .periods { flex-wrap:wrap; } .periods a { white-space:nowrap; padding:9px 11px; } }

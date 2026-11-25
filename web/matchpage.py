@@ -186,7 +186,7 @@ body.theater-open { overflow:hidden; }
 .foot { color:var(--muted); font-size:12px; margin-top:30px; line-height:1.6; }
 
 @media (max-width: 860px) {
-  .top { grid-template-columns:1fr; }
+  .top { grid-template-columns:minmax(0, 1fr); }  /* minmax: may shrink below its content on phones */
   .hero .tname { font-size:16px; } .hero .score { font-size:30px; gap:8px; }
   .hero .vs { gap:10px; }
 }
@@ -197,6 +197,9 @@ body.theater-open { overflow:hidden; }
   .mvp .title { font-size:24px; } .mvp .grid { margin-top:22px; gap:20px 16px; }
   .hero .tname { font-size:14px; white-space:normal; }
   .av.tm { width:36px; height:36px; font-size:13px; }
+}
+@media (max-width: 380px) {  /* small phones (320px): the MVP card fits the screen */
+  .mvp { padding:16px 14px 90px; gap:16px; } .mvp .grid { gap:18px 10px; }
 }
 """
 
