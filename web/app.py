@@ -973,7 +973,7 @@ def merge_page():
     if not merge_allowed():
         return redirect(url_for("login", next=request.path))
     # The merges are saved with the uploads (c); the stats file (sc) is read-only and takes them in at the next
-    # stats update (import5v5/from_bundle.py --pull-extras), so a merge shows on the stats pages from then on.
+    # stats update (import5v5/from_bundle.py --pull-extras, via /api/extras), so a merge shows from then on.
     sc = scon()
     c = con()
     try:
@@ -1058,6 +1058,38 @@ def upload_result(m, created, notes):
     return jsonify(ok=True, created=created, notes=notes, match=m["map"], key=m["match_key"],
                    published=bool(m["published"]) or publish,
                    url=f"{base}/m/{m['slug']}", admin_url=f"{base}/admin/match/{m['id']}")
+
+
+@app.route("/api/extras")
+def api_extras():
+    """For the stats update (import5v5/from_bundle.py --pull-extras): what only the uploads database knows.
+    Account merges, who-killed-whom from uploaded demos, and which matches have a published highlight page.
+    Each game carries what identifies it in the server's own data: its match number when the database already
+    matched it, else map, date, score and players, so the update can match it to the stats file.
+    Everything here is already public on the site; admin notes and unpublished matches are left out.
+    503 while the database is unreachable: the scheduled update (5V5/automation) uses that to know it is back."""
+    c = con()
+    try:
+        published = {r[0] for r in c.execute("SELECT match_key FROM matches WHERE published = 1")}
+        merges = [{"alt": r["alt"], "main": r["main"], "created_at": r["created_at"]}
+                  for r in c.execute("SELECT alt, main, created_at FROM merges")]
+        wanted = "g.match_key IS NOT NULL OR g.id IN (SELECT game_id FROM duels)"
+        duels, players = {}, {}
+        for r in c.execute("SELECT game_id, killer, victim, kills, hs, openings FROM duels"):
+            duels.setdefault(r["game_id"], []).append({"killer": r["killer"], "victim": r["victim"], "kills": r["kills"],
+                                                       "hs": r["hs"], "openings": r["openings"]})
+        for r in c.execute(f"SELECT gp.game_id, gp.steamid FROM game_players gp JOIN games g ON g.id = gp.game_id "
+                           f"WHERE {wanted}"):
+            players.setdefault(r["game_id"], []).append(r["steamid"])
+        games = [{"ext_id": g["ext_id"], "link": g["match_key"] if g["match_key"] in published else None,
+                  "played_at": g["played_at"], "map": g["map"], "date": g["date"],
+                  "score": sorted([g["score_a"] or 0, g["score_b"] or 0]), "players": sorted(players.get(g["id"], [])),
+                  "duels": duels.get(g["id"], [])}
+                 for g in c.execute(f"SELECT g.* FROM games g WHERE {wanted}")
+                 if g["match_key"] in published or g["id"] in duels]  # nothing about unpublished uploads
+    finally:
+        c.close()
+    return jsonify(merges=merges, games=games)
 
 
 @app.route("/api/levels")

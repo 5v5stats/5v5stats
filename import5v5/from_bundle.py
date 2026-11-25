@@ -8,7 +8,7 @@ the read-only stats file the website serves (the hosted database keeps only uplo
 
     python import5v5\\from_bundle.py <cs2-stats-bundle folder>                 write the JSON and web/stats.db
     python import5v5\\from_bundle.py <cs2-stats-bundle folder> --pull-extras   ... first fetching merges, demo
-                                                       duels and highlight links from the hosted database
+                                                       duels and highlight links from 5v5stats.com/api/extras
 
 Then commit import5v5/data/ and web/stats.db and push. Only finished matches are kept (statsdb.finished).
 """
@@ -28,6 +28,7 @@ import statsdb  # noqa: E402
 
 OUT = os.path.join(HERE, "data")
 EXTRAS = os.path.join(OUT, "extras.json")
+EXTRAS_URL = "https://5v5stats.com/api/extras"
 MAP_NAMES = {"de_dust2": "Dust II", "de_inferno": "Inferno", "de_mirage": "Mirage", "de_nuke": "Nuke",
              "de_anubis": "Anubis", "de_ancient": "Ancient", "de_vertigo": "Vertigo", "de_cache": "Cache",
              "de_train": "Train", "de_overpass": "Overpass", "de_cbble_d": "Cbble d", "de_cbble": "Cobblestone"}
@@ -94,27 +95,44 @@ def convert(bundle):
     return site, players, matches, skipped
 
 
-def pull_extras():
-    """What only the uploads database knows, saved to import5v5/data/extras.json for the stats file:
-    account merges made in the admin panel, who-killed-whom from uploaded demos, and which server match has
-    a highlight page (its upload's match key). Keyed by the server's match number, so it survives a rebuild."""
-    import db
-    if not db.IS_PG:
-        raise SystemExit("--pull-extras needs DATABASE_URL (the hosted database)")
-    con = db.connect()
-    extras = {
-        "merges": [dict(r) for r in con.execute("SELECT alt, main, created_at, note FROM merges")],
-        "links": [dict(r) for r in con.execute("""SELECT ext_id, match_key, played_at FROM games
-                                                  WHERE ext_id IS NOT NULL AND match_key IS NOT NULL""")],
-        "duels": [dict(r) for r in con.execute("""SELECT g.ext_id, d.killer, d.victim, d.kills, d.hs, d.openings
-                                                  FROM duels d JOIN games g ON g.id = d.game_id
-                                                  WHERE g.ext_id IS NOT NULL""")],
-    }
-    con.close()
+def pull_extras(url):
+    """What only the uploads database knows, from the site's /api/extras, saved to import5v5/data/extras.json:
+    account merges made in the admin panel, who-killed-whom from uploaded demos, and which matches have a
+    published highlight page. No database password is needed: the site reads its own database."""
+    import urllib.error
+    import urllib.request
+    req = urllib.request.Request(url, headers={"User-Agent": "5v5stats-stats-update"})
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            extras = json.load(r)
+    except urllib.error.HTTPError as e:
+        raise SystemExit(f"{url} answered {e.code}" + (": the uploads database is still paused" if e.code == 503 else ""))
+    if not isinstance(extras, dict) or "merges" not in extras or "games" not in extras:
+        raise SystemExit(f"{url} did not answer with the expected data")
     with open(EXTRAS, "w", encoding="utf-8") as f:
         json.dump(extras, f, ensure_ascii=False, indent=0)
-    print(f"pulled {len(extras['merges'])} merges, {len(extras['links'])} highlight links, "
-          f"{len(extras['duels'])} duel rows")
+    print(f"pulled {len(extras['merges'])} merges and {len(extras['games'])} games with highlight links or duels "
+          f"({sum(len(g['duels']) for g in extras['games'])} duel rows)")
+
+
+def _match_game(con, gid, g):
+    """The stats file's game for an uploads-database game: by match number, else (a demo the uploads database
+    never matched) the same map, a date within a day, the same score and at least 8 of the same players."""
+    if g.get("ext_id") in gid:
+        return gid[g["ext_id"]]
+    try:
+        day = datetime.date.fromisoformat(g["date"])
+    except (TypeError, ValueError):
+        return None
+    for c in con.execute("SELECT id, score_a, score_b FROM games WHERE map = ? AND date BETWEEN ? AND ?",
+                         (g["map"], (day - datetime.timedelta(days=1)).isoformat(),
+                          (day + datetime.timedelta(days=1)).isoformat())).fetchall():
+        if sorted([c["score_a"], c["score_b"]]) != sorted(g["score"]):
+            continue
+        mine = {r[0] for r in con.execute("SELECT steamid FROM game_players WHERE game_id = ?", (c["id"],))}
+        if len(mine & set(g["players"])) >= 8:
+            return c["id"]
+    return None
 
 
 def build_stats_db(site, players, matches, path):
@@ -135,14 +153,23 @@ def build_stats_db(site, players, matches, path):
     statsdb.set_meta(con, "period_totals", totals)
     extras = json.load(open(EXTRAS, encoding="utf-8")) if os.path.exists(EXTRAS) else {}
     gid = {r["ext_id"]: r["id"] for r in con.execute("SELECT id, ext_id FROM games")}
-    con.executemany("INSERT INTO merges(alt, main, created_at, note) VALUES (?,?,?,?)",
-                    [(m["alt"], m["main"], m["created_at"], m["note"]) for m in extras.get("merges", [])])
-    con.executemany("UPDATE games SET match_key = ?, played_at = ? WHERE id = ?",
-                    [(x["match_key"], x["played_at"], gid[x["ext_id"]]) for x in extras.get("links", [])
-                     if x["ext_id"] in gid])
-    con.executemany("INSERT OR IGNORE INTO duels(game_id, killer, victim, kills, hs, openings) VALUES (?,?,?,?,?,?)",
-                    [(gid[d["ext_id"]], d["killer"], d["victim"], d["kills"], d["hs"], d["openings"])
-                     for d in extras.get("duels", []) if d["ext_id"] in gid])
+    con.executemany("INSERT INTO merges(alt, main, created_at, note) VALUES (?,?,?,'')",
+                    [(m["alt"], m["main"], m["created_at"]) for m in extras.get("merges", [])])
+    matched, unmatched = 0, []
+    for g in extras.get("games", []):
+        target = _match_game(con, gid, g)
+        if target is None:
+            unmatched.append(f"{g.get('map')} {g.get('date')} {'-'.join(map(str, g.get('score', [])))}")
+            continue
+        matched += 1
+        if g.get("link"):
+            con.execute("UPDATE games SET match_key = ?, played_at = ? WHERE id = ?", (g["link"], g["played_at"], target))
+        con.executemany("""INSERT OR IGNORE INTO duels(game_id, killer, victim, kills, hs, openings)
+                           VALUES (?,?,?,?,?,?)""",
+                        [(target, d["killer"], d["victim"], d["kills"], d["hs"], d["openings"]) for d in g["duels"]])
+    if extras.get("games"):
+        print(f"uploads matched to server matches: {matched} of {len(extras['games'])}"
+              + (f"; not in the MatchZy data (yet): {', '.join(unmatched[:10])}" if unmatched else ""))
     statsdb.bump_rev(con)
     con.commit()
     con.execute("VACUUM")
@@ -156,11 +183,11 @@ def build_stats_db(site, players, matches, path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("bundle", help="the cs2-stats-bundle folder, after `npm run build:data`")
-    ap.add_argument("--pull-extras", action="store_true",
-                    help="first save merges, demo duels and highlight links from the hosted database (DATABASE_URL)")
+    ap.add_argument("--pull-extras", nargs="?", const=EXTRAS_URL, metavar="URL",
+                    help=f"first save merges, demo duels and highlight links from the site (default {EXTRAS_URL})")
     a = ap.parse_args()
     if a.pull_extras:
-        pull_extras()
+        pull_extras(a.pull_extras)
     site, players, matches, skipped = convert(a.bundle)
     os.makedirs(OUT, exist_ok=True)
     for name, obj in (("site", site), ("players", players), ("matches", matches)):
