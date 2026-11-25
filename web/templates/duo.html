@@ -68,6 +68,7 @@
 <div class="meta-line"><span>{{ plabel }}:</span><span><b>{{ d.total }}</b> ortak maç</span><span><b>{{ d.with.n }}</b> aynı takımda</span><span><b>{{ d.vs.n }}</b> rakip</span></div>
 
 {% set h = d.h2h %}
+{% if n_demos %}{# who killed whom exists only in demo data, which the stats no longer take in: hidden without it #}
 <div class="sec"><h2>Birbirlerini öldürme</h2><small>// {{ h.games }} demo maçından</small></div>
 <p class="demo-note"><b>{% if demo_since %}{{ demo_since|day }} itibarıyla{% else %}Henüz{% endif %}</b>
   Kim kimi öldürdü bilgisi sadece kendi demolarımızdan geliyor{% if demo_since %} ({{ n_demos }} maç){% endif %}. Demoları yeni kaydetmeye başladık, bu yüzden daha eski maçlar burada sayılmıyor.
@@ -88,8 +89,9 @@
 {% else %}
 <p class="dim small" style="margin:10px 0 22px">Karşı karşıya oynadıkları demo maçı yok: kim kimi öldürdü sadece bizim demolarımızda var.</p>
 {% endif %}
+{% endif %}
 
-<div class="sec"><h2>Maçlar</h2><small>// {{ plabel|lower }} (5v5stats + demolar)</small></div>
+<div class="sec"><h2>Maçlar</h2><small>// {{ plabel|lower }}</small></div>
 <div class="duo-modes">
   {% for mode, title in [('with', 'Aynı takımda'), ('vs', 'Rakip olarak')] %}
   {% set m = d[mode] %}

@@ -7,8 +7,8 @@ reads the JSON files directly, writes the same three files parse.py made, and bu
 the read-only stats file the website serves (the hosted database keeps only uploads and the admin panel).
 
     python import5v5\\from_bundle.py <cs2-stats-bundle folder>                 write the JSON and web/stats.db
-    python import5v5\\from_bundle.py <cs2-stats-bundle folder> --pull-extras   ... first fetching merges, demo
-                                                       duels and highlight links from 5v5stats.com/api/extras
+    python import5v5\\from_bundle.py <cs2-stats-bundle folder> --pull-extras   ... first fetching account
+                                                       merges and highlight links from 5v5stats.com/api/extras
 
 Then commit import5v5/data/ and web/stats.db and push. Only finished matches are kept (statsdb.finished).
 """
@@ -97,8 +97,8 @@ def convert(bundle):
 
 def pull_extras(url):
     """What only the uploads database knows, from the site's /api/extras, saved to import5v5/data/extras.json:
-    account merges made in the admin panel, who-killed-whom from uploaded demos, and which matches have a
-    published highlight page. No database password is needed: the site reads its own database."""
+    account merges made in the admin panel and which matches have a published highlight page. No demo data
+    (the stats come only from MatchZy). No database password is needed: the site reads its own database."""
     import urllib.error
     import urllib.request
     req = urllib.request.Request(url, headers={"User-Agent": "5v5stats-stats-update"})
@@ -111,8 +111,7 @@ def pull_extras(url):
         raise SystemExit(f"{url} did not answer with the expected data")
     with open(EXTRAS, "w", encoding="utf-8") as f:
         json.dump(extras, f, ensure_ascii=False, indent=0)
-    print(f"pulled {len(extras['merges'])} merges and {len(extras['games'])} games with highlight links or duels "
-          f"({sum(len(g['duels']) for g in extras['games'])} duel rows)")
+    print(f"pulled {len(extras['merges'])} merges and {len(extras['games'])} highlight links")
 
 
 def _match_game(con, gid, g):
@@ -164,17 +163,13 @@ def build_stats_db(site, players, matches, path):
         matched += 1
         if g.get("link"):
             con.execute("UPDATE games SET match_key = ?, played_at = ? WHERE id = ?", (g["link"], g["played_at"], target))
-        con.executemany("""INSERT OR IGNORE INTO duels(game_id, killer, victim, kills, hs, openings)
-                           VALUES (?,?,?,?,?,?)""",
-                        [(target, d["killer"], d["victim"], d["kills"], d["hs"], d["openings"]) for d in g["duels"]])
     if extras.get("games"):
-        print(f"uploads matched to server matches: {matched} of {len(extras['games'])}"
+        print(f"highlight pages matched to server matches: {matched} of {len(extras['games'])}"
               + (f"; not in the MatchZy data (yet): {', '.join(unmatched[:10])}" if unmatched else ""))
     statsdb.bump_rev(con)
     con.commit()
     con.execute("VACUUM")
-    counts = {t: con.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in ("games", "game_players", "merges",
-                                                                                 "duels")}
+    counts = {t: con.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in ("games", "game_players", "merges")}
     con.close()
     os.replace(tmp, path)
     print(f"wrote {os.path.relpath(path)} ({os.path.getsize(path) / 1e6:.1f} MB): {counts}")
@@ -184,7 +179,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("bundle", help="the cs2-stats-bundle folder, after `npm run build:data`")
     ap.add_argument("--pull-extras", nargs="?", const=EXTRAS_URL, metavar="URL",
-                    help=f"first save merges, demo duels and highlight links from the site (default {EXTRAS_URL})")
+                    help=f"first save account merges and highlight links from the site (default {EXTRAS_URL})")
     a = ap.parse_args()
     if a.pull_extras:
         pull_extras(a.pull_extras)
