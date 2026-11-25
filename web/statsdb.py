@@ -13,6 +13,7 @@ includes a match we also have as a demo, the two are merged (the 5v5stats copy c
 import datetime
 import json
 import time
+from zoneinfo import ZoneInfo
 
 import rating
 
@@ -511,12 +512,12 @@ def player_totals(con, period="all", now=None):
             for sid, t in snap.items():
                 _add(out.setdefault(who(sid), {}), t)
             rows = con.execute("""SELECT gp.* FROM game_players gp JOIN games g ON g.id = gp.game_id
-                                  WHERE g.source = 'demo' AND g.date >= ?""", (since,)).fetchall()
+                                  WHERE g.source = 'demo' AND g.date BETWEEN ? AND ?""", (since, until)).fetchall()
             for r in rows:
                 _add(out.setdefault(who(r["steamid"]), {}), json.loads(r["counters"]))
         else:  # no 5v5stats data: per-match rows
             rows = con.execute("""SELECT gp.*, g.source, g.rounds FROM game_players gp JOIN games g ON g.id = gp.game_id
-                                  WHERE g.date >= ?""", (since,)).fetchall()
+                                  WHERE g.date BETWEEN ? AND ?""", (since, until)).fetchall()
             for r in rows:
                 c = json.loads(r["counters"]) if r["counters"] else _estimate(r, base.get(r["steamid"], {}))
                 _add(out.setdefault(who(r["steamid"]), {}), c)
@@ -556,10 +557,12 @@ def activity_by_month(con, months=12):
 
 
 def weekly_counts(con, weeks=8):
-    end = datetime.date.fromisoformat(latest_date(con))
+    """Matches per week, Monday to Sunday, the last `weeks` weeks up to this one (the front page's bars)."""
+    monday = week_start()
     out = []
     for i in range(weeks - 1, -1, -1):
-        a, b = end - datetime.timedelta(days=7 * i + 6), end - datetime.timedelta(days=7 * i)
+        a = monday - datetime.timedelta(days=7 * i)
+        b = a + datetime.timedelta(days=6)
         out.append(con.execute("SELECT COUNT(*) FROM games WHERE date BETWEEN ? AND ?",
                                (a.isoformat(), b.isoformat())).fetchone()[0])
     return out
@@ -705,19 +708,32 @@ def game_data(con, gid):
 
 def latest_date(con):
     r = con.execute("SELECT MAX(date) FROM games").fetchone()[0]
-    return r or datetime.date.today().isoformat()
+    return r or today()
 
 
-TR_TZ = datetime.timezone(datetime.timedelta(hours=3))  # the server's players are in Turkey (no DST)
+# The players' time: US Pacific (Yigit, 2026-11-24; matches end 19:00-22:00 there, which is the next morning in
+# Turkey). Match dates (import5v5/from_bundle.py) and "today" both use it, so a match counts on the evening
+# it was played.
+SITE_TZ = ZoneInfo("America/Los_Angeles")
 
 
 def today():
-    return datetime.datetime.now(TR_TZ).date().isoformat()
+    return datetime.datetime.now(SITE_TZ).date().isoformat()
+
+
+def week_start(day=None):
+    """The Monday of the week that `day` (default today) is in."""
+    d = datetime.date.fromisoformat(day or today())
+    return d - datetime.timedelta(days=d.weekday())
 
 
 def window(con, period):
-    """(first day, last day) of a period: the 7 / 30 / 90 days up to today (Turkey time)."""
-    days = {"90d": 90, "30d": 30, "7d": 7}[period]
+    """(first day, last day) of a period, in the players' time. "7d" ("Bu Hafta") is this week, Monday to Sunday:
+    it resets every Monday (Yigit's choice, as on the old site). 30 / 90 days are the days up to today."""
+    if period == "7d":
+        monday = week_start()
+        return monday.isoformat(), (monday + datetime.timedelta(days=6)).isoformat()
+    days = {"90d": 90, "30d": 30}[period]
     until = today()
     since = (datetime.date.fromisoformat(until) - datetime.timedelta(days=days - 1)).isoformat()
     return since, until
@@ -727,8 +743,8 @@ def period_where(con, period, alias=""):
     """SQL condition (and args) selecting a period's games."""
     if period == "all":
         return "1=1", ()
-    since, _ = window(con, period)
-    return f"{alias}date >= ?", (since,)
+    since, until = window(con, period)  # both ends: a period never takes in a match after it
+    return f"{alias}date BETWEEN ? AND ?", (since, until)
 
 
 def leaderboard(con, period="all"):

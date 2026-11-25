@@ -41,7 +41,7 @@ from werkzeug.security import check_password_hash, generate_password_hash  # noq
 SECRETS = config.ensure_secrets()
 app = Flask(__name__, template_folder=os.path.join(HERE, "templates"), static_folder=os.path.join(HERE, "static"))
 app.secret_key = SECRETS["SECRET_KEY"]
-TR_TZ = datetime.timezone(datetime.timedelta(hours=3))  # Turkey (no DST); Vercel runs on UTC
+SITE_TZ = statsdb.SITE_TZ  # the players' time (US Pacific); Vercel runs on UTC
 DEFAULT_PERIOD = "30d"  # the site opens on the last 30 days; ?p=all for all time
 AWARD_PERIOD = "7d"  # the front page, the awards pages and İkili open on the last week
 app.jinja_env.globals.update(map_img=lambda m: map_img(m), map_thumb=lambda m, cls="mthumb": map_thumb(m, cls),
@@ -308,14 +308,17 @@ def month_tr(ym):
         return ym
 
 
-@app.template_filter("ago_day")
-def ago_day(iso, ref):
-    """days before ref, short Turkish: bugün / 4g / 2ay"""
+@app.template_filter("shortday")
+def shortday(iso):
+    """2026-11-22 -> 22 Kas (the year only when it is not this year). The "last match" labels show the date:
+    a "2 days ago" count was measured from the newest match in the data, so it said "bugün" (today) for days
+    after a stats update."""
     try:
-        n = (datetime.date.fromisoformat(ref) - datetime.date.fromisoformat(iso)).days
+        d = datetime.date.fromisoformat(iso)
     except (TypeError, ValueError):
         return ""
-    return "bugün" if n <= 0 else f"{n}g" if n < 30 else f"{n // 30}ay"
+    this_year = statsdb.today()[:4] == str(d.year)
+    return f"{d.day} {TR_MONTHS[d.month - 1]}" + ("" if this_year else f" {d.year}")
 
 
 @app.template_filter("bin")
@@ -534,7 +537,7 @@ def awards_page():
                                  "tier": r.get("rating"), "detail": detail(r)} for r in top]})
         return out
     ctx = dict(cards=cards_of(AWARDS), anti=cards_of(ANTI_AWARDS), facts=cards_of(FACTS), period=period, periods=PERIODS, people=people(c), ranked=len(q),
-               minm=rating.MIN_MATCHES.get(period))
+               minm=rating.MIN_MATCHES.get(period), week_matches=statsdb.overview(c, period)["matches"])
     c.close()
     return render_template("awards.html", **ctx)
 
@@ -561,7 +564,7 @@ def award_page(slug):
              "detail": detail(r)} for i, r in enumerate(q)]
     ctx = dict(rows=rows, title=title, unit=unit, desc=desc, slug=slug, period=period, periods=PERIODS, anti=kind == "anti", fact=kind == "fact",
                people=people(c), others=[(a[0], a[1]) for a in KINDS[kind]], unranked=len(board) - len(q),
-               minm=rating.MIN_MATCHES.get(period))
+               minm=rating.MIN_MATCHES.get(period), week_matches=statsdb.overview(c, period)["matches"])
     c.close()
     return render_template("award.html", **ctx)
 
@@ -585,7 +588,7 @@ def stats_home():
                       (sync_date or "",)).fetchone()[0]
     clip_title = {"7d": "Haftanın klipleri", "30d": "Bu ayın klipleri", "90d": "Son 3 ayın klipleri"}.get(period)
     if period == "all":  # the front page: this month's clips (the last 30 days), else the best ever
-        best = top_clips(c, period, since=(datetime.date.today() - datetime.timedelta(days=30)).isoformat())
+        best = top_clips(c, period, since=(datetime.date.fromisoformat(statsdb.today()) - datetime.timedelta(days=30)).isoformat())
         clip_title = "Bu ayın klipleri"
         if not best:
             best, clip_title = top_clips(c, period), "En iyi klipler"
@@ -604,7 +607,7 @@ def stats_home():
                weeks=statsdb.weekly_counts(c), seen=statsdb.last_seen(c), ref=statsdb.latest_date(c),
                month30=statsdb.overview(c, "30d")["matches"],
                sync_date=sync_date,  # newest 5v5stats match we have; later games are our demos only
-               synced=(datetime.datetime.fromtimestamp(synced / 1000, TR_TZ).strftime("%Y-%m-%d %H:%M")
+               synced=(datetime.datetime.fromtimestamp(synced / 1000, SITE_TZ).strftime("%Y-%m-%d %H:%M")
                        if synced else None))
     c.close()
     return render_template("stats.html", **ctx)
@@ -781,9 +784,11 @@ def duo_page():
         for s in {r[k] for rows in (facts["lift"], facts["sink"], facts["dom"], facts["rival"]) for r in rows
                   for k in ("a", "b")}:
             names.setdefault(s, (ppl.get(s) or {}).get("name") or s)
+    week_matches = statsdb.overview(c, period)["matches"] if period == "7d" else None
     c.close()
     return render_template("duo.html", a=a, b=b, d=d, plist=plist, names=names, people=ppl, tiers=tiers,
-                           period=period, periods=PERIODS,
+                           period=period, periods=PERIODS, week_matches=week_matches,
+                           minm=rating.MIN_MATCHES.get(period),
                            demo_since=since, n_demos=n_demos, facts=facts)
 
 

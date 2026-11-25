@@ -555,3 +555,5 @@ code { font-family:var(--mono); font-size:12px; color:#ffb38a; }
 }
 @media (max-width: 380px) { .sec h2 { white-space:normal; } }  /* long titles ("Tüm zamanların en iyi 3") on 320px */
 @media (max-width: 700px) { .periods { flex-wrap:wrap; } .periods a { white-space:nowrap; padding:9px 11px; } }
+/* "Bu Hafta" before the week's first matches: the note box with its two buttons on the right */
+.empty-week { margin-top:26px; flex-wrap:wrap; } .empty-week .offline-links { margin-left:auto; }

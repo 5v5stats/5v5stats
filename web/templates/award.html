@@ -18,7 +18,8 @@
 <nav class="aw-tabs">{% for s, t in others %}<a href="{{ url_for('award_page', slug=s, p=pq) }}" class="{{ 'on' if s == slug }}">{{ t }}</a>{% endfor %}</nav>
 
 {% if not rows %}
-<p class="dim" style="margin:30px 0">Bu dönemde sıralamaya girecek kadar maç oynayan oyuncu yok.</p>
+{% if period == '7d' %}{% include "_empty_week.html" %}{% else %}
+<p class="dim" style="margin:30px 0">Bu dönemde sıralamaya girecek kadar maç oynayan oyuncu yok.</p>{% endif %}
 {% else %}
 <div class="podium{{ ' anti' if anti }}{{ ' fact' if fact }}">
   {% for r in rows[:3] %}

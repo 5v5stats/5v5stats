@@ -1,7 +1,7 @@
 {
 "917": {
 "id": 917,
-"date": "2026-11-23",
+"date": "2026-11-22",
 "rounds": 35,
 "total_kills": 263,
 "map_name": "Dust II",
@@ -174,7 +174,7 @@
 },
 "916": {
 "id": 916,
-"date": "2026-11-23",
+"date": "2026-11-22",
 "rounds": 20,
 "total_kills": 158,
 "map_name": "Anubis",
@@ -332,7 +332,7 @@
 },
 "913": {
 "id": 913,
-"date": "2026-11-23",
+"date": "2026-11-22",
 "rounds": 22,
 "total_kills": 153,
 "map_name": "Dust II",
@@ -503,7 +503,7 @@
 },
 "912": {
 "id": 912,
-"date": "2026-11-22",
+"date": "2026-11-21",
 "rounds": 24,
 "total_kills": 176,
 "map_name": "Dust II",
@@ -665,7 +665,7 @@
 },
 "911": {
 "id": 911,
-"date": "2026-11-21",
+"date": "2026-11-20",
 "rounds": 19,
 "total_kills": 142,
 "map_name": "Dust II",
@@ -822,7 +822,7 @@
 },
 "910": {
 "id": 910,
-"date": "2026-11-21",
+"date": "2026-11-20",
 "rounds": 23,
 "total_kills": 170,
 "map_name": "Anubis",
@@ -983,7 +983,7 @@
 },
 "909": {
 "id": 909,
-"date": "2026-11-21",
+"date": "2026-11-20",
 "rounds": 24,
 "total_kills": 177,
 "map_name": "Dust II",
@@ -1145,7 +1145,7 @@
 },
 "908": {
 "id": 908,
-"date": "2026-11-20",
+"date": "2026-11-19",
 "rounds": 36,
 "total_kills": 264,
 "map_name": "Anubis",
@@ -1319,7 +1319,7 @@
 },
 "907": {
 "id": 907,
-"date": "2026-11-20",
+"date": "2026-11-19",
 "rounds": 22,
 "total_kills": 152,
 "map_name": "Dust II",
@@ -1479,7 +1479,7 @@
 },
 "906": {
 "id": 906,
-"date": "2026-11-19",
+"date": "2026-11-18",
 "rounds": 16,
 "total_kills": 117,
 "map_name": "Dust II",
@@ -1633,7 +1633,7 @@
 },
 "905": {
 "id": 905,
-"date": "2026-11-19",
+"date": "2026-11-18",
 "rounds": 23,
 "total_kills": 150,
 "map_name": "Inferno",
@@ -1794,7 +1794,7 @@
 },
 "903": {
 "id": 903,
-"date": "2026-11-19",
+"date": "2026-11-18",
 "rounds": 22,
 "total_kills": 161,
 "map_name": "Dust II",
@@ -1954,7 +1954,7 @@
 },
 "902": {
 "id": 902,
-"date": "2026-11-18",
+"date": "2026-11-17",
 "rounds": 22,
 "total_kills": 165,
 "map_name": "Inferno",
@@ -2114,7 +2114,7 @@
 },
 "901": {
 "id": 901,
-"date": "2026-11-18",
+"date": "2026-11-17",
 "rounds": 23,
 "total_kills": 169,
 "map_name": "Ancient",
@@ -2275,7 +2275,7 @@
 },
 "900": {
 "id": 900,
-"date": "2026-11-18",
+"date": "2026-11-17",
 "rounds": 21,
 "total_kills": 143,
 "map_name": "Dust II",
@@ -2434,7 +2434,7 @@
 },
 "899": {
 "id": 899,
-"date": "2026-11-17",
+"date": "2026-11-16",
 "rounds": 18,
 "total_kills": 137,
 "map_name": "Nuke",
@@ -2590,7 +2590,7 @@
 },
 "898": {
 "id": 898,
-"date": "2026-11-17",
+"date": "2026-11-16",
 "rounds": 19,
 "total_kills": 141,
 "map_name": "Mirage",
@@ -2747,7 +2747,7 @@
 },
 "897": {
 "id": 897,
-"date": "2026-11-17",
+"date": "2026-11-16",
 "rounds": 16,
 "total_kills": 109,
 "map_name": "Dust II",
@@ -2901,7 +2901,7 @@
 },
 "896": {
 "id": 896,
-"date": "2026-11-16",
+"date": "2026-11-15",
 "rounds": 23,
 "total_kills": 171,
 "map_name": "Dust II",
@@ -3062,7 +3062,7 @@
 },
 "894": {
 "id": 894,
-"date": "2026-11-15",
+"date": "2026-11-14",
 "rounds": 20,
 "total_kills": 152,
 "map_name": "Inferno",
@@ -3220,7 +3220,7 @@
 },
 "893": {
 "id": 893,
-"date": "2026-11-15",
+"date": "2026-11-14",
 "rounds": 20,
 "total_kills": 145,
 "map_name": "Dust II",
@@ -3378,7 +3378,7 @@
 },
 "892": {
 "id": 892,
-"date": "2026-11-15",
+"date": "2026-11-14",
 "rounds": 22,
 "total_kills": 154,
 "map_name": "Dust II",
@@ -3549,7 +3549,7 @@
 },
 "891": {
 "id": 891,
-"date": "2026-11-14",
+"date": "2026-11-13",
 "rounds": 29,
 "total_kills": 199,
 "map_name": "Dust II",
@@ -3716,7 +3716,7 @@
 },
 "889": {
 "id": 889,
-"date": "2026-11-14",
+"date": "2026-11-13",
 "rounds": 28,
 "total_kills": 205,
 "map_name": "Anubis",
@@ -3882,7 +3882,7 @@
 },
 "888": {
 "id": 888,
-"date": "2026-11-14",
+"date": "2026-11-13",
 "rounds": 24,
 "total_kills": 169,
 "map_name": "Dust II",
@@ -4044,7 +4044,7 @@
 },
 "887": {
 "id": 887,
-"date": "2026-11-11",
+"date": "2026-11-10",
 "rounds": 28,
 "total_kills": 198,
 "map_name": "Dust II",
@@ -4210,7 +4210,7 @@
 },
 "886": {
 "id": 886,
-"date": "2026-11-11",
+"date": "2026-11-10",
 "rounds": 18,
 "total_kills": 129,
 "map_name": "Anubis",
@@ -4366,7 +4366,7 @@
 },
 "885": {
 "id": 885,
-"date": "2026-11-11",
+"date": "2026-11-10",
 "rounds": 18,
 "total_kills": 125,
 "map_name": "Dust II",
@@ -4522,7 +4522,7 @@
 },
 "883": {
 "id": 883,
-"date": "2026-11-11",
+"date": "2026-11-10",
 "rounds": 16,
 "total_kills": 127,
 "map_name": "Dust II",
@@ -4676,7 +4676,7 @@
 },
 "882": {
 "id": 882,
-"date": "2026-11-10",
+"date": "2026-11-09",
 "rounds": 22,
 "total_kills": 159,
 "map_name": "Dust II",
@@ -4836,7 +4836,7 @@
 },
 "881": {
 "id": 881,
-"date": "2026-11-09",
+"date": "2026-11-08",
 "rounds": 20,
 "total_kills": 136,
 "map_name": "Dust II",
@@ -4994,7 +4994,7 @@
 },
 "880": {
 "id": 880,
-"date": "2026-11-08",
+"date": "2026-11-07",
 "rounds": 22,
 "total_kills": 162,
 "map_name": "Ancient",
@@ -5154,7 +5154,7 @@
 },
 "878": {
 "id": 878,
-"date": "2026-11-08",
+"date": "2026-11-07",
 "rounds": 24,
 "total_kills": 185,
 "map_name": "Dust II",
@@ -5316,7 +5316,7 @@
 },
 "877": {
 "id": 877,
-"date": "2026-11-08",
+"date": "2026-11-07",
 "rounds": 22,
 "total_kills": 160,
 "map_name": "Dust II",
@@ -5476,7 +5476,7 @@
 },
 "876": {
 "id": 876,
-"date": "2026-11-08",
+"date": "2026-11-07",
 "rounds": 20,
 "total_kills": 148,
 "map_name": "Anubis",
@@ -5634,7 +5634,7 @@
 },
 "875": {
 "id": 875,
-"date": "2026-11-08",
+"date": "2026-11-07",
 "rounds": 22,
 "total_kills": 161,
 "map_name": "Inferno",
@@ -5794,7 +5794,7 @@
 },
 "873": {
 "id": 873,
-"date": "2026-11-08",
+"date": "2026-11-07",
 "rounds": 24,
 "total_kills": 169,
 "map_name": "Dust II",
@@ -5956,7 +5956,7 @@
 },
 "871": {
 "id": 871,
-"date": "2026-11-07",
+"date": "2026-11-06",
 "rounds": 19,
 "total_kills": 140,
 "map_name": "Dust II",
@@ -6113,7 +6113,7 @@
 },
 "870": {
 "id": 870,
-"date": "2026-11-06",
+"date": "2026-11-05",
 "rounds": 18,
 "total_kills": 125,
 "map_name": "Anubis",
@@ -6269,7 +6269,7 @@
 },
 "869": {
 "id": 869,
-"date": "2026-11-06",
+"date": "2026-11-05",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -6430,7 +6430,7 @@
 },
 "868": {
 "id": 868,
-"date": "2026-11-06",
+"date": "2026-11-05",
 "rounds": 23,
 "total_kills": 162,
 "map_name": "Cache",
@@ -6591,7 +6591,7 @@
 },
 "867": {
 "id": 867,
-"date": "2026-11-06",
+"date": "2026-11-05",
 "rounds": 16,
 "total_kills": 119,
 "map_name": "Dust II",
@@ -6745,7 +6745,7 @@
 },
 "866": {
 "id": 866,
-"date": "2026-11-06",
+"date": "2026-11-05",
 "rounds": 22,
 "total_kills": 159,
 "map_name": "Ancient",
@@ -6905,7 +6905,7 @@
 },
 "865": {
 "id": 865,
-"date": "2026-11-06",
+"date": "2026-11-05",
 "rounds": 19,
 "total_kills": 140,
 "map_name": "Dust II",
@@ -7062,7 +7062,7 @@
 },
 "863": {
 "id": 863,
-"date": "2026-11-06",
+"date": "2026-11-05",
 "rounds": 23,
 "total_kills": 170,
 "map_name": "Dust II",
@@ -7223,7 +7223,7 @@
 },
 "862": {
 "id": 862,
-"date": "2026-11-05",
+"date": "2026-11-04",
 "rounds": 22,
 "total_kills": 162,
 "map_name": "Inferno",
@@ -7394,7 +7394,7 @@
 },
 "860": {
 "id": 860,
-"date": "2026-11-05",
+"date": "2026-11-04",
 "rounds": 19,
 "total_kills": 134,
 "map_name": "Anubis",
@@ -7551,7 +7551,7 @@
 },
 "859": {
 "id": 859,
-"date": "2026-11-05",
+"date": "2026-11-04",
 "rounds": 19,
 "total_kills": 144,
 "map_name": "Dust II",
@@ -7708,7 +7708,7 @@
 },
 "858": {
 "id": 858,
-"date": "2026-11-05",
+"date": "2026-11-04",
 "rounds": 28,
 "total_kills": 202,
 "map_name": "Dust II",
@@ -7874,7 +7874,7 @@
 },
 "857": {
 "id": 857,
-"date": "2026-11-04",
+"date": "2026-11-03",
 "rounds": 22,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -8034,7 +8034,7 @@
 },
 "856": {
 "id": 856,
-"date": "2026-11-03",
+"date": "2026-11-02",
 "rounds": 21,
 "total_kills": 150,
 "map_name": "Dust II",
@@ -8193,7 +8193,7 @@
 },
 "855": {
 "id": 855,
-"date": "2026-10-31",
+"date": "2026-10-30",
 "rounds": 28,
 "total_kills": 201,
 "map_name": "Dust II",
@@ -8359,7 +8359,7 @@
 },
 "854": {
 "id": 854,
-"date": "2026-10-31",
+"date": "2026-10-30",
 "rounds": 15,
 "total_kills": 106,
 "map_name": "Inferno",
@@ -8512,7 +8512,7 @@
 },
 "853": {
 "id": 853,
-"date": "2026-10-31",
+"date": "2026-10-30",
 "rounds": 24,
 "total_kills": 169,
 "map_name": "Nuke",
@@ -8674,7 +8674,7 @@
 },
 "851": {
 "id": 851,
-"date": "2026-10-31",
+"date": "2026-10-30",
 "rounds": 15,
 "total_kills": 114,
 "map_name": "Dust II",
@@ -8827,7 +8827,7 @@
 },
 "848": {
 "id": 848,
-"date": "2026-10-30",
+"date": "2026-10-29",
 "rounds": 22,
 "total_kills": 156,
 "map_name": "Inferno",
@@ -8987,7 +8987,7 @@
 },
 "847": {
 "id": 847,
-"date": "2026-10-30",
+"date": "2026-10-29",
 "rounds": 21,
 "total_kills": 151,
 "map_name": "Dust II",
@@ -9146,7 +9146,7 @@
 },
 "845": {
 "id": 845,
-"date": "2026-10-29",
+"date": "2026-10-28",
 "rounds": 14,
 "total_kills": 98,
 "map_name": "Dust II",
@@ -9298,7 +9298,7 @@
 },
 "844": {
 "id": 844,
-"date": "2026-10-29",
+"date": "2026-10-28",
 "rounds": 30,
 "total_kills": 208,
 "map_name": "Inferno",
@@ -9466,7 +9466,7 @@
 },
 "843": {
 "id": 843,
-"date": "2026-10-29",
+"date": "2026-10-28",
 "rounds": 20,
 "total_kills": 146,
 "map_name": "Dust II",
@@ -9624,7 +9624,7 @@
 },
 "841": {
 "id": 841,
-"date": "2026-10-28",
+"date": "2026-10-27",
 "rounds": 30,
 "total_kills": 218,
 "map_name": "Inferno",
@@ -9792,7 +9792,7 @@
 },
 "840": {
 "id": 840,
-"date": "2026-10-28",
+"date": "2026-10-27",
 "rounds": 22,
 "total_kills": 158,
 "map_name": "Anubis",
@@ -9952,7 +9952,7 @@
 },
 "839": {
 "id": 839,
-"date": "2026-10-28",
+"date": "2026-10-27",
 "rounds": 24,
 "total_kills": 181,
 "map_name": "Dust II",
@@ -10114,7 +10114,7 @@
 },
 "838": {
 "id": 838,
-"date": "2026-10-27",
+"date": "2026-10-26",
 "rounds": 22,
 "total_kills": 163,
 "map_name": "Mirage",
@@ -10274,7 +10274,7 @@
 },
 "837": {
 "id": 837,
-"date": "2026-10-27",
+"date": "2026-10-26",
 "rounds": 19,
 "total_kills": 137,
 "map_name": "Dust II",
@@ -10431,7 +10431,7 @@
 },
 "836": {
 "id": 836,
-"date": "2026-10-26",
+"date": "2026-10-25",
 "rounds": 19,
 "total_kills": 141,
 "map_name": "Dust II",
@@ -10588,7 +10588,7 @@
 },
 "835": {
 "id": 835,
-"date": "2026-10-26",
+"date": "2026-10-25",
 "rounds": 15,
 "total_kills": 107,
 "map_name": "Mirage",
@@ -10741,7 +10741,7 @@
 },
 "834": {
 "id": 834,
-"date": "2026-10-26",
+"date": "2026-10-25",
 "rounds": 15,
 "total_kills": 111,
 "map_name": "Dust II",
@@ -10894,7 +10894,7 @@
 },
 "833": {
 "id": 833,
-"date": "2026-10-25",
+"date": "2026-10-24",
 "rounds": 17,
 "total_kills": 133,
 "map_name": "Anubis",
@@ -11049,7 +11049,7 @@
 },
 "831": {
 "id": 831,
-"date": "2026-10-25",
+"date": "2026-10-24",
 "rounds": 24,
 "total_kills": 181,
 "map_name": "Dust II",
@@ -11211,7 +11211,7 @@
 },
 "830": {
 "id": 830,
-"date": "2026-10-25",
+"date": "2026-10-24",
 "rounds": 35,
 "total_kills": 261,
 "map_name": "Inferno",
@@ -11384,7 +11384,7 @@
 },
 "829": {
 "id": 829,
-"date": "2026-10-25",
+"date": "2026-10-24",
 "rounds": 24,
 "total_kills": 178,
 "map_name": "Dust II",
@@ -11546,7 +11546,7 @@
 },
 "828": {
 "id": 828,
-"date": "2026-10-24",
+"date": "2026-10-23",
 "rounds": 21,
 "total_kills": 148,
 "map_name": "Dust II",
@@ -11705,7 +11705,7 @@
 },
 "826": {
 "id": 826,
-"date": "2026-10-24",
+"date": "2026-10-23",
 "rounds": 24,
 "total_kills": 183,
 "map_name": "Ancient",
@@ -11867,7 +11867,7 @@
 },
 "824": {
 "id": 824,
-"date": "2026-10-24",
+"date": "2026-10-23",
 "rounds": 18,
 "total_kills": 139,
 "map_name": "Mirage",
@@ -12023,7 +12023,7 @@
 },
 "822": {
 "id": 822,
-"date": "2026-10-24",
+"date": "2026-10-23",
 "rounds": 19,
 "total_kills": 141,
 "map_name": "Dust II",
@@ -12180,7 +12180,7 @@
 },
 "820": {
 "id": 820,
-"date": "2026-10-22",
+"date": "2026-10-21",
 "rounds": 18,
 "total_kills": 134,
 "map_name": "Dust II",
@@ -12336,7 +12336,7 @@
 },
 "818": {
 "id": 818,
-"date": "2026-10-22",
+"date": "2026-10-21",
 "rounds": 18,
 "total_kills": 136,
 "map_name": "Nuke",
@@ -12492,7 +12492,7 @@
 },
 "817": {
 "id": 817,
-"date": "2026-10-22",
+"date": "2026-10-21",
 "rounds": 17,
 "total_kills": 130,
 "map_name": "Mirage",
@@ -12647,7 +12647,7 @@
 },
 "816": {
 "id": 816,
-"date": "2026-10-22",
+"date": "2026-10-21",
 "rounds": 23,
 "total_kills": 151,
 "map_name": "Dust II",
@@ -12808,7 +12808,7 @@
 },
 "815": {
 "id": 815,
-"date": "2026-10-21",
+"date": "2026-10-20",
 "rounds": 30,
 "total_kills": 217,
 "map_name": "Dust II",
@@ -12976,7 +12976,7 @@
 },
 "814": {
 "id": 814,
-"date": "2026-10-20",
+"date": "2026-10-19",
 "rounds": 18,
 "total_kills": 126,
 "map_name": "Dust II",
@@ -13132,7 +13132,7 @@
 },
 "812": {
 "id": 812,
-"date": "2026-10-20",
+"date": "2026-10-19",
 "rounds": 23,
 "total_kills": 160,
 "map_name": "Anubis",
@@ -13293,7 +13293,7 @@
 },
 "811": {
 "id": 811,
-"date": "2026-10-20",
+"date": "2026-10-19",
 "rounds": 18,
 "total_kills": 124,
 "map_name": "Inferno",
@@ -13449,7 +13449,7 @@
 },
 "810": {
 "id": 810,
-"date": "2026-10-20",
+"date": "2026-10-19",
 "rounds": 22,
 "total_kills": 171,
 "map_name": "Dust II",
@@ -13609,7 +13609,7 @@
 },
 "809": {
 "id": 809,
-"date": "2026-10-19",
+"date": "2026-10-18",
 "rounds": 22,
 "total_kills": 169,
 "map_name": "Inferno",
@@ -13769,7 +13769,7 @@
 },
 "807": {
 "id": 807,
-"date": "2026-10-19",
+"date": "2026-10-18",
 "rounds": 29,
 "total_kills": 202,
 "map_name": "Dust II",
@@ -13936,7 +13936,7 @@
 },
 "806": {
 "id": 806,
-"date": "2026-10-18",
+"date": "2026-10-17",
 "rounds": 16,
 "total_kills": 111,
 "map_name": "Mirage",
@@ -14090,7 +14090,7 @@
 },
 "805": {
 "id": 805,
-"date": "2026-10-18",
+"date": "2026-10-17",
 "rounds": 20,
 "total_kills": 152,
 "map_name": "Inferno",
@@ -14248,7 +14248,7 @@
 },
 "803": {
 "id": 803,
-"date": "2026-10-18",
+"date": "2026-10-17",
 "rounds": 18,
 "total_kills": 141,
 "map_name": "Dust II",
@@ -14404,7 +14404,7 @@
 },
 "801": {
 "id": 801,
-"date": "2026-10-17",
+"date": "2026-10-16",
 "rounds": 21,
 "total_kills": 154,
 "map_name": "Dust II",
@@ -14563,7 +14563,7 @@
 },
 "799": {
 "id": 799,
-"date": "2026-10-15",
+"date": "2026-10-14",
 "rounds": 23,
 "total_kills": 150,
 "map_name": "Mirage",
@@ -14724,7 +14724,7 @@
 },
 "797": {
 "id": 797,
-"date": "2026-10-15",
+"date": "2026-10-14",
 "rounds": 16,
 "total_kills": 121,
 "map_name": "Cache",
@@ -14878,7 +14878,7 @@
 },
 "795": {
 "id": 795,
-"date": "2026-10-15",
+"date": "2026-10-14",
 "rounds": 14,
 "total_kills": 99,
 "map_name": "Dust II",
@@ -15030,7 +15030,7 @@
 },
 "794": {
 "id": 794,
-"date": "2026-10-14",
+"date": "2026-10-13",
 "rounds": 20,
 "total_kills": 146,
 "map_name": "Dust II",
@@ -15188,7 +15188,7 @@
 },
 "792": {
 "id": 792,
-"date": "2026-10-14",
+"date": "2026-10-13",
 "rounds": 24,
 "total_kills": 173,
 "map_name": "Inferno",
@@ -15350,7 +15350,7 @@
 },
 "790": {
 "id": 790,
-"date": "2026-10-14",
+"date": "2026-10-13",
 "rounds": 24,
 "total_kills": 178,
 "map_name": "Dust II",
@@ -15512,7 +15512,7 @@
 },
 "789": {
 "id": 789,
-"date": "2026-10-13",
+"date": "2026-10-12",
 "rounds": 22,
 "total_kills": 158,
 "map_name": "Dust II",
@@ -15672,7 +15672,7 @@
 },
 "788": {
 "id": 788,
-"date": "2026-10-12",
+"date": "2026-10-11",
 "rounds": 30,
 "total_kills": 211,
 "map_name": "Dust II",
@@ -15840,7 +15840,7 @@
 },
 "787": {
 "id": 787,
-"date": "2026-10-12",
+"date": "2026-10-11",
 "rounds": 18,
 "total_kills": 127,
 "map_name": "Nuke",
@@ -15996,7 +15996,7 @@
 },
 "786": {
 "id": 786,
-"date": "2026-10-12",
+"date": "2026-10-11",
 "rounds": 19,
 "total_kills": 140,
 "map_name": "Inferno",
@@ -16153,7 +16153,7 @@
 },
 "785": {
 "id": 785,
-"date": "2026-10-12",
+"date": "2026-10-11",
 "rounds": 23,
 "total_kills": 153,
 "map_name": "Dust II",
@@ -16314,7 +16314,7 @@
 },
 "784": {
 "id": 784,
-"date": "2026-10-11",
+"date": "2026-10-10",
 "rounds": 24,
 "total_kills": 163,
 "map_name": "Anubis",
@@ -16476,7 +16476,7 @@
 },
 "782": {
 "id": 782,
-"date": "2026-10-11",
+"date": "2026-10-10",
 "rounds": 23,
 "total_kills": 168,
 "map_name": "Dust II",
@@ -16637,7 +16637,7 @@
 },
 "781": {
 "id": 781,
-"date": "2026-10-11",
+"date": "2026-10-10",
 "rounds": 29,
 "total_kills": 222,
 "map_name": "Inferno",
@@ -16804,7 +16804,7 @@
 },
 "780": {
 "id": 780,
-"date": "2026-10-11",
+"date": "2026-10-10",
 "rounds": 23,
 "total_kills": 162,
 "map_name": "Dust II",
@@ -17124,7 +17124,7 @@
 },
 "777": {
 "id": 777,
-"date": "2026-10-10",
+"date": "2026-10-09",
 "rounds": 20,
 "total_kills": 147,
 "map_name": "Dust II",
@@ -17282,7 +17282,7 @@
 },
 "776": {
 "id": 776,
-"date": "2026-10-09",
+"date": "2026-10-08",
 "rounds": 17,
 "total_kills": 125,
 "map_name": "Inferno",
@@ -17437,7 +17437,7 @@
 },
 "775": {
 "id": 775,
-"date": "2026-10-09",
+"date": "2026-10-08",
 "rounds": 19,
 "total_kills": 140,
 "map_name": "Dust II",
@@ -17594,7 +17594,7 @@
 },
 "773": {
 "id": 773,
-"date": "2026-10-08",
+"date": "2026-10-07",
 "rounds": 30,
 "total_kills": 219,
 "map_name": "Inferno",
@@ -17762,7 +17762,7 @@
 },
 "772": {
 "id": 772,
-"date": "2026-10-08",
+"date": "2026-10-07",
 "rounds": 36,
 "total_kills": 245,
 "map_name": "Dust II",
@@ -17936,7 +17936,7 @@
 },
 "771": {
 "id": 771,
-"date": "2026-10-06",
+"date": "2026-10-05",
 "rounds": 21,
 "total_kills": 156,
 "map_name": "Anubis",
@@ -18095,7 +18095,7 @@
 },
 "769": {
 "id": 769,
-"date": "2026-10-06",
+"date": "2026-10-05",
 "rounds": 18,
 "total_kills": 127,
 "map_name": "Inferno",
@@ -18251,7 +18251,7 @@
 },
 "768": {
 "id": 768,
-"date": "2026-10-06",
+"date": "2026-10-05",
 "rounds": 23,
 "total_kills": 169,
 "map_name": "Dust II",
@@ -18412,7 +18412,7 @@
 },
 "767": {
 "id": 767,
-"date": "2026-10-06",
+"date": "2026-10-05",
 "rounds": 22,
 "total_kills": 147,
 "map_name": "Dust II",
@@ -18572,7 +18572,7 @@
 },
 "766": {
 "id": 766,
-"date": "2026-10-05",
+"date": "2026-10-04",
 "rounds": 48,
 "total_kills": 362,
 "map_name": "Dust II",
@@ -18758,7 +18758,7 @@
 },
 "765": {
 "id": 765,
-"date": "2026-10-02",
+"date": "2026-10-01",
 "rounds": 17,
 "total_kills": 125,
 "map_name": "Dust II",
@@ -18913,7 +18913,7 @@
 },
 "764": {
 "id": 764,
-"date": "2026-10-02",
+"date": "2026-10-01",
 "rounds": 23,
 "total_kills": 169,
 "map_name": "Anubis",
@@ -19074,7 +19074,7 @@
 },
 "763": {
 "id": 763,
-"date": "2026-10-02",
+"date": "2026-10-01",
 "rounds": 24,
 "total_kills": 158,
 "map_name": "Inferno",
@@ -19236,7 +19236,7 @@
 },
 "762": {
 "id": 762,
-"date": "2026-10-02",
+"date": "2026-10-01",
 "rounds": 19,
 "total_kills": 138,
 "map_name": "Dust II",
@@ -19393,7 +19393,7 @@
 },
 "761": {
 "id": 761,
-"date": "2026-09-30",
+"date": "2026-09-29",
 "rounds": 15,
 "total_kills": 115,
 "map_name": "Inferno",
@@ -19546,7 +19546,7 @@
 },
 "760": {
 "id": 760,
-"date": "2026-09-30",
+"date": "2026-09-29",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -19868,7 +19868,7 @@
 },
 "758": {
 "id": 758,
-"date": "2026-09-29",
+"date": "2026-09-28",
 "rounds": 21,
 "total_kills": 160,
 "map_name": "Inferno",
@@ -20027,7 +20027,7 @@
 },
 "757": {
 "id": 757,
-"date": "2026-09-29",
+"date": "2026-09-28",
 "rounds": 17,
 "total_kills": 124,
 "map_name": "Dust II",
@@ -20182,7 +20182,7 @@
 },
 "755": {
 "id": 755,
-"date": "2026-09-28",
+"date": "2026-09-27",
 "rounds": 30,
 "total_kills": 222,
 "map_name": "Inferno",
@@ -20350,7 +20350,7 @@
 },
 "753": {
 "id": 753,
-"date": "2026-09-28",
+"date": "2026-09-27",
 "rounds": 36,
 "total_kills": 259,
 "map_name": "Dust II",
@@ -20524,7 +20524,7 @@
 },
 "752": {
 "id": 752,
-"date": "2026-09-23",
+"date": "2026-09-22",
 "rounds": 19,
 "total_kills": 138,
 "map_name": "Dust II",
@@ -20681,7 +20681,7 @@
 },
 "751": {
 "id": 751,
-"date": "2026-09-23",
+"date": "2026-09-22",
 "rounds": 20,
 "total_kills": 143,
 "map_name": "Anubis",
@@ -20839,7 +20839,7 @@
 },
 "749": {
 "id": 749,
-"date": "2026-09-23",
+"date": "2026-09-22",
 "rounds": 30,
 "total_kills": 222,
 "map_name": "Dust II",
@@ -21007,7 +21007,7 @@
 },
 "747": {
 "id": 747,
-"date": "2026-09-23",
+"date": "2026-09-22",
 "rounds": 20,
 "total_kills": 145,
 "map_name": "Dust II",
@@ -21165,7 +21165,7 @@
 },
 "745": {
 "id": 745,
-"date": "2026-09-22",
+"date": "2026-09-21",
 "rounds": 19,
 "total_kills": 130,
 "map_name": "Inferno",
@@ -21322,7 +21322,7 @@
 },
 "744": {
 "id": 744,
-"date": "2026-09-22",
+"date": "2026-09-21",
 "rounds": 24,
 "total_kills": 171,
 "map_name": "Anubis",
@@ -21484,7 +21484,7 @@
 },
 "743": {
 "id": 743,
-"date": "2026-09-22",
+"date": "2026-09-21",
 "rounds": 24,
 "total_kills": 177,
 "map_name": "Dust II",
@@ -21657,7 +21657,7 @@
 },
 "742": {
 "id": 742,
-"date": "2026-09-22",
+"date": "2026-09-21",
 "rounds": 18,
 "total_kills": 134,
 "map_name": "Dust II",
@@ -21813,7 +21813,7 @@
 },
 "741": {
 "id": 741,
-"date": "2026-09-21",
+"date": "2026-09-20",
 "rounds": 23,
 "total_kills": 169,
 "map_name": "Anubis",
@@ -21974,7 +21974,7 @@
 },
 "740": {
 "id": 740,
-"date": "2026-09-21",
+"date": "2026-09-20",
 "rounds": 19,
 "total_kills": 140,
 "map_name": "Inferno",
@@ -22131,7 +22131,7 @@
 },
 "739": {
 "id": 739,
-"date": "2026-09-21",
+"date": "2026-09-20",
 "rounds": 18,
 "total_kills": 140,
 "map_name": "Dust II",
@@ -22287,7 +22287,7 @@
 },
 "738": {
 "id": 738,
-"date": "2026-09-19",
+"date": "2026-09-18",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Inferno",
@@ -22448,7 +22448,7 @@
 },
 "737": {
 "id": 737,
-"date": "2026-09-19",
+"date": "2026-09-18",
 "rounds": 15,
 "total_kills": 106,
 "map_name": "Anubis",
@@ -22601,7 +22601,7 @@
 },
 "736": {
 "id": 736,
-"date": "2026-09-19",
+"date": "2026-09-18",
 "rounds": 23,
 "total_kills": 165,
 "map_name": "Dust II",
@@ -22762,7 +22762,7 @@
 },
 "735": {
 "id": 735,
-"date": "2026-09-18",
+"date": "2026-09-17",
 "rounds": 24,
 "total_kills": 164,
 "map_name": "Inferno",
@@ -22924,7 +22924,7 @@
 },
 "734": {
 "id": 734,
-"date": "2026-09-18",
+"date": "2026-09-17",
 "rounds": 20,
 "total_kills": 150,
 "map_name": "Dust II",
@@ -23082,7 +23082,7 @@
 },
 "733": {
 "id": 733,
-"date": "2026-09-17",
+"date": "2026-09-16",
 "rounds": 18,
 "total_kills": 135,
 "map_name": "Dust II",
@@ -23238,7 +23238,7 @@
 },
 "732": {
 "id": 732,
-"date": "2026-09-16",
+"date": "2026-09-15",
 "rounds": 13,
 "total_kills": 102,
 "map_name": "Dust II",
@@ -23389,7 +23389,7 @@
 },
 "730": {
 "id": 730,
-"date": "2026-09-14",
+"date": "2026-09-13",
 "rounds": 23,
 "total_kills": 178,
 "map_name": "Anubis",
@@ -23550,7 +23550,7 @@
 },
 "727": {
 "id": 727,
-"date": "2026-09-14",
+"date": "2026-09-13",
 "rounds": 23,
 "total_kills": 169,
 "map_name": "Dust II",
@@ -23711,7 +23711,7 @@
 },
 "726": {
 "id": 726,
-"date": "2026-09-13",
+"date": "2026-09-12",
 "rounds": 29,
 "total_kills": 218,
 "map_name": "Mirage",
@@ -23878,7 +23878,7 @@
 },
 "725": {
 "id": 725,
-"date": "2026-09-13",
+"date": "2026-09-12",
 "rounds": 24,
 "total_kills": 175,
 "map_name": "Dust II",
@@ -24040,7 +24040,7 @@
 },
 "723": {
 "id": 723,
-"date": "2026-09-11",
+"date": "2026-09-10",
 "rounds": 17,
 "total_kills": 123,
 "map_name": "Dust II",
@@ -24195,7 +24195,7 @@
 },
 "721": {
 "id": 721,
-"date": "2026-09-07",
+"date": "2026-09-06",
 "rounds": 23,
 "total_kills": 167,
 "map_name": "Inferno",
@@ -24356,7 +24356,7 @@
 },
 "719": {
 "id": 719,
-"date": "2026-09-07",
+"date": "2026-09-06",
 "rounds": 24,
 "total_kills": 176,
 "map_name": "Dust II",
@@ -24518,7 +24518,7 @@
 },
 "717": {
 "id": 717,
-"date": "2026-09-06",
+"date": "2026-09-05",
 "rounds": 36,
 "total_kills": 270,
 "map_name": "Inferno",
@@ -24692,7 +24692,7 @@
 },
 "716": {
 "id": 716,
-"date": "2026-09-06",
+"date": "2026-09-05",
 "rounds": 19,
 "total_kills": 131,
 "map_name": "Dust II",
@@ -24849,7 +24849,7 @@
 },
 "715": {
 "id": 715,
-"date": "2026-09-05",
+"date": "2026-09-04",
 "rounds": 19,
 "total_kills": 131,
 "map_name": "Anubis",
@@ -25006,7 +25006,7 @@
 },
 "714": {
 "id": 714,
-"date": "2026-09-05",
+"date": "2026-09-04",
 "rounds": 30,
 "total_kills": 202,
 "map_name": "Dust II",
@@ -25174,7 +25174,7 @@
 },
 "713": {
 "id": 713,
-"date": "2026-09-04",
+"date": "2026-09-03",
 "rounds": 24,
 "total_kills": 180,
 "map_name": "Anubis",
@@ -25336,7 +25336,7 @@
 },
 "711": {
 "id": 711,
-"date": "2026-09-04",
+"date": "2026-09-03",
 "rounds": 36,
 "total_kills": 260,
 "map_name": "Inferno",
@@ -25510,7 +25510,7 @@
 },
 "709": {
 "id": 709,
-"date": "2026-09-04",
+"date": "2026-09-03",
 "rounds": 24,
 "total_kills": 176,
 "map_name": "Dust II",
@@ -25683,7 +25683,7 @@
 },
 "708": {
 "id": 708,
-"date": "2026-09-03",
+"date": "2026-09-02",
 "rounds": 22,
 "total_kills": 159,
 "map_name": "Dust II",
@@ -25843,7 +25843,7 @@
 },
 "707": {
 "id": 707,
-"date": "2026-08-30",
+"date": "2026-08-29",
 "rounds": 23,
 "total_kills": 175,
 "map_name": "Inferno",
@@ -26004,7 +26004,7 @@
 },
 "706": {
 "id": 706,
-"date": "2026-08-30",
+"date": "2026-08-29",
 "rounds": 24,
 "total_kills": 173,
 "map_name": "Dust II",
@@ -26166,7 +26166,7 @@
 },
 "702": {
 "id": 702,
-"date": "2026-08-27",
+"date": "2026-08-26",
 "rounds": 19,
 "total_kills": 134,
 "map_name": "Dust II",
@@ -26323,7 +26323,7 @@
 },
 "701": {
 "id": 701,
-"date": "2026-08-27",
+"date": "2026-08-26",
 "rounds": 30,
 "total_kills": 208,
 "map_name": "Dust II",
@@ -26491,7 +26491,7 @@
 },
 "700": {
 "id": 700,
-"date": "2026-08-26",
+"date": "2026-08-25",
 "rounds": 19,
 "total_kills": 141,
 "map_name": "Mirage",
@@ -26648,7 +26648,7 @@
 },
 "699": {
 "id": 699,
-"date": "2026-08-26",
+"date": "2026-08-25",
 "rounds": 18,
 "total_kills": 128,
 "map_name": "Ancient",
@@ -26804,7 +26804,7 @@
 },
 "698": {
 "id": 698,
-"date": "2026-08-26",
+"date": "2026-08-25",
 "rounds": 23,
 "total_kills": 175,
 "map_name": "Dust II",
@@ -26965,7 +26965,7 @@
 },
 "697": {
 "id": 697,
-"date": "2026-08-25",
+"date": "2026-08-24",
 "rounds": 34,
 "total_kills": 253,
 "map_name": "Dust II",
@@ -27137,7 +27137,7 @@
 },
 "694": {
 "id": 694,
-"date": "2026-08-25",
+"date": "2026-08-24",
 "rounds": 22,
 "total_kills": 158,
 "map_name": "Anubis",
@@ -27297,7 +27297,7 @@
 },
 "691": {
 "id": 691,
-"date": "2026-08-25",
+"date": "2026-08-24",
 "rounds": 22,
 "total_kills": 161,
 "map_name": "Mirage",
@@ -27457,7 +27457,7 @@
 },
 "690": {
 "id": 690,
-"date": "2026-08-25",
+"date": "2026-08-24",
 "rounds": 20,
 "total_kills": 156,
 "map_name": "Nuke",
@@ -27615,7 +27615,7 @@
 },
 "689": {
 "id": 689,
-"date": "2026-08-25",
+"date": "2026-08-24",
 "rounds": 19,
 "total_kills": 132,
 "map_name": "Dust II",
@@ -27772,7 +27772,7 @@
 },
 "688": {
 "id": 688,
-"date": "2026-08-24",
+"date": "2026-08-23",
 "rounds": 22,
 "total_kills": 164,
 "map_name": "Inferno",
@@ -27932,7 +27932,7 @@
 },
 "687": {
 "id": 687,
-"date": "2026-08-24",
+"date": "2026-08-23",
 "rounds": 14,
 "total_kills": 96,
 "map_name": "Anubis",
@@ -28084,7 +28084,7 @@
 },
 "686": {
 "id": 686,
-"date": "2026-08-24",
+"date": "2026-08-23",
 "rounds": 23,
 "total_kills": 168,
 "map_name": "Dust II",
@@ -28245,7 +28245,7 @@
 },
 "685": {
 "id": 685,
-"date": "2026-08-23",
+"date": "2026-08-22",
 "rounds": 23,
 "total_kills": 166,
 "map_name": "Dust II",
@@ -28406,7 +28406,7 @@
 },
 "684": {
 "id": 684,
-"date": "2026-08-23",
+"date": "2026-08-22",
 "rounds": 23,
 "total_kills": 173,
 "map_name": "Inferno",
@@ -28567,7 +28567,7 @@
 },
 "683": {
 "id": 683,
-"date": "2026-08-23",
+"date": "2026-08-22",
 "rounds": 23,
 "total_kills": 169,
 "map_name": "Ancient",
@@ -28728,7 +28728,7 @@
 },
 "682": {
 "id": 682,
-"date": "2026-08-23",
+"date": "2026-08-22",
 "rounds": 22,
 "total_kills": 172,
 "map_name": "Dust II",
@@ -28888,7 +28888,7 @@
 },
 "681": {
 "id": 681,
-"date": "2026-08-22",
+"date": "2026-08-21",
 "rounds": 29,
 "total_kills": 219,
 "map_name": "Dust II",
@@ -29055,7 +29055,7 @@
 },
 "680": {
 "id": 680,
-"date": "2026-08-22",
+"date": "2026-08-21",
 "rounds": 21,
 "total_kills": 150,
 "map_name": "Dust II",
@@ -29214,7 +29214,7 @@
 },
 "678": {
 "id": 678,
-"date": "2026-08-21",
+"date": "2026-08-20",
 "rounds": 29,
 "total_kills": 206,
 "map_name": "Dust II",
@@ -29381,7 +29381,7 @@
 },
 "677": {
 "id": 677,
-"date": "2026-08-21",
+"date": "2026-08-20",
 "rounds": 23,
 "total_kills": 160,
 "map_name": "Dust II",
@@ -29542,7 +29542,7 @@
 },
 "676": {
 "id": 676,
-"date": "2026-07-15",
+"date": "2026-07-14",
 "rounds": 20,
 "total_kills": 155,
 "map_name": "Dust II",
@@ -29700,7 +29700,7 @@
 },
 "674": {
 "id": 674,
-"date": "2026-07-15",
+"date": "2026-07-14",
 "rounds": 17,
 "total_kills": 132,
 "map_name": "Dust II",
@@ -29855,7 +29855,7 @@
 },
 "673": {
 "id": 673,
-"date": "2026-07-03",
+"date": "2026-07-02",
 "rounds": 29,
 "total_kills": 219,
 "map_name": "Dust II",
@@ -30022,7 +30022,7 @@
 },
 "672": {
 "id": 672,
-"date": "2026-06-23",
+"date": "2026-06-22",
 "rounds": 23,
 "total_kills": 157,
 "map_name": "Dust II",
@@ -30183,7 +30183,7 @@
 },
 "670": {
 "id": 670,
-"date": "2026-06-22",
+"date": "2026-06-21",
 "rounds": 20,
 "total_kills": 140,
 "map_name": "Dust II",
@@ -30341,7 +30341,7 @@
 },
 "669": {
 "id": 669,
-"date": "2026-06-21",
+"date": "2026-06-20",
 "rounds": 23,
 "total_kills": 164,
 "map_name": "Dust II",
@@ -30502,7 +30502,7 @@
 },
 "668": {
 "id": 668,
-"date": "2026-06-19",
+"date": "2026-06-18",
 "rounds": 23,
 "total_kills": 164,
 "map_name": "Anubis",
@@ -30663,7 +30663,7 @@
 },
 "667": {
 "id": 667,
-"date": "2026-06-19",
+"date": "2026-06-18",
 "rounds": 23,
 "total_kills": 169,
 "map_name": "Nuke",
@@ -30824,7 +30824,7 @@
 },
 "666": {
 "id": 666,
-"date": "2026-06-19",
+"date": "2026-06-18",
 "rounds": 23,
 "total_kills": 168,
 "map_name": "Dust II",
@@ -30985,7 +30985,7 @@
 },
 "665": {
 "id": 665,
-"date": "2026-06-18",
+"date": "2026-06-17",
 "rounds": 30,
 "total_kills": 211,
 "map_name": "Anubis",
@@ -31164,7 +31164,7 @@
 },
 "664": {
 "id": 664,
-"date": "2026-06-18",
+"date": "2026-06-17",
 "rounds": 21,
 "total_kills": 145,
 "map_name": "Dust II",
@@ -31323,7 +31323,7 @@
 },
 "663": {
 "id": 663,
-"date": "2026-06-17",
+"date": "2026-06-16",
 "rounds": 19,
 "total_kills": 136,
 "map_name": "Mirage",
@@ -31480,7 +31480,7 @@
 },
 "660": {
 "id": 660,
-"date": "2026-06-17",
+"date": "2026-06-16",
 "rounds": 23,
 "total_kills": 168,
 "map_name": "Dust II",
@@ -31641,7 +31641,7 @@
 },
 "656": {
 "id": 656,
-"date": "2026-06-17",
+"date": "2026-06-16",
 "rounds": 19,
 "total_kills": 132,
 "map_name": "Inferno",
@@ -31798,7 +31798,7 @@
 },
 "655": {
 "id": 655,
-"date": "2026-06-17",
+"date": "2026-06-16",
 "rounds": 22,
 "total_kills": 164,
 "map_name": "Dust II",
@@ -31958,7 +31958,7 @@
 },
 "654": {
 "id": 654,
-"date": "2026-06-16",
+"date": "2026-06-15",
 "rounds": 23,
 "total_kills": 168,
 "map_name": "Inferno",
@@ -32119,7 +32119,7 @@
 },
 "653": {
 "id": 653,
-"date": "2026-06-16",
+"date": "2026-06-15",
 "rounds": 28,
 "total_kills": 202,
 "map_name": "Dust II",
@@ -32285,7 +32285,7 @@
 },
 "652": {
 "id": 652,
-"date": "2026-06-15",
+"date": "2026-06-14",
 "rounds": 19,
 "total_kills": 136,
 "map_name": "Inferno",
@@ -32442,7 +32442,7 @@
 },
 "651": {
 "id": 651,
-"date": "2026-06-15",
+"date": "2026-06-14",
 "rounds": 20,
 "total_kills": 143,
 "map_name": "Dust II",
@@ -32600,7 +32600,7 @@
 },
 "649": {
 "id": 649,
-"date": "2026-06-15",
+"date": "2026-06-14",
 "rounds": 19,
 "total_kills": 146,
 "map_name": "Inferno",
@@ -32757,7 +32757,7 @@
 },
 "647": {
 "id": 647,
-"date": "2026-06-15",
+"date": "2026-06-14",
 "rounds": 18,
 "total_kills": 125,
 "map_name": "Dust II",
@@ -32913,7 +32913,7 @@
 },
 "646": {
 "id": 646,
-"date": "2026-06-15",
+"date": "2026-06-14",
 "rounds": 18,
 "total_kills": 125,
 "map_name": "Ancient",
@@ -33069,7 +33069,7 @@
 },
 "644": {
 "id": 644,
-"date": "2026-06-13",
+"date": "2026-06-12",
 "rounds": 14,
 "total_kills": 84,
 "map_name": "Inferno",
@@ -33232,7 +33232,7 @@
 },
 "643": {
 "id": 643,
-"date": "2026-06-13",
+"date": "2026-06-12",
 "rounds": 18,
 "total_kills": 123,
 "map_name": "Dust II",
@@ -33388,7 +33388,7 @@
 },
 "641": {
 "id": 641,
-"date": "2026-06-13",
+"date": "2026-06-12",
 "rounds": 21,
 "total_kills": 152,
 "map_name": "Ancient",
@@ -33547,7 +33547,7 @@
 },
 "639": {
 "id": 639,
-"date": "2026-06-12",
+"date": "2026-06-11",
 "rounds": 21,
 "total_kills": 150,
 "map_name": "Dust II",
@@ -33706,7 +33706,7 @@
 },
 "638": {
 "id": 638,
-"date": "2026-06-12",
+"date": "2026-06-11",
 "rounds": 21,
 "total_kills": 144,
 "map_name": "Inferno",
@@ -33865,7 +33865,7 @@
 },
 "637": {
 "id": 637,
-"date": "2026-06-12",
+"date": "2026-06-11",
 "rounds": 21,
 "total_kills": 156,
 "map_name": "Nuke",
@@ -34024,7 +34024,7 @@
 },
 "636": {
 "id": 636,
-"date": "2026-06-12",
+"date": "2026-06-11",
 "rounds": 14,
 "total_kills": 103,
 "map_name": "Mirage",
@@ -34176,7 +34176,7 @@
 },
 "635": {
 "id": 635,
-"date": "2026-06-12",
+"date": "2026-06-11",
 "rounds": 19,
 "total_kills": 140,
 "map_name": "Dust II",
@@ -34333,7 +34333,7 @@
 },
 "634": {
 "id": 634,
-"date": "2026-06-11",
+"date": "2026-06-10",
 "rounds": 30,
 "total_kills": 222,
 "map_name": "Ancient",
@@ -34501,7 +34501,7 @@
 },
 "633": {
 "id": 633,
-"date": "2026-06-11",
+"date": "2026-06-10",
 "rounds": 19,
 "total_kills": 139,
 "map_name": "Inferno",
@@ -34658,7 +34658,7 @@
 },
 "632": {
 "id": 632,
-"date": "2026-06-11",
+"date": "2026-06-10",
 "rounds": 24,
 "total_kills": 167,
 "map_name": "Dust II",
@@ -34820,7 +34820,7 @@
 },
 "631": {
 "id": 631,
-"date": "2026-06-08",
+"date": "2026-06-07",
 "rounds": 18,
 "total_kills": 138,
 "map_name": "Mirage",
@@ -34976,7 +34976,7 @@
 },
 "630": {
 "id": 630,
-"date": "2026-06-08",
+"date": "2026-06-07",
 "rounds": 23,
 "total_kills": 171,
 "map_name": "Inferno",
@@ -35137,7 +35137,7 @@
 },
 "629": {
 "id": 629,
-"date": "2026-06-08",
+"date": "2026-06-07",
 "rounds": 29,
 "total_kills": 220,
 "map_name": "Dust II",
@@ -35304,7 +35304,7 @@
 },
 "628": {
 "id": 628,
-"date": "2026-06-06",
+"date": "2026-06-05",
 "rounds": 24,
 "total_kills": 172,
 "map_name": "Dust II",
@@ -35466,7 +35466,7 @@
 },
 "627": {
 "id": 627,
-"date": "2026-06-03",
+"date": "2026-06-02",
 "rounds": 42,
 "total_kills": 307,
 "map_name": "Inferno",
@@ -35646,7 +35646,7 @@
 },
 "624": {
 "id": 624,
-"date": "2026-06-03",
+"date": "2026-06-02",
 "rounds": 19,
 "total_kills": 138,
 "map_name": "Dust II",
@@ -35803,7 +35803,7 @@
 },
 "623": {
 "id": 623,
-"date": "2026-06-02",
+"date": "2026-06-01",
 "rounds": 18,
 "total_kills": 130,
 "map_name": "Mirage",
@@ -35959,7 +35959,7 @@
 },
 "622": {
 "id": 622,
-"date": "2026-06-02",
+"date": "2026-06-01",
 "rounds": 16,
 "total_kills": 109,
 "map_name": "Dust II",
@@ -36113,7 +36113,7 @@
 },
 "621": {
 "id": 621,
-"date": "2026-06-01",
+"date": "2026-05-31",
 "rounds": 16,
 "total_kills": 117,
 "map_name": "Dust II",
@@ -36267,7 +36267,7 @@
 },
 "620": {
 "id": 620,
-"date": "2026-05-31",
+"date": "2026-05-30",
 "rounds": 22,
 "total_kills": 167,
 "map_name": "Dust II",
@@ -36427,7 +36427,7 @@
 },
 "619": {
 "id": 619,
-"date": "2026-05-30",
+"date": "2026-05-29",
 "rounds": 29,
 "total_kills": 179,
 "map_name": "Anubis",
@@ -36583,7 +36583,7 @@
 },
 "618": {
 "id": 618,
-"date": "2026-05-30",
+"date": "2026-05-29",
 "rounds": 20,
 "total_kills": 145,
 "map_name": "Dust II",
@@ -36741,7 +36741,7 @@
 },
 "616": {
 "id": 616,
-"date": "2026-05-29",
+"date": "2026-05-28",
 "rounds": 18,
 "total_kills": 133,
 "map_name": "Nuke",
@@ -36897,7 +36897,7 @@
 },
 "614": {
 "id": 614,
-"date": "2026-05-29",
+"date": "2026-05-28",
 "rounds": 19,
 "total_kills": 139,
 "map_name": "Dust II",
@@ -37054,7 +37054,7 @@
 },
 "613": {
 "id": 613,
-"date": "2026-05-29",
+"date": "2026-05-28",
 "rounds": 21,
 "total_kills": 153,
 "map_name": "Inferno",
@@ -37213,7 +37213,7 @@
 },
 "612": {
 "id": 612,
-"date": "2026-05-28",
+"date": "2026-05-27",
 "rounds": 23,
 "total_kills": 161,
 "map_name": "Ancient",
@@ -37374,7 +37374,7 @@
 },
 "611": {
 "id": 611,
-"date": "2026-05-28",
+"date": "2026-05-27",
 "rounds": 20,
 "total_kills": 134,
 "map_name": "Dust II",
@@ -37532,7 +37532,7 @@
 },
 "610": {
 "id": 610,
-"date": "2026-05-26",
+"date": "2026-05-25",
 "rounds": 24,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -37694,7 +37694,7 @@
 },
 "608": {
 "id": 608,
-"date": "2026-05-26",
+"date": "2026-05-25",
 "rounds": 24,
 "total_kills": 173,
 "map_name": "Inferno",
@@ -37867,7 +37867,7 @@
 },
 "607": {
 "id": 607,
-"date": "2026-05-25",
+"date": "2026-05-24",
 "rounds": 18,
 "total_kills": 126,
 "map_name": "Dust II",
@@ -38023,7 +38023,7 @@
 },
 "606": {
 "id": 606,
-"date": "2026-05-25",
+"date": "2026-05-24",
 "rounds": 23,
 "total_kills": 165,
 "map_name": "Dust II",
@@ -38184,7 +38184,7 @@
 },
 "605": {
 "id": 605,
-"date": "2026-05-25",
+"date": "2026-05-24",
 "rounds": 19,
 "total_kills": 150,
 "map_name": "Inferno",
@@ -38341,7 +38341,7 @@
 },
 "604": {
 "id": 604,
-"date": "2026-05-22",
+"date": "2026-05-21",
 "rounds": 29,
 "total_kills": 205,
 "map_name": "Nuke",
@@ -38508,7 +38508,7 @@
 },
 "602": {
 "id": 602,
-"date": "2026-05-21",
+"date": "2026-05-20",
 "rounds": 30,
 "total_kills": 215,
 "map_name": "Dust II",
@@ -38676,7 +38676,7 @@
 },
 "601": {
 "id": 601,
-"date": "2026-05-18",
+"date": "2026-05-17",
 "rounds": 15,
 "total_kills": 113,
 "map_name": "Inferno",
@@ -38829,7 +38829,7 @@
 },
 "600": {
 "id": 600,
-"date": "2026-05-18",
+"date": "2026-05-17",
 "rounds": 16,
 "total_kills": 113,
 "map_name": "Dust II",
@@ -38983,7 +38983,7 @@
 },
 "599": {
 "id": 599,
-"date": "2026-05-18",
+"date": "2026-05-17",
 "rounds": 16,
 "total_kills": 122,
 "map_name": "Mirage",
@@ -39137,7 +39137,7 @@
 },
 "598": {
 "id": 598,
-"date": "2026-05-15",
+"date": "2026-05-14",
 "rounds": 22,
 "total_kills": 166,
 "map_name": "Mirage",
@@ -39297,7 +39297,7 @@
 },
 "597": {
 "id": 597,
-"date": "2026-05-15",
+"date": "2026-05-14",
 "rounds": 24,
 "total_kills": 175,
 "map_name": "Dust II",
@@ -39459,7 +39459,7 @@
 },
 "596": {
 "id": 596,
-"date": "2026-05-14",
+"date": "2026-05-13",
 "rounds": 20,
 "total_kills": 153,
 "map_name": "Inferno",
@@ -39617,7 +39617,7 @@
 },
 "595": {
 "id": 595,
-"date": "2026-05-14",
+"date": "2026-05-13",
 "rounds": 24,
 "total_kills": 178,
 "map_name": "Dust II",
@@ -39779,7 +39779,7 @@
 },
 "594": {
 "id": 594,
-"date": "2026-05-14",
+"date": "2026-05-13",
 "rounds": 36,
 "total_kills": 270,
 "map_name": "Cache",
@@ -39953,7 +39953,7 @@
 },
 "593": {
 "id": 593,
-"date": "2026-05-13",
+"date": "2026-05-12",
 "rounds": 23,
 "total_kills": 172,
 "map_name": "Anubis",
@@ -40114,7 +40114,7 @@
 },
 "592": {
 "id": 592,
-"date": "2026-05-12",
+"date": "2026-05-11",
 "rounds": 20,
 "total_kills": 146,
 "map_name": "Anubis",
@@ -40272,7 +40272,7 @@
 },
 "591": {
 "id": 591,
-"date": "2026-05-12",
+"date": "2026-05-11",
 "rounds": 22,
 "total_kills": 155,
 "map_name": "Ancient",
@@ -40432,7 +40432,7 @@
 },
 "590": {
 "id": 590,
-"date": "2026-05-11",
+"date": "2026-05-10",
 "rounds": 23,
 "total_kills": 172,
 "map_name": "Dust II",
@@ -40593,7 +40593,7 @@
 },
 "589": {
 "id": 589,
-"date": "2026-05-11",
+"date": "2026-05-10",
 "rounds": 23,
 "total_kills": 164,
 "map_name": "Inferno",
@@ -40754,7 +40754,7 @@
 },
 "588": {
 "id": 588,
-"date": "2026-05-11",
+"date": "2026-05-10",
 "rounds": 23,
 "total_kills": 161,
 "map_name": "Dust II",
@@ -40915,7 +40915,7 @@
 },
 "587": {
 "id": 587,
-"date": "2026-05-08",
+"date": "2026-05-07",
 "rounds": 20,
 "total_kills": 153,
 "map_name": "Inferno",
@@ -41073,7 +41073,7 @@
 },
 "586": {
 "id": 586,
-"date": "2026-05-08",
+"date": "2026-05-07",
 "rounds": 23,
 "total_kills": 170,
 "map_name": "Dust II",
@@ -41234,7 +41234,7 @@
 },
 "585": {
 "id": 585,
-"date": "2026-05-07",
+"date": "2026-05-06",
 "rounds": 22,
 "total_kills": 162,
 "map_name": "Nuke",
@@ -41394,7 +41394,7 @@
 },
 "584": {
 "id": 584,
-"date": "2026-05-07",
+"date": "2026-05-06",
 "rounds": 16,
 "total_kills": 120,
 "map_name": "Dust II",
@@ -41548,7 +41548,7 @@
 },
 "583": {
 "id": 583,
-"date": "2026-05-06",
+"date": "2026-05-05",
 "rounds": 18,
 "total_kills": 131,
 "map_name": "Dust II",
@@ -41704,7 +41704,7 @@
 },
 "582": {
 "id": 582,
-"date": "2026-05-04",
+"date": "2026-05-03",
 "rounds": 17,
 "total_kills": 121,
 "map_name": "Anubis",
@@ -41859,7 +41859,7 @@
 },
 "581": {
 "id": 581,
-"date": "2026-04-29",
+"date": "2026-04-28",
 "rounds": 21,
 "total_kills": 152,
 "map_name": "Mirage",
@@ -42018,7 +42018,7 @@
 },
 "580": {
 "id": 580,
-"date": "2026-04-29",
+"date": "2026-04-28",
 "rounds": 18,
 "total_kills": 127,
 "map_name": "Dust II",
@@ -42174,7 +42174,7 @@
 },
 "578": {
 "id": 578,
-"date": "2026-04-28",
+"date": "2026-04-27",
 "rounds": 28,
 "total_kills": 212,
 "map_name": "Dust II",
@@ -42340,7 +42340,7 @@
 },
 "577": {
 "id": 577,
-"date": "2026-04-27",
+"date": "2026-04-26",
 "rounds": 30,
 "total_kills": 218,
 "map_name": "Dust II",
@@ -42508,7 +42508,7 @@
 },
 "574": {
 "id": 574,
-"date": "2026-04-24",
+"date": "2026-04-23",
 "rounds": 24,
 "total_kills": 181,
 "map_name": "Ancient",
@@ -42670,7 +42670,7 @@
 },
 "573": {
 "id": 573,
-"date": "2026-04-24",
+"date": "2026-04-23",
 "rounds": 16,
 "total_kills": 127,
 "map_name": "Anubis",
@@ -42824,7 +42824,7 @@
 },
 "571": {
 "id": 571,
-"date": "2026-04-24",
+"date": "2026-04-23",
 "rounds": 20,
 "total_kills": 140,
 "map_name": "Dust II",
@@ -42982,7 +42982,7 @@
 },
 "570": {
 "id": 570,
-"date": "2026-04-20",
+"date": "2026-04-19",
 "rounds": 23,
 "total_kills": 159,
 "map_name": "Anubis",
@@ -43143,7 +43143,7 @@
 },
 "569": {
 "id": 569,
-"date": "2026-04-20",
+"date": "2026-04-19",
 "rounds": 17,
 "total_kills": 118,
 "map_name": "Nuke",
@@ -43298,7 +43298,7 @@
 },
 "568": {
 "id": 568,
-"date": "2026-04-20",
+"date": "2026-04-19",
 "rounds": 17,
 "total_kills": 126,
 "map_name": "Dust II",
@@ -43453,7 +43453,7 @@
 },
 "567": {
 "id": 567,
-"date": "2026-04-17",
+"date": "2026-04-16",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -43614,7 +43614,7 @@
 },
 "566": {
 "id": 566,
-"date": "2026-04-17",
+"date": "2026-04-16",
 "rounds": 23,
 "total_kills": 170,
 "map_name": "Mirage",
@@ -43775,7 +43775,7 @@
 },
 "565": {
 "id": 565,
-"date": "2026-04-17",
+"date": "2026-04-16",
 "rounds": 16,
 "total_kills": 122,
 "map_name": "Ancient",
@@ -43929,7 +43929,7 @@
 },
 "564": {
 "id": 564,
-"date": "2026-04-17",
+"date": "2026-04-16",
 "rounds": 20,
 "total_kills": 149,
 "map_name": "Dust II",
@@ -44087,7 +44087,7 @@
 },
 "562": {
 "id": 562,
-"date": "2026-04-16",
+"date": "2026-04-15",
 "rounds": 19,
 "total_kills": 133,
 "map_name": "Dust II",
@@ -44244,7 +44244,7 @@
 },
 "561": {
 "id": 561,
-"date": "2026-04-15",
+"date": "2026-04-14",
 "rounds": 21,
 "total_kills": 142,
 "map_name": "Anubis",
@@ -44403,7 +44403,7 @@
 },
 "560": {
 "id": 560,
-"date": "2026-04-15",
+"date": "2026-04-14",
 "rounds": 23,
 "total_kills": 160,
 "map_name": "Dust II",
@@ -44564,7 +44564,7 @@
 },
 "559": {
 "id": 559,
-"date": "2026-04-14",
+"date": "2026-04-13",
 "rounds": 19,
 "total_kills": 129,
 "map_name": "Mirage",
@@ -44721,7 +44721,7 @@
 },
 "558": {
 "id": 558,
-"date": "2026-04-14",
+"date": "2026-04-13",
 "rounds": 29,
 "total_kills": 218,
 "map_name": "Dust II",
@@ -44888,7 +44888,7 @@
 },
 "557": {
 "id": 557,
-"date": "2026-04-13",
+"date": "2026-04-12",
 "rounds": 16,
 "total_kills": 108,
 "map_name": "Anubis",
@@ -45042,7 +45042,7 @@
 },
 "555": {
 "id": 555,
-"date": "2026-04-13",
+"date": "2026-04-12",
 "rounds": 20,
 "total_kills": 141,
 "map_name": "Inferno",
@@ -45200,7 +45200,7 @@
 },
 "554": {
 "id": 554,
-"date": "2026-04-13",
+"date": "2026-04-12",
 "rounds": 20,
 "total_kills": 145,
 "map_name": "Dust II",
@@ -45358,7 +45358,7 @@
 },
 "553": {
 "id": 553,
-"date": "2026-04-11",
+"date": "2026-04-10",
 "rounds": 18,
 "total_kills": 122,
 "map_name": "Inferno",
@@ -45514,7 +45514,7 @@
 },
 "552": {
 "id": 552,
-"date": "2026-04-11",
+"date": "2026-04-10",
 "rounds": 23,
 "total_kills": 164,
 "map_name": "Dust II",
@@ -45675,7 +45675,7 @@
 },
 "551": {
 "id": 551,
-"date": "2026-04-10",
+"date": "2026-04-09",
 "rounds": 16,
 "total_kills": 116,
 "map_name": "Dust II",
@@ -45829,7 +45829,7 @@
 },
 "550": {
 "id": 550,
-"date": "2026-04-10",
+"date": "2026-04-09",
 "rounds": 16,
 "total_kills": 127,
 "map_name": "Ancient",
@@ -45983,7 +45983,7 @@
 },
 "549": {
 "id": 549,
-"date": "2026-04-10",
+"date": "2026-04-09",
 "rounds": 24,
 "total_kills": 176,
 "map_name": "Anubis",
@@ -46145,7 +46145,7 @@
 },
 "548": {
 "id": 548,
-"date": "2026-04-10",
+"date": "2026-04-09",
 "rounds": 23,
 "total_kills": 173,
 "map_name": "Dust II",
@@ -46306,7 +46306,7 @@
 },
 "546": {
 "id": 546,
-"date": "2026-04-09",
+"date": "2026-04-08",
 "rounds": 24,
 "total_kills": 168,
 "map_name": "Dust II",
@@ -46468,7 +46468,7 @@
 },
 "545": {
 "id": 545,
-"date": "2026-04-09",
+"date": "2026-04-08",
 "rounds": 30,
 "total_kills": 213,
 "map_name": "Cache",
@@ -46636,7 +46636,7 @@
 },
 "543": {
 "id": 543,
-"date": "2026-04-09",
+"date": "2026-04-08",
 "rounds": 19,
 "total_kills": 139,
 "map_name": "Train",
@@ -46793,7 +46793,7 @@
 },
 "542": {
 "id": 542,
-"date": "2026-04-09",
+"date": "2026-04-08",
 "rounds": 19,
 "total_kills": 120,
 "map_name": "Dust II",
@@ -46950,7 +46950,7 @@
 },
 "540": {
 "id": 540,
-"date": "2026-04-08",
+"date": "2026-04-07",
 "rounds": 22,
 "total_kills": 168,
 "map_name": "Mirage",
@@ -47110,7 +47110,7 @@
 },
 "539": {
 "id": 539,
-"date": "2026-04-08",
+"date": "2026-04-07",
 "rounds": 19,
 "total_kills": 147,
 "map_name": "Dust II",
@@ -47267,7 +47267,7 @@
 },
 "536": {
 "id": 536,
-"date": "2026-04-07",
+"date": "2026-04-06",
 "rounds": 30,
 "total_kills": 238,
 "map_name": "Ancient",
@@ -47435,7 +47435,7 @@
 },
 "535": {
 "id": 535,
-"date": "2026-04-07",
+"date": "2026-04-06",
 "rounds": 20,
 "total_kills": 149,
 "map_name": "Mirage",
@@ -47593,7 +47593,7 @@
 },
 "534": {
 "id": 534,
-"date": "2026-04-07",
+"date": "2026-04-06",
 "rounds": 23,
 "total_kills": 167,
 "map_name": "Dust II",
@@ -47754,7 +47754,7 @@
 },
 "533": {
 "id": 533,
-"date": "2026-04-07",
+"date": "2026-04-06",
 "rounds": 22,
 "total_kills": 160,
 "map_name": "Dust II",
@@ -47914,7 +47914,7 @@
 },
 "532": {
 "id": 532,
-"date": "2026-04-06",
+"date": "2026-04-05",
 "rounds": 35,
 "total_kills": 258,
 "map_name": "Anubis",
@@ -48087,7 +48087,7 @@
 },
 "531": {
 "id": 531,
-"date": "2026-04-06",
+"date": "2026-04-05",
 "rounds": 20,
 "total_kills": 143,
 "map_name": "Dust II",
@@ -48245,7 +48245,7 @@
 },
 "530": {
 "id": 530,
-"date": "2026-04-05",
+"date": "2026-04-04",
 "rounds": 24,
 "total_kills": 176,
 "map_name": "Inferno",
@@ -48407,7 +48407,7 @@
 },
 "528": {
 "id": 528,
-"date": "2026-04-05",
+"date": "2026-04-04",
 "rounds": 23,
 "total_kills": 169,
 "map_name": "Ancient",
@@ -48568,7 +48568,7 @@
 },
 "527": {
 "id": 527,
-"date": "2026-04-05",
+"date": "2026-04-04",
 "rounds": 20,
 "total_kills": 147,
 "map_name": "Dust II",
@@ -48726,7 +48726,7 @@
 },
 "525": {
 "id": 525,
-"date": "2026-04-04",
+"date": "2026-04-03",
 "rounds": 29,
 "total_kills": 203,
 "map_name": "Dust II",
@@ -48893,7 +48893,7 @@
 },
 "524": {
 "id": 524,
-"date": "2026-04-04",
+"date": "2026-04-03",
 "rounds": 20,
 "total_kills": 148,
 "map_name": "Inferno",
@@ -49051,7 +49051,7 @@
 },
 "523": {
 "id": 523,
-"date": "2026-04-04",
+"date": "2026-04-03",
 "rounds": 30,
 "total_kills": 216,
 "map_name": "Mirage",
@@ -49219,7 +49219,7 @@
 },
 "522": {
 "id": 522,
-"date": "2026-04-04",
+"date": "2026-04-03",
 "rounds": 23,
 "total_kills": 165,
 "map_name": "Dust II",
@@ -49380,7 +49380,7 @@
 },
 "520": {
 "id": 520,
-"date": "2026-04-03",
+"date": "2026-04-02",
 "rounds": 18,
 "total_kills": 123,
 "map_name": "Dust II",
@@ -49536,7 +49536,7 @@
 },
 "519": {
 "id": 519,
-"date": "2026-04-01",
+"date": "2026-03-31",
 "rounds": 30,
 "total_kills": 226,
 "map_name": "Overpass",
@@ -49704,7 +49704,7 @@
 },
 "518": {
 "id": 518,
-"date": "2026-04-01",
+"date": "2026-03-31",
 "rounds": 21,
 "total_kills": 151,
 "map_name": "Dust II",
@@ -49863,7 +49863,7 @@
 },
 "517": {
 "id": 517,
-"date": "2026-03-31",
+"date": "2026-03-30",
 "rounds": 24,
 "total_kills": 178,
 "map_name": "Dust II",
@@ -50025,7 +50025,7 @@
 },
 "515": {
 "id": 515,
-"date": "2026-03-31",
+"date": "2026-03-30",
 "rounds": 18,
 "total_kills": 133,
 "map_name": "Mirage",
@@ -50181,7 +50181,7 @@
 },
 "514": {
 "id": 514,
-"date": "2026-03-31",
+"date": "2026-03-30",
 "rounds": 23,
 "total_kills": 167,
 "map_name": "Ancient",
@@ -50342,7 +50342,7 @@
 },
 "513": {
 "id": 513,
-"date": "2026-03-30",
+"date": "2026-03-29",
 "rounds": 20,
 "total_kills": 155,
 "map_name": "Dust II",
@@ -50500,7 +50500,7 @@
 },
 "512": {
 "id": 512,
-"date": "2026-03-30",
+"date": "2026-03-29",
 "rounds": 23,
 "total_kills": 172,
 "map_name": "Anubis",
@@ -50661,7 +50661,7 @@
 },
 "510": {
 "id": 510,
-"date": "2026-03-30",
+"date": "2026-03-29",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Inferno",
@@ -50822,7 +50822,7 @@
 },
 "508": {
 "id": 508,
-"date": "2026-03-30",
+"date": "2026-03-29",
 "rounds": 19,
 "total_kills": 138,
 "map_name": "Dust II",
@@ -50979,7 +50979,7 @@
 },
 "507": {
 "id": 507,
-"date": "2026-03-29",
+"date": "2026-03-28",
 "rounds": 22,
 "total_kills": 161,
 "map_name": "Dust II",
@@ -51139,7 +51139,7 @@
 },
 "505": {
 "id": 505,
-"date": "2026-03-29",
+"date": "2026-03-28",
 "rounds": 30,
 "total_kills": 211,
 "map_name": "Nuke",
@@ -51307,7 +51307,7 @@
 },
 "504": {
 "id": 504,
-"date": "2026-03-29",
+"date": "2026-03-28",
 "rounds": 23,
 "total_kills": 168,
 "map_name": "Anubis",
@@ -51468,7 +51468,7 @@
 },
 "503": {
 "id": 503,
-"date": "2026-03-27",
+"date": "2026-03-26",
 "rounds": 21,
 "total_kills": 156,
 "map_name": "Dust II",
@@ -51627,7 +51627,7 @@
 },
 "502": {
 "id": 502,
-"date": "2026-03-27",
+"date": "2026-03-26",
 "rounds": 29,
 "total_kills": 201,
 "map_name": "Inferno",
@@ -51794,7 +51794,7 @@
 },
 "501": {
 "id": 501,
-"date": "2026-03-27",
+"date": "2026-03-26",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -51955,7 +51955,7 @@
 },
 "500": {
 "id": 500,
-"date": "2026-03-22",
+"date": "2026-03-21",
 "rounds": 18,
 "total_kills": 130,
 "map_name": "Dust II",
@@ -52111,7 +52111,7 @@
 },
 "499": {
 "id": 499,
-"date": "2026-03-22",
+"date": "2026-03-21",
 "rounds": 18,
 "total_kills": 132,
 "map_name": "Dust II",
@@ -52267,7 +52267,7 @@
 },
 "498": {
 "id": 498,
-"date": "2026-03-22",
+"date": "2026-03-21",
 "rounds": 19,
 "total_kills": 139,
 "map_name": "Mirage",
@@ -52424,7 +52424,7 @@
 },
 "497": {
 "id": 497,
-"date": "2026-03-22",
+"date": "2026-03-21",
 "rounds": 16,
 "total_kills": 117,
 "map_name": "Dust II",
@@ -52578,7 +52578,7 @@
 },
 "494": {
 "id": 494,
-"date": "2026-03-20",
+"date": "2026-03-19",
 "rounds": 17,
 "total_kills": 119,
 "map_name": "Dust II",
@@ -52733,7 +52733,7 @@
 },
 "493": {
 "id": 493,
-"date": "2026-03-20",
+"date": "2026-03-19",
 "rounds": 30,
 "total_kills": 227,
 "map_name": "Anubis",
@@ -52901,7 +52901,7 @@
 },
 "492": {
 "id": 492,
-"date": "2026-03-20",
+"date": "2026-03-19",
 "rounds": 21,
 "total_kills": 157,
 "map_name": "Dust II",
@@ -53060,7 +53060,7 @@
 },
 "491": {
 "id": 491,
-"date": "2026-03-20",
+"date": "2026-03-19",
 "rounds": 22,
 "total_kills": 158,
 "map_name": "Inferno",
@@ -53220,7 +53220,7 @@
 },
 "489": {
 "id": 489,
-"date": "2026-03-20",
+"date": "2026-03-19",
 "rounds": 21,
 "total_kills": 158,
 "map_name": "Dust II",
@@ -53379,7 +53379,7 @@
 },
 "488": {
 "id": 488,
-"date": "2026-03-19",
+"date": "2026-03-18",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -53540,7 +53540,7 @@
 },
 "486": {
 "id": 486,
-"date": "2026-03-19",
+"date": "2026-03-18",
 "rounds": 23,
 "total_kills": 177,
 "map_name": "Inferno",
@@ -53701,7 +53701,7 @@
 },
 "485": {
 "id": 485,
-"date": "2026-03-19",
+"date": "2026-03-18",
 "rounds": 16,
 "total_kills": 111,
 "map_name": "Nuke",
@@ -53855,7 +53855,7 @@
 },
 "483": {
 "id": 483,
-"date": "2026-03-19",
+"date": "2026-03-18",
 "rounds": 24,
 "total_kills": 174,
 "map_name": "Dust II",
@@ -54017,7 +54017,7 @@
 },
 "482": {
 "id": 482,
-"date": "2026-03-16",
+"date": "2026-03-15",
 "rounds": 23,
 "total_kills": 165,
 "map_name": "Anubis",
@@ -54178,7 +54178,7 @@
 },
 "481": {
 "id": 481,
-"date": "2026-03-16",
+"date": "2026-03-15",
 "rounds": 19,
 "total_kills": 143,
 "map_name": "Dust II",
@@ -54335,7 +54335,7 @@
 },
 "479": {
 "id": 479,
-"date": "2026-03-15",
+"date": "2026-03-14",
 "rounds": 24,
 "total_kills": 181,
 "map_name": "Dust II",
@@ -54497,7 +54497,7 @@
 },
 "478": {
 "id": 478,
-"date": "2026-03-14",
+"date": "2026-03-13",
 "rounds": 20,
 "total_kills": 145,
 "map_name": "Inferno",
@@ -54655,7 +54655,7 @@
 },
 "476": {
 "id": 476,
-"date": "2026-03-14",
+"date": "2026-03-13",
 "rounds": 19,
 "total_kills": 141,
 "map_name": "Dust II",
@@ -54812,7 +54812,7 @@
 },
 "475": {
 "id": 475,
-"date": "2026-03-13",
+"date": "2026-03-12",
 "rounds": 23,
 "total_kills": 166,
 "map_name": "Nuke",
@@ -54973,7 +54973,7 @@
 },
 "474": {
 "id": 474,
-"date": "2026-03-13",
+"date": "2026-03-12",
 "rounds": 28,
 "total_kills": 207,
 "map_name": "Mirage",
@@ -55139,7 +55139,7 @@
 },
 "473": {
 "id": 473,
-"date": "2026-03-13",
+"date": "2026-03-12",
 "rounds": 22,
 "total_kills": 171,
 "map_name": "Dust II",
@@ -55299,7 +55299,7 @@
 },
 "471": {
 "id": 471,
-"date": "2026-03-08",
+"date": "2026-03-07",
 "rounds": 21,
 "total_kills": 152,
 "map_name": "Inferno",
@@ -55458,7 +55458,7 @@
 },
 "470": {
 "id": 470,
-"date": "2026-03-08",
+"date": "2026-03-07",
 "rounds": 23,
 "total_kills": 162,
 "map_name": "Ancient",
@@ -55619,7 +55619,7 @@
 },
 "469": {
 "id": 469,
-"date": "2026-03-07",
+"date": "2026-03-06",
 "rounds": 14,
 "total_kills": 96,
 "map_name": "Dust II",
@@ -55771,7 +55771,7 @@
 },
 "468": {
 "id": 468,
-"date": "2026-03-07",
+"date": "2026-03-06",
 "rounds": 21,
 "total_kills": 150,
 "map_name": "Nuke",
@@ -55930,7 +55930,7 @@
 },
 "467": {
 "id": 467,
-"date": "2026-03-07",
+"date": "2026-03-06",
 "rounds": 22,
 "total_kills": 155,
 "map_name": "Inferno",
@@ -56090,7 +56090,7 @@
 },
 "465": {
 "id": 465,
-"date": "2026-03-07",
+"date": "2026-03-06",
 "rounds": 20,
 "total_kills": 141,
 "map_name": "Dust II",
@@ -56248,7 +56248,7 @@
 },
 "462": {
 "id": 462,
-"date": "2026-03-06",
+"date": "2026-03-05",
 "rounds": 19,
 "total_kills": 137,
 "map_name": "Dust II",
@@ -56405,7 +56405,7 @@
 },
 "460": {
 "id": 460,
-"date": "2026-03-06",
+"date": "2026-03-05",
 "rounds": 18,
 "total_kills": 131,
 "map_name": "Vertigo",
@@ -56561,7 +56561,7 @@
 },
 "459": {
 "id": 459,
-"date": "2026-03-06",
+"date": "2026-03-05",
 "rounds": 28,
 "total_kills": 195,
 "map_name": "Dust II",
@@ -56727,7 +56727,7 @@
 },
 "458": {
 "id": 458,
-"date": "2026-03-03",
+"date": "2026-03-02",
 "rounds": 24,
 "total_kills": 166,
 "map_name": "Inferno",
@@ -56889,7 +56889,7 @@
 },
 "457": {
 "id": 457,
-"date": "2026-03-03",
+"date": "2026-03-02",
 "rounds": 22,
 "total_kills": 165,
 "map_name": "Dust II",
@@ -57049,7 +57049,7 @@
 },
 "456": {
 "id": 456,
-"date": "2026-03-02",
+"date": "2026-03-01",
 "rounds": 21,
 "total_kills": 149,
 "map_name": "Vertigo",
@@ -57208,7 +57208,7 @@
 },
 "455": {
 "id": 455,
-"date": "2026-03-02",
+"date": "2026-03-01",
 "rounds": 23,
 "total_kills": 168,
 "map_name": "Dust II",
@@ -57369,7 +57369,7 @@
 },
 "454": {
 "id": 454,
-"date": "2026-03-01",
+"date": "2026-02-28",
 "rounds": 20,
 "total_kills": 138,
 "map_name": "Inferno",
@@ -57527,7 +57527,7 @@
 },
 "453": {
 "id": 453,
-"date": "2026-03-01",
+"date": "2026-02-28",
 "rounds": 21,
 "total_kills": 150,
 "map_name": "Dust II",
@@ -57686,7 +57686,7 @@
 },
 "452": {
 "id": 452,
-"date": "2026-03-01",
+"date": "2026-02-28",
 "rounds": 24,
 "total_kills": 174,
 "map_name": "Ancient",
@@ -57848,7 +57848,7 @@
 },
 "451": {
 "id": 451,
-"date": "2026-02-28",
+"date": "2026-02-27",
 "rounds": 22,
 "total_kills": 153,
 "map_name": "Nuke",
@@ -58008,7 +58008,7 @@
 },
 "450": {
 "id": 450,
-"date": "2026-02-28",
+"date": "2026-02-27",
 "rounds": 17,
 "total_kills": 122,
 "map_name": "Inferno",
@@ -58163,7 +58163,7 @@
 },
 "449": {
 "id": 449,
-"date": "2026-02-28",
+"date": "2026-02-27",
 "rounds": 21,
 "total_kills": 154,
 "map_name": "Dust II",
@@ -58322,7 +58322,7 @@
 },
 "448": {
 "id": 448,
-"date": "2026-02-27",
+"date": "2026-02-26",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -58483,7 +58483,7 @@
 },
 "446": {
 "id": 446,
-"date": "2026-02-26",
+"date": "2026-02-25",
 "rounds": 16,
 "total_kills": 118,
 "map_name": "Mirage",
@@ -58637,7 +58637,7 @@
 },
 "445": {
 "id": 445,
-"date": "2026-02-26",
+"date": "2026-02-25",
 "rounds": 22,
 "total_kills": 165,
 "map_name": "Dust II",
@@ -58797,7 +58797,7 @@
 },
 "444": {
 "id": 444,
-"date": "2026-02-25",
+"date": "2026-02-24",
 "rounds": 22,
 "total_kills": 168,
 "map_name": "Dust II",
@@ -58957,7 +58957,7 @@
 },
 "443": {
 "id": 443,
-"date": "2026-02-24",
+"date": "2026-02-23",
 "rounds": 20,
 "total_kills": 141,
 "map_name": "Inferno",
@@ -59115,7 +59115,7 @@
 },
 "442": {
 "id": 442,
-"date": "2026-02-24",
+"date": "2026-02-23",
 "rounds": 19,
 "total_kills": 134,
 "map_name": "Anubis",
@@ -59272,7 +59272,7 @@
 },
 "441": {
 "id": 441,
-"date": "2026-02-24",
+"date": "2026-02-23",
 "rounds": 23,
 "total_kills": 160,
 "map_name": "Dust II",
@@ -59433,7 +59433,7 @@
 },
 "439": {
 "id": 439,
-"date": "2026-02-21",
+"date": "2026-02-20",
 "rounds": 19,
 "total_kills": 143,
 "map_name": "Dust II",
@@ -59590,7 +59590,7 @@
 },
 "437": {
 "id": 437,
-"date": "2026-02-21",
+"date": "2026-02-20",
 "rounds": 22,
 "total_kills": 155,
 "map_name": "Anubis",
@@ -59750,7 +59750,7 @@
 },
 "436": {
 "id": 436,
-"date": "2026-02-21",
+"date": "2026-02-20",
 "rounds": 22,
 "total_kills": 156,
 "map_name": "Dust II",
@@ -59910,7 +59910,7 @@
 },
 "435": {
 "id": 435,
-"date": "2026-02-21",
+"date": "2026-02-20",
 "rounds": 16,
 "total_kills": 113,
 "map_name": "Nuke",
@@ -60064,7 +60064,7 @@
 },
 "433": {
 "id": 433,
-"date": "2026-02-20",
+"date": "2026-02-19",
 "rounds": 19,
 "total_kills": 145,
 "map_name": "Dust II",
@@ -60221,7 +60221,7 @@
 },
 "430": {
 "id": 430,
-"date": "2026-02-19",
+"date": "2026-02-18",
 "rounds": 20,
 "total_kills": 148,
 "map_name": "Inferno",
@@ -60379,7 +60379,7 @@
 },
 "428": {
 "id": 428,
-"date": "2026-02-19",
+"date": "2026-02-18",
 "rounds": 24,
 "total_kills": 162,
 "map_name": "Nuke",
@@ -60541,7 +60541,7 @@
 },
 "426": {
 "id": 426,
-"date": "2026-02-18",
+"date": "2026-02-17",
 "rounds": 42,
 "total_kills": 308,
 "map_name": "Ancient",
@@ -60721,7 +60721,7 @@
 },
 "423": {
 "id": 423,
-"date": "2026-02-18",
+"date": "2026-02-17",
 "rounds": 30,
 "total_kills": 208,
 "map_name": "Anubis",
@@ -60889,7 +60889,7 @@
 },
 "422": {
 "id": 422,
-"date": "2026-02-17",
+"date": "2026-02-16",
 "rounds": 22,
 "total_kills": 158,
 "map_name": "Inferno",
@@ -61049,7 +61049,7 @@
 },
 "420": {
 "id": 420,
-"date": "2026-02-16",
+"date": "2026-02-15",
 "rounds": 21,
 "total_kills": 150,
 "map_name": "Mirage",
@@ -61219,7 +61219,7 @@
 },
 "419": {
 "id": 419,
-"date": "2026-02-16",
+"date": "2026-02-15",
 "rounds": 23,
 "total_kills": 161,
 "map_name": "Inferno",
@@ -61380,7 +61380,7 @@
 },
 "418": {
 "id": 418,
-"date": "2026-02-16",
+"date": "2026-02-15",
 "rounds": 21,
 "total_kills": 152,
 "map_name": "Nuke",
@@ -61539,7 +61539,7 @@
 },
 "417": {
 "id": 417,
-"date": "2026-02-15",
+"date": "2026-02-14",
 "rounds": 35,
 "total_kills": 260,
 "map_name": "Nuke",
@@ -61712,7 +61712,7 @@
 },
 "416": {
 "id": 416,
-"date": "2026-02-15",
+"date": "2026-02-14",
 "rounds": 20,
 "total_kills": 153,
 "map_name": "Mirage",
@@ -61870,7 +61870,7 @@
 },
 "413": {
 "id": 413,
-"date": "2026-02-15",
+"date": "2026-02-14",
 "rounds": 21,
 "total_kills": 140,
 "map_name": "Inferno",
@@ -62029,7 +62029,7 @@
 },
 "411": {
 "id": 411,
-"date": "2026-02-15",
+"date": "2026-02-14",
 "rounds": 19,
 "total_kills": 137,
 "map_name": "Dust II",
@@ -62186,7 +62186,7 @@
 },
 "410": {
 "id": 410,
-"date": "2026-02-14",
+"date": "2026-02-13",
 "rounds": 18,
 "total_kills": 137,
 "map_name": "Nuke",
@@ -62342,7 +62342,7 @@
 },
 "409": {
 "id": 409,
-"date": "2026-02-14",
+"date": "2026-02-13",
 "rounds": 18,
 "total_kills": 132,
 "map_name": "Dust II",
@@ -62498,7 +62498,7 @@
 },
 "408": {
 "id": 408,
-"date": "2026-02-13",
+"date": "2026-02-12",
 "rounds": 20,
 "total_kills": 135,
 "map_name": "Inferno",
@@ -62656,7 +62656,7 @@
 },
 "407": {
 "id": 407,
-"date": "2026-02-13",
+"date": "2026-02-12",
 "rounds": 19,
 "total_kills": 136,
 "map_name": "Mirage",
@@ -62813,7 +62813,7 @@
 },
 "406": {
 "id": 406,
-"date": "2026-02-13",
+"date": "2026-02-12",
 "rounds": 16,
 "total_kills": 116,
 "map_name": "Inferno",
@@ -62967,7 +62967,7 @@
 },
 "405": {
 "id": 405,
-"date": "2026-02-13",
+"date": "2026-02-12",
 "rounds": 18,
 "total_kills": 128,
 "map_name": "Dust II",
@@ -63123,7 +63123,7 @@
 },
 "403": {
 "id": 403,
-"date": "2026-02-12",
+"date": "2026-02-11",
 "rounds": 19,
 "total_kills": 135,
 "map_name": "Ancient",
@@ -63280,7 +63280,7 @@
 },
 "402": {
 "id": 402,
-"date": "2026-02-12",
+"date": "2026-02-11",
 "rounds": 19,
 "total_kills": 137,
 "map_name": "Inferno",
@@ -63437,7 +63437,7 @@
 },
 "400": {
 "id": 400,
-"date": "2026-02-12",
+"date": "2026-02-11",
 "rounds": 35,
 "total_kills": 251,
 "map_name": "Dust II",
@@ -63610,7 +63610,7 @@
 },
 "399": {
 "id": 399,
-"date": "2026-02-10",
+"date": "2026-02-09",
 "rounds": 48,
 "total_kills": 344,
 "map_name": "Inferno",
@@ -63796,7 +63796,7 @@
 },
 "398": {
 "id": 398,
-"date": "2026-02-10",
+"date": "2026-02-09",
 "rounds": 24,
 "total_kills": 170,
 "map_name": "Dust II",
@@ -63958,7 +63958,7 @@
 },
 "396": {
 "id": 396,
-"date": "2026-02-09",
+"date": "2026-02-08",
 "rounds": 18,
 "total_kills": 134,
 "map_name": "Dust II",
@@ -64114,7 +64114,7 @@
 },
 "395": {
 "id": 395,
-"date": "2026-02-08",
+"date": "2026-02-07",
 "rounds": 17,
 "total_kills": 117,
 "map_name": "Nuke",
@@ -64269,7 +64269,7 @@
 },
 "393": {
 "id": 393,
-"date": "2026-02-08",
+"date": "2026-02-07",
 "rounds": 20,
 "total_kills": 150,
 "map_name": "Ancient",
@@ -64427,7 +64427,7 @@
 },
 "392": {
 "id": 392,
-"date": "2026-02-08",
+"date": "2026-02-07",
 "rounds": 21,
 "total_kills": 153,
 "map_name": "Inferno",
@@ -64586,7 +64586,7 @@
 },
 "391": {
 "id": 391,
-"date": "2026-02-08",
+"date": "2026-02-07",
 "rounds": 24,
 "total_kills": 161,
 "map_name": "Dust II",
@@ -64748,7 +64748,7 @@
 },
 "389": {
 "id": 389,
-"date": "2026-02-07",
+"date": "2026-02-06",
 "rounds": 23,
 "total_kills": 159,
 "map_name": "Mirage",
@@ -64909,7 +64909,7 @@
 },
 "387": {
 "id": 387,
-"date": "2026-02-07",
+"date": "2026-02-06",
 "rounds": 21,
 "total_kills": 151,
 "map_name": "Dust II",
@@ -65068,7 +65068,7 @@
 },
 "386": {
 "id": 386,
-"date": "2026-02-06",
+"date": "2026-02-05",
 "rounds": 20,
 "total_kills": 147,
 "map_name": "Dust II",
@@ -65226,7 +65226,7 @@
 },
 "385": {
 "id": 385,
-"date": "2026-02-06",
+"date": "2026-02-05",
 "rounds": 15,
 "total_kills": 109,
 "map_name": "Dust II",
@@ -65379,7 +65379,7 @@
 },
 "383": {
 "id": 383,
-"date": "2026-02-05",
+"date": "2026-02-04",
 "rounds": 19,
 "total_kills": 128,
 "map_name": "Ancient",
@@ -65536,7 +65536,7 @@
 },
 "382": {
 "id": 382,
-"date": "2026-02-05",
+"date": "2026-02-04",
 "rounds": 18,
 "total_kills": 132,
 "map_name": "Nuke",
@@ -65692,7 +65692,7 @@
 },
 "381": {
 "id": 381,
-"date": "2026-02-05",
+"date": "2026-02-04",
 "rounds": 20,
 "total_kills": 139,
 "map_name": "Dust II",
@@ -65850,7 +65850,7 @@
 },
 "380": {
 "id": 380,
-"date": "2026-02-04",
+"date": "2026-02-03",
 "rounds": 22,
 "total_kills": 149,
 "map_name": "Dust II",
@@ -66010,7 +66010,7 @@
 },
 "378": {
 "id": 378,
-"date": "2026-02-04",
+"date": "2026-02-03",
 "rounds": 20,
 "total_kills": 144,
 "map_name": "Ancient",
@@ -66168,7 +66168,7 @@
 },
 "376": {
 "id": 376,
-"date": "2026-02-04",
+"date": "2026-02-03",
 "rounds": 21,
 "total_kills": 151,
 "map_name": "Inferno",
@@ -66327,7 +66327,7 @@
 },
 "375": {
 "id": 375,
-"date": "2026-02-04",
+"date": "2026-02-03",
 "rounds": 21,
 "total_kills": 154,
 "map_name": "Dust II",
@@ -66486,7 +66486,7 @@
 },
 "374": {
 "id": 374,
-"date": "2026-02-03",
+"date": "2026-02-02",
 "rounds": 24,
 "total_kills": 179,
 "map_name": "Inferno",
@@ -66648,7 +66648,7 @@
 },
 "371": {
 "id": 371,
-"date": "2026-02-03",
+"date": "2026-02-02",
 "rounds": 30,
 "total_kills": 216,
 "map_name": "Dust II",
@@ -66816,7 +66816,7 @@
 },
 "370": {
 "id": 370,
-"date": "2026-02-02",
+"date": "2026-02-01",
 "rounds": 29,
 "total_kills": 216,
 "map_name": "Nuke",
@@ -66983,7 +66983,7 @@
 },
 "369": {
 "id": 369,
-"date": "2026-02-02",
+"date": "2026-02-01",
 "rounds": 22,
 "total_kills": 159,
 "map_name": "Inferno",
@@ -67143,7 +67143,7 @@
 },
 "368": {
 "id": 368,
-"date": "2026-02-02",
+"date": "2026-02-01",
 "rounds": 18,
 "total_kills": 123,
 "map_name": "Dust II",
@@ -67299,7 +67299,7 @@
 },
 "363": {
 "id": 363,
-"date": "2026-01-31",
+"date": "2026-01-30",
 "rounds": 24,
 "total_kills": 177,
 "map_name": "Nuke",
@@ -67472,7 +67472,7 @@
 },
 "362": {
 "id": 362,
-"date": "2026-01-31",
+"date": "2026-01-30",
 "rounds": 22,
 "total_kills": 155,
 "map_name": "Inferno",
@@ -67632,7 +67632,7 @@
 },
 "360": {
 "id": 360,
-"date": "2026-01-31",
+"date": "2026-01-30",
 "rounds": 22,
 "total_kills": 158,
 "map_name": "Dust II",
@@ -67792,7 +67792,7 @@
 },
 "358": {
 "id": 358,
-"date": "2026-01-30",
+"date": "2026-01-29",
 "rounds": 21,
 "total_kills": 153,
 "map_name": "Anubis",
@@ -67951,7 +67951,7 @@
 },
 "354": {
 "id": 354,
-"date": "2026-01-30",
+"date": "2026-01-29",
 "rounds": 20,
 "total_kills": 150,
 "map_name": "Nuke",
@@ -68109,7 +68109,7 @@
 },
 "351": {
 "id": 351,
-"date": "2026-01-30",
+"date": "2026-01-29",
 "rounds": 19,
 "total_kills": 143,
 "map_name": "Dust II",
@@ -68266,7 +68266,7 @@
 },
 "350": {
 "id": 350,
-"date": "2026-01-30",
+"date": "2026-01-29",
 "rounds": 22,
 "total_kills": 162,
 "map_name": "Inferno",
@@ -68426,7 +68426,7 @@
 },
 "349": {
 "id": 349,
-"date": "2026-01-30",
+"date": "2026-01-29",
 "rounds": 19,
 "total_kills": 138,
 "map_name": "Dust II",
@@ -68583,7 +68583,7 @@
 },
 "348": {
 "id": 348,
-"date": "2026-01-29",
+"date": "2026-01-28",
 "rounds": 20,
 "total_kills": 138,
 "map_name": "Anubis",
@@ -68741,7 +68741,7 @@
 },
 "346": {
 "id": 346,
-"date": "2026-01-29",
+"date": "2026-01-28",
 "rounds": 22,
 "total_kills": 162,
 "map_name": "Dust II",
@@ -68901,7 +68901,7 @@
 },
 "344": {
 "id": 344,
-"date": "2026-01-28",
+"date": "2026-01-27",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -69062,7 +69062,7 @@
 },
 "343": {
 "id": 343,
-"date": "2026-01-27",
+"date": "2026-01-26",
 "rounds": 24,
 "total_kills": 172,
 "map_name": "Overpass",
@@ -69224,7 +69224,7 @@
 },
 "342": {
 "id": 342,
-"date": "2026-01-27",
+"date": "2026-01-26",
 "rounds": 22,
 "total_kills": 160,
 "map_name": "Dust II",
@@ -69384,7 +69384,7 @@
 },
 "341": {
 "id": 341,
-"date": "2026-01-27",
+"date": "2026-01-26",
 "rounds": 36,
 "total_kills": 277,
 "map_name": "Ancient",
@@ -69558,7 +69558,7 @@
 },
 "340": {
 "id": 340,
-"date": "2026-01-27",
+"date": "2026-01-26",
 "rounds": 24,
 "total_kills": 181,
 "map_name": "Dust II",
@@ -69720,7 +69720,7 @@
 },
 "336": {
 "id": 336,
-"date": "2026-01-20",
+"date": "2026-01-19",
 "rounds": 24,
 "total_kills": 178,
 "map_name": "Dust II",
@@ -69882,7 +69882,7 @@
 },
 "335": {
 "id": 335,
-"date": "2026-01-20",
+"date": "2026-01-19",
 "rounds": 17,
 "total_kills": 124,
 "map_name": "Mirage",
@@ -70037,7 +70037,7 @@
 },
 "333": {
 "id": 333,
-"date": "2026-01-20",
+"date": "2026-01-19",
 "rounds": 21,
 "total_kills": 160,
 "map_name": "Inferno",
@@ -70196,7 +70196,7 @@
 },
 "330": {
 "id": 330,
-"date": "2026-01-20",
+"date": "2026-01-19",
 "rounds": 24,
 "total_kills": 167,
 "map_name": "Cache",
@@ -70358,7 +70358,7 @@
 },
 "328": {
 "id": 328,
-"date": "2026-01-20",
+"date": "2026-01-19",
 "rounds": 19,
 "total_kills": 146,
 "map_name": "Dust II",
@@ -70673,7 +70673,7 @@
 },
 "325": {
 "id": 325,
-"date": "2026-01-19",
+"date": "2026-01-18",
 "rounds": 19,
 "total_kills": 142,
 "map_name": "Dust II",
@@ -70830,7 +70830,7 @@
 },
 "323": {
 "id": 323,
-"date": "2026-01-18",
+"date": "2026-01-17",
 "rounds": 21,
 "total_kills": 156,
 "map_name": "Nuke",
@@ -70989,7 +70989,7 @@
 },
 "322": {
 "id": 322,
-"date": "2026-01-18",
+"date": "2026-01-17",
 "rounds": 14,
 "total_kills": 109,
 "map_name": "Inferno",
@@ -71141,7 +71141,7 @@
 },
 "321": {
 "id": 321,
-"date": "2026-01-18",
+"date": "2026-01-17",
 "rounds": 22,
 "total_kills": 154,
 "map_name": "Dust II",
@@ -71301,7 +71301,7 @@
 },
 "320": {
 "id": 320,
-"date": "2026-01-17",
+"date": "2026-01-16",
 "rounds": 22,
 "total_kills": 158,
 "map_name": "Nuke",
@@ -71461,7 +71461,7 @@
 },
 "319": {
 "id": 319,
-"date": "2026-01-17",
+"date": "2026-01-16",
 "rounds": 21,
 "total_kills": 141,
 "map_name": "Inferno",
@@ -71620,7 +71620,7 @@
 },
 "318": {
 "id": 318,
-"date": "2026-01-17",
+"date": "2026-01-16",
 "rounds": 16,
 "total_kills": 107,
 "map_name": "Mirage",
@@ -71774,7 +71774,7 @@
 },
 "317": {
 "id": 317,
-"date": "2026-01-17",
+"date": "2026-01-16",
 "rounds": 20,
 "total_kills": 145,
 "map_name": "Dust II",
@@ -71932,7 +71932,7 @@
 },
 "315": {
 "id": 315,
-"date": "2026-01-15",
+"date": "2026-01-14",
 "rounds": 20,
 "total_kills": 150,
 "map_name": "Inferno",
@@ -72090,7 +72090,7 @@
 },
 "313": {
 "id": 313,
-"date": "2026-01-15",
+"date": "2026-01-14",
 "rounds": 16,
 "total_kills": 110,
 "map_name": "Dust II",
@@ -72244,7 +72244,7 @@
 },
 "312": {
 "id": 312,
-"date": "2026-01-13",
+"date": "2026-01-12",
 "rounds": 24,
 "total_kills": 159,
 "map_name": "Inferno",
@@ -72406,7 +72406,7 @@
 },
 "311": {
 "id": 311,
-"date": "2026-01-13",
+"date": "2026-01-12",
 "rounds": 28,
 "total_kills": 206,
 "map_name": "Nuke",
@@ -72572,7 +72572,7 @@
 },
 "310": {
 "id": 310,
-"date": "2026-01-13",
+"date": "2026-01-12",
 "rounds": 24,
 "total_kills": 166,
 "map_name": "Dust II",
@@ -72734,7 +72734,7 @@
 },
 "309": {
 "id": 309,
-"date": "2026-01-12",
+"date": "2026-01-11",
 "rounds": 14,
 "total_kills": 100,
 "map_name": "Anubis",
@@ -72886,7 +72886,7 @@
 },
 "307": {
 "id": 307,
-"date": "2026-01-12",
+"date": "2026-01-11",
 "rounds": 23,
 "total_kills": 160,
 "map_name": "Inferno",
@@ -73047,7 +73047,7 @@
 },
 "306": {
 "id": 306,
-"date": "2026-01-12",
+"date": "2026-01-11",
 "rounds": 23,
 "total_kills": 175,
 "map_name": "Dust II",
@@ -73208,7 +73208,7 @@
 },
 "305": {
 "id": 305,
-"date": "2026-01-11",
+"date": "2026-01-10",
 "rounds": 24,
 "total_kills": 179,
 "map_name": "Dust II",
@@ -73370,7 +73370,7 @@
 },
 "303": {
 "id": 303,
-"date": "2026-01-09",
+"date": "2026-01-08",
 "rounds": 24,
 "total_kills": 172,
 "map_name": "Dust II",
@@ -73532,7 +73532,7 @@
 },
 "302": {
 "id": 302,
-"date": "2026-01-08",
+"date": "2026-01-07",
 "rounds": 22,
 "total_kills": 152,
 "map_name": "Inferno",
@@ -73692,7 +73692,7 @@
 },
 "301": {
 "id": 301,
-"date": "2026-01-08",
+"date": "2026-01-07",
 "rounds": 21,
 "total_kills": 149,
 "map_name": "Dust II",
@@ -73851,7 +73851,7 @@
 },
 "299": {
 "id": 299,
-"date": "2026-01-07",
+"date": "2026-01-06",
 "rounds": 24,
 "total_kills": 166,
 "map_name": "Nuke",
@@ -74013,7 +74013,7 @@
 },
 "298": {
 "id": 298,
-"date": "2026-01-07",
+"date": "2026-01-06",
 "rounds": 19,
 "total_kills": 144,
 "map_name": "Inferno",
@@ -74170,7 +74170,7 @@
 },
 "297": {
 "id": 297,
-"date": "2026-01-07",
+"date": "2026-01-06",
 "rounds": 19,
 "total_kills": 137,
 "map_name": "Dust II",
@@ -74327,7 +74327,7 @@
 },
 "292": {
 "id": 292,
-"date": "2026-01-04",
+"date": "2026-01-03",
 "rounds": 19,
 "total_kills": 144,
 "map_name": "Inferno",
@@ -74495,7 +74495,7 @@
 },
 "291": {
 "id": 291,
-"date": "2026-01-04",
+"date": "2026-01-03",
 "rounds": 21,
 "total_kills": 149,
 "map_name": "Dust II",
@@ -74654,7 +74654,7 @@
 },
 "289": {
 "id": 289,
-"date": "2026-01-03",
+"date": "2026-01-02",
 "rounds": 36,
 "total_kills": 238,
 "map_name": "Dust II",
@@ -74839,7 +74839,7 @@
 },
 "288": {
 "id": 288,
-"date": "2026-01-02",
+"date": "2026-01-01",
 "rounds": 22,
 "total_kills": 149,
 "map_name": "Anubis",
@@ -74999,7 +74999,7 @@
 },
 "286": {
 "id": 286,
-"date": "2026-01-02",
+"date": "2026-01-01",
 "rounds": 24,
 "total_kills": 179,
 "map_name": "Train",
@@ -75161,7 +75161,7 @@
 },
 "285": {
 "id": 285,
-"date": "2026-01-02",
+"date": "2026-01-01",
 "rounds": 22,
 "total_kills": 158,
 "map_name": "Dust II",
@@ -75321,7 +75321,7 @@
 },
 "284": {
 "id": 284,
-"date": "2025-12-30",
+"date": "2025-12-29",
 "rounds": 23,
 "total_kills": 165,
 "map_name": "Nuke",
@@ -75482,7 +75482,7 @@
 },
 "283": {
 "id": 283,
-"date": "2025-12-30",
+"date": "2025-12-29",
 "rounds": 24,
 "total_kills": 173,
 "map_name": "Dust II",
@@ -75644,7 +75644,7 @@
 },
 "281": {
 "id": 281,
-"date": "2025-12-30",
+"date": "2025-12-29",
 "rounds": 20,
 "total_kills": 135,
 "map_name": "Mirage",
@@ -75802,7 +75802,7 @@
 },
 "280": {
 "id": 280,
-"date": "2025-12-30",
+"date": "2025-12-29",
 "rounds": 24,
 "total_kills": 173,
 "map_name": "Inferno",
@@ -75964,7 +75964,7 @@
 },
 "278": {
 "id": 278,
-"date": "2025-12-30",
+"date": "2025-12-29",
 "rounds": 21,
 "total_kills": 152,
 "map_name": "Dust II",
@@ -76123,7 +76123,7 @@
 },
 "277": {
 "id": 277,
-"date": "2025-12-27",
+"date": "2025-12-26",
 "rounds": 21,
 "total_kills": 149,
 "map_name": "Dust II",
@@ -76282,7 +76282,7 @@
 },
 "276": {
 "id": 276,
-"date": "2025-12-27",
+"date": "2025-12-26",
 "rounds": 24,
 "total_kills": 173,
 "map_name": "Anubis",
@@ -76444,7 +76444,7 @@
 },
 "275": {
 "id": 275,
-"date": "2025-12-27",
+"date": "2025-12-26",
 "rounds": 21,
 "total_kills": 158,
 "map_name": "Dust II",
@@ -76603,7 +76603,7 @@
 },
 "274": {
 "id": 274,
-"date": "2025-12-27",
+"date": "2025-12-26",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -76764,7 +76764,7 @@
 },
 "269": {
 "id": 269,
-"date": "2025-12-25",
+"date": "2025-12-24",
 "rounds": 18,
 "total_kills": 158,
 "map_name": "Cobblestone",
@@ -76942,7 +76942,7 @@
 },
 "268": {
 "id": 268,
-"date": "2025-12-25",
+"date": "2025-12-24",
 "rounds": 23,
 "total_kills": 167,
 "map_name": "Mirage",
@@ -77103,7 +77103,7 @@
 },
 "267": {
 "id": 267,
-"date": "2025-12-25",
+"date": "2025-12-24",
 "rounds": 23,
 "total_kills": 155,
 "map_name": "Dust II",
@@ -77264,7 +77264,7 @@
 },
 "266": {
 "id": 266,
-"date": "2025-12-24",
+"date": "2025-12-23",
 "rounds": 20,
 "total_kills": 138,
 "map_name": "Dust II",
@@ -77422,7 +77422,7 @@
 },
 "265": {
 "id": 265,
-"date": "2025-12-24",
+"date": "2025-12-23",
 "rounds": 22,
 "total_kills": 156,
 "map_name": "Mirage",
@@ -77582,7 +77582,7 @@
 },
 "264": {
 "id": 264,
-"date": "2025-12-24",
+"date": "2025-12-23",
 "rounds": 18,
 "total_kills": 133,
 "map_name": "Dust II",
@@ -77738,7 +77738,7 @@
 },
 "263": {
 "id": 263,
-"date": "2025-12-23",
+"date": "2025-12-22",
 "rounds": 22,
 "total_kills": 148,
 "map_name": "Mirage",
@@ -77898,7 +77898,7 @@
 },
 "259": {
 "id": 259,
-"date": "2025-12-23",
+"date": "2025-12-22",
 "rounds": 24,
 "total_kills": 173,
 "map_name": "Dust II",
@@ -78060,7 +78060,7 @@
 },
 "258": {
 "id": 258,
-"date": "2025-12-22",
+"date": "2025-12-21",
 "rounds": 22,
 "total_kills": 169,
 "map_name": "Dust II",
@@ -78220,7 +78220,7 @@
 },
 "257": {
 "id": 257,
-"date": "2025-12-22",
+"date": "2025-12-21",
 "rounds": 24,
 "total_kills": 173,
 "map_name": "Dust II",
@@ -78382,7 +78382,7 @@
 },
 "256": {
 "id": 256,
-"date": "2025-12-21",
+"date": "2025-12-20",
 "rounds": 16,
 "total_kills": 118,
 "map_name": "Inferno",
@@ -78536,7 +78536,7 @@
 },
 "255": {
 "id": 255,
-"date": "2025-12-21",
+"date": "2025-12-20",
 "rounds": 21,
 "total_kills": 154,
 "map_name": "Nuke",
@@ -78695,7 +78695,7 @@
 },
 "254": {
 "id": 254,
-"date": "2025-12-21",
+"date": "2025-12-20",
 "rounds": 17,
 "total_kills": 121,
 "map_name": "Dust II",
@@ -78850,7 +78850,7 @@
 },
 "252": {
 "id": 252,
-"date": "2025-12-20",
+"date": "2025-12-19",
 "rounds": 23,
 "total_kills": 158,
 "map_name": "Dust II",
@@ -79011,7 +79011,7 @@
 },
 "251": {
 "id": 251,
-"date": "2025-12-20",
+"date": "2025-12-19",
 "rounds": 24,
 "total_kills": 174,
 "map_name": "Mirage",
@@ -79173,7 +79173,7 @@
 },
 "249": {
 "id": 249,
-"date": "2025-12-18",
+"date": "2025-12-17",
 "rounds": 20,
 "total_kills": 146,
 "map_name": "Dust II",
@@ -79331,7 +79331,7 @@
 },
 "248": {
 "id": 248,
-"date": "2025-12-13",
+"date": "2025-12-12",
 "rounds": 17,
 "total_kills": 126,
 "map_name": "Mirage",
@@ -79486,7 +79486,7 @@
 },
 "247": {
 "id": 247,
-"date": "2025-12-13",
+"date": "2025-12-12",
 "rounds": 35,
 "total_kills": 239,
 "map_name": "Dust II",
@@ -79659,7 +79659,7 @@
 },
 "246": {
 "id": 246,
-"date": "2025-12-12",
+"date": "2025-12-11",
 "rounds": 21,
 "total_kills": 141,
 "map_name": "Nuke",
@@ -79818,7 +79818,7 @@
 },
 "243": {
 "id": 243,
-"date": "2025-12-12",
+"date": "2025-12-11",
 "rounds": 22,
 "total_kills": 149,
 "map_name": "Dust II",
@@ -79978,7 +79978,7 @@
 },
 "241": {
 "id": 241,
-"date": "2025-12-11",
+"date": "2025-12-10",
 "rounds": 22,
 "total_kills": 163,
 "map_name": "Ancient",
@@ -80138,7 +80138,7 @@
 },
 "240": {
 "id": 240,
-"date": "2025-12-11",
+"date": "2025-12-10",
 "rounds": 22,
 "total_kills": 160,
 "map_name": "Dust II",
@@ -80298,7 +80298,7 @@
 },
 "239": {
 "id": 239,
-"date": "2025-12-10",
+"date": "2025-12-09",
 "rounds": 20,
 "total_kills": 145,
 "map_name": "Mirage",
@@ -80456,7 +80456,7 @@
 },
 "238": {
 "id": 238,
-"date": "2025-12-10",
+"date": "2025-12-09",
 "rounds": 18,
 "total_kills": 141,
 "map_name": "Dust II",
@@ -80612,7 +80612,7 @@
 },
 "237": {
 "id": 237,
-"date": "2025-12-10",
+"date": "2025-12-09",
 "rounds": 29,
 "total_kills": 216,
 "map_name": "Anubis",
@@ -80779,7 +80779,7 @@
 },
 "235": {
 "id": 235,
-"date": "2025-12-09",
+"date": "2025-12-08",
 "rounds": 14,
 "total_kills": 103,
 "map_name": "Mirage",
@@ -80931,7 +80931,7 @@
 },
 "233": {
 "id": 233,
-"date": "2025-12-09",
+"date": "2025-12-08",
 "rounds": 24,
 "total_kills": 182,
 "map_name": "Dust II",
@@ -81093,7 +81093,7 @@
 },
 "232": {
 "id": 232,
-"date": "2025-12-08",
+"date": "2025-12-07",
 "rounds": 29,
 "total_kills": 215,
 "map_name": "Dust II",
@@ -81260,7 +81260,7 @@
 },
 "231": {
 "id": 231,
-"date": "2025-12-07",
+"date": "2025-12-06",
 "rounds": 24,
 "total_kills": 170,
 "map_name": "Mirage",
@@ -81422,7 +81422,7 @@
 },
 "230": {
 "id": 230,
-"date": "2025-12-07",
+"date": "2025-12-06",
 "rounds": 21,
 "total_kills": 148,
 "map_name": "Dust II",
@@ -81581,7 +81581,7 @@
 },
 "229": {
 "id": 229,
-"date": "2025-12-06",
+"date": "2025-12-05",
 "rounds": 15,
 "total_kills": 108,
 "map_name": "Dust II",
@@ -81734,7 +81734,7 @@
 },
 "228": {
 "id": 228,
-"date": "2025-12-03",
+"date": "2025-12-02",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -81895,7 +81895,7 @@
 },
 "227": {
 "id": 227,
-"date": "2025-12-03",
+"date": "2025-12-02",
 "rounds": 22,
 "total_kills": 156,
 "map_name": "Dust II",
@@ -82055,7 +82055,7 @@
 },
 "226": {
 "id": 226,
-"date": "2025-12-03",
+"date": "2025-12-02",
 "rounds": 24,
 "total_kills": 173,
 "map_name": "Dust II",
@@ -82217,7 +82217,7 @@
 },
 "225": {
 "id": 225,
-"date": "2025-12-01",
+"date": "2025-11-30",
 "rounds": 20,
 "total_kills": 151,
 "map_name": "Dust II",
@@ -82375,7 +82375,7 @@
 },
 "224": {
 "id": 224,
-"date": "2025-12-01",
+"date": "2025-11-30",
 "rounds": 23,
 "total_kills": 167,
 "map_name": "Inferno",
@@ -82536,7 +82536,7 @@
 },
 "223": {
 "id": 223,
-"date": "2025-12-01",
+"date": "2025-11-30",
 "rounds": 28,
 "total_kills": 208,
 "map_name": "Dust II",
@@ -82702,7 +82702,7 @@
 },
 "221": {
 "id": 221,
-"date": "2025-11-30",
+"date": "2025-11-29",
 "rounds": 18,
 "total_kills": 139,
 "map_name": "Dust II",
@@ -82858,7 +82858,7 @@
 },
 "219": {
 "id": 219,
-"date": "2025-11-30",
+"date": "2025-11-29",
 "rounds": 21,
 "total_kills": 155,
 "map_name": "Inferno",
@@ -83017,7 +83017,7 @@
 },
 "218": {
 "id": 218,
-"date": "2025-11-30",
+"date": "2025-11-29",
 "rounds": 16,
 "total_kills": 112,
 "map_name": "Dust II",
@@ -83171,7 +83171,7 @@
 },
 "216": {
 "id": 216,
-"date": "2025-11-29",
+"date": "2025-11-28",
 "rounds": 24,
 "total_kills": 171,
 "map_name": "Inferno",
@@ -83333,7 +83333,7 @@
 },
 "215": {
 "id": 215,
-"date": "2025-11-29",
+"date": "2025-11-28",
 "rounds": 23,
 "total_kills": 166,
 "map_name": "Dust II",
@@ -83494,7 +83494,7 @@
 },
 "213": {
 "id": 213,
-"date": "2025-11-27",
+"date": "2025-11-26",
 "rounds": 16,
 "total_kills": 106,
 "map_name": "Dust II",
@@ -83648,7 +83648,7 @@
 },
 "212": {
 "id": 212,
-"date": "2025-11-26",
+"date": "2025-11-25",
 "rounds": 30,
 "total_kills": 226,
 "map_name": "Dust II",
@@ -83816,7 +83816,7 @@
 },
 "210": {
 "id": 210,
-"date": "2025-11-26",
+"date": "2025-11-25",
 "rounds": 30,
 "total_kills": 219,
 "map_name": "Mirage",
@@ -83984,7 +83984,7 @@
 },
 "209": {
 "id": 209,
-"date": "2025-11-26",
+"date": "2025-11-25",
 "rounds": 20,
 "total_kills": 140,
 "map_name": "Dust II",
@@ -84142,7 +84142,7 @@
 },
 "208": {
 "id": 208,
-"date": "2025-11-26",
+"date": "2025-11-25",
 "rounds": 24,
 "total_kills": 152,
 "map_name": "Dust II",
@@ -84293,7 +84293,7 @@
 },
 "207": {
 "id": 207,
-"date": "2025-11-25",
+"date": "2025-11-24",
 "rounds": 18,
 "total_kills": 134,
 "map_name": "Inferno",
@@ -84449,7 +84449,7 @@
 },
 "206": {
 "id": 206,
-"date": "2025-11-25",
+"date": "2025-11-24",
 "rounds": 21,
 "total_kills": 162,
 "map_name": "Dust II",
@@ -84608,7 +84608,7 @@
 },
 "205": {
 "id": 205,
-"date": "2025-11-22",
+"date": "2025-11-21",
 "rounds": 21,
 "total_kills": 152,
 "map_name": "Dust II",
@@ -84767,7 +84767,7 @@
 },
 "204": {
 "id": 204,
-"date": "2025-11-22",
+"date": "2025-11-21",
 "rounds": 24,
 "total_kills": 169,
 "map_name": "Inferno",
@@ -84929,7 +84929,7 @@
 },
 "201": {
 "id": 201,
-"date": "2025-11-22",
+"date": "2025-11-21",
 "rounds": 29,
 "total_kills": 200,
 "map_name": "Dust II",
@@ -85096,7 +85096,7 @@
 },
 "200": {
 "id": 200,
-"date": "2025-11-21",
+"date": "2025-11-20",
 "rounds": 19,
 "total_kills": 141,
 "map_name": "Dust II",
@@ -85253,7 +85253,7 @@
 },
 "198": {
 "id": 198,
-"date": "2025-11-17",
+"date": "2025-11-16",
 "rounds": 20,
 "total_kills": 149,
 "map_name": "Dust II",
@@ -85411,7 +85411,7 @@
 },
 "197": {
 "id": 197,
-"date": "2025-11-17",
+"date": "2025-11-16",
 "rounds": 46,
 "total_kills": 332,
 "map_name": "Dust II",
@@ -85595,7 +85595,7 @@
 },
 "196": {
 "id": 196,
-"date": "2025-11-16",
+"date": "2025-11-15",
 "rounds": 24,
 "total_kills": 163,
 "map_name": "Mirage",
@@ -85757,7 +85757,7 @@
 },
 "194": {
 "id": 194,
-"date": "2025-11-16",
+"date": "2025-11-15",
 "rounds": 24,
 "total_kills": 165,
 "map_name": "Inferno",
@@ -85919,7 +85919,7 @@
 },
 "193": {
 "id": 193,
-"date": "2025-11-14",
+"date": "2025-11-13",
 "rounds": 17,
 "total_kills": 120,
 "map_name": "Inferno",
@@ -86074,7 +86074,7 @@
 },
 "191": {
 "id": 191,
-"date": "2025-11-14",
+"date": "2025-11-13",
 "rounds": 23,
 "total_kills": 169,
 "map_name": "Dust II",
@@ -86235,7 +86235,7 @@
 },
 "189": {
 "id": 189,
-"date": "2025-11-12",
+"date": "2025-11-11",
 "rounds": 16,
 "total_kills": 114,
 "map_name": "Anubis",
@@ -86389,7 +86389,7 @@
 },
 "187": {
 "id": 187,
-"date": "2025-11-12",
+"date": "2025-11-11",
 "rounds": 29,
 "total_kills": 205,
 "map_name": "Train",
@@ -86556,7 +86556,7 @@
 },
 "186": {
 "id": 186,
-"date": "2025-11-12",
+"date": "2025-11-11",
 "rounds": 24,
 "total_kills": 169,
 "map_name": "Dust II",
@@ -86718,7 +86718,7 @@
 },
 "181": {
 "id": 181,
-"date": "2025-11-11",
+"date": "2025-11-10",
 "rounds": 46,
 "total_kills": 337,
 "map_name": "Inferno",
@@ -86902,7 +86902,7 @@
 },
 "180": {
 "id": 180,
-"date": "2025-11-10",
+"date": "2025-11-09",
 "rounds": 40,
 "total_kills": 285,
 "map_name": "Dust II",
@@ -87080,7 +87080,7 @@
 },
 "178": {
 "id": 178,
-"date": "2025-11-10",
+"date": "2025-11-09",
 "rounds": 24,
 "total_kills": 178,
 "map_name": "Inferno",
@@ -87242,7 +87242,7 @@
 },
 "176": {
 "id": 176,
-"date": "2025-11-10",
+"date": "2025-11-09",
 "rounds": 29,
 "total_kills": 214,
 "map_name": "Mirage",
@@ -87409,7 +87409,7 @@
 },
 "175": {
 "id": 175,
-"date": "2025-11-09",
+"date": "2025-11-08",
 "rounds": 23,
 "total_kills": 174,
 "map_name": "Dust II",
@@ -87570,7 +87570,7 @@
 },
 "173": {
 "id": 173,
-"date": "2025-11-09",
+"date": "2025-11-08",
 "rounds": 24,
 "total_kills": 169,
 "map_name": "Anubis",
@@ -87732,7 +87732,7 @@
 },
 "172": {
 "id": 172,
-"date": "2025-11-09",
+"date": "2025-11-08",
 "rounds": 15,
 "total_kills": 107,
 "map_name": "Mirage",
@@ -87885,7 +87885,7 @@
 },
 "171": {
 "id": 171,
-"date": "2025-11-08",
+"date": "2025-11-07",
 "rounds": 24,
 "total_kills": 165,
 "map_name": "Cbble d",
@@ -88047,7 +88047,7 @@
 },
 "170": {
 "id": 170,
-"date": "2025-11-08",
+"date": "2025-11-07",
 "rounds": 24,
 "total_kills": 170,
 "map_name": "Dust II",
@@ -88209,7 +88209,7 @@
 },
 "169": {
 "id": 169,
-"date": "2025-11-08",
+"date": "2025-11-07",
 "rounds": 21,
 "total_kills": 153,
 "map_name": "Ancient",
@@ -88368,7 +88368,7 @@
 },
 "168": {
 "id": 168,
-"date": "2025-11-07",
+"date": "2025-11-06",
 "rounds": 24,
 "total_kills": 165,
 "map_name": "Dust II",
@@ -88530,7 +88530,7 @@
 },
 "167": {
 "id": 167,
-"date": "2025-11-05",
+"date": "2025-11-04",
 "rounds": 19,
 "total_kills": 133,
 "map_name": "Mirage",
@@ -88687,7 +88687,7 @@
 },
 "166": {
 "id": 166,
-"date": "2025-11-05",
+"date": "2025-11-04",
 "rounds": 21,
 "total_kills": 136,
 "map_name": "Dust II",
@@ -88846,7 +88846,7 @@
 },
 "165": {
 "id": 165,
-"date": "2025-11-04",
+"date": "2025-11-03",
 "rounds": 19,
 "total_kills": 141,
 "map_name": "Dust II",
@@ -89003,7 +89003,7 @@
 },
 "164": {
 "id": 164,
-"date": "2025-11-03",
+"date": "2025-11-02",
 "rounds": 23,
 "total_kills": 164,
 "map_name": "Inferno",
@@ -89164,7 +89164,7 @@
 },
 "162": {
 "id": 162,
-"date": "2025-11-03",
+"date": "2025-11-02",
 "rounds": 18,
 "total_kills": 124,
 "map_name": "Dust II",
@@ -89320,7 +89320,7 @@
 },
 "161": {
 "id": 161,
-"date": "2025-11-02",
+"date": "2025-11-01",
 "rounds": 20,
 "total_kills": 139,
 "map_name": "Dust II",
@@ -89478,7 +89478,7 @@
 },
 "160": {
 "id": 160,
-"date": "2025-11-02",
+"date": "2025-11-01",
 "rounds": 22,
 "total_kills": 164,
 "map_name": "Vertigo",
@@ -89638,7 +89638,7 @@
 },
 "158": {
 "id": 158,
-"date": "2025-11-02",
+"date": "2025-11-01",
 "rounds": 20,
 "total_kills": 143,
 "map_name": "Anubis",
@@ -89796,7 +89796,7 @@
 },
 "156": {
 "id": 156,
-"date": "2025-11-02",
+"date": "2025-11-01",
 "rounds": 21,
 "total_kills": 148,
 "map_name": "Dust II",
@@ -89955,7 +89955,7 @@
 },
 "155": {
 "id": 155,
-"date": "2025-11-01",
+"date": "2025-10-31",
 "rounds": 16,
 "total_kills": 113,
 "map_name": "Cache",
@@ -90109,7 +90109,7 @@
 },
 "153": {
 "id": 153,
-"date": "2025-11-01",
+"date": "2025-10-31",
 "rounds": 19,
 "total_kills": 145,
 "map_name": "Ancient",
@@ -90266,7 +90266,7 @@
 },
 "151": {
 "id": 151,
-"date": "2025-11-01",
+"date": "2025-10-31",
 "rounds": 24,
 "total_kills": 171,
 "map_name": "Inferno",
@@ -90428,7 +90428,7 @@
 },
 "150": {
 "id": 150,
-"date": "2025-10-31",
+"date": "2025-10-30",
 "rounds": 21,
 "total_kills": 159,
 "map_name": "Dust II",
@@ -90587,7 +90587,7 @@
 },
 "149": {
 "id": 149,
-"date": "2025-10-31",
+"date": "2025-10-30",
 "rounds": 19,
 "total_kills": 137,
 "map_name": "Anubis",
@@ -90744,7 +90744,7 @@
 },
 "148": {
 "id": 148,
-"date": "2025-10-31",
+"date": "2025-10-30",
 "rounds": 18,
 "total_kills": 130,
 "map_name": "Nuke",
@@ -90900,7 +90900,7 @@
 },
 "147": {
 "id": 147,
-"date": "2025-10-30",
+"date": "2025-10-29",
 "rounds": 20,
 "total_kills": 150,
 "map_name": "Vertigo",
@@ -91058,7 +91058,7 @@
 },
 "146": {
 "id": 146,
-"date": "2025-10-30",
+"date": "2025-10-29",
 "rounds": 23,
 "total_kills": 171,
 "map_name": "Dust II",
@@ -91219,7 +91219,7 @@
 },
 "145": {
 "id": 145,
-"date": "2025-10-29",
+"date": "2025-10-28",
 "rounds": 18,
 "total_kills": 118,
 "map_name": "Dust II",
@@ -91386,7 +91386,7 @@
 },
 "144": {
 "id": 144,
-"date": "2025-10-28",
+"date": "2025-10-27",
 "rounds": 22,
 "total_kills": 159,
 "map_name": "Dust II",
@@ -91546,7 +91546,7 @@
 },
 "143": {
 "id": 143,
-"date": "2025-10-28",
+"date": "2025-10-27",
 "rounds": 36,
 "total_kills": 256,
 "map_name": "Inferno",
@@ -91720,7 +91720,7 @@
 },
 "142": {
 "id": 142,
-"date": "2025-10-28",
+"date": "2025-10-27",
 "rounds": 24,
 "total_kills": 183,
 "map_name": "Dust II",
@@ -91882,7 +91882,7 @@
 },
 "128": {
 "id": 128,
-"date": "2025-10-14",
+"date": "2025-10-13",
 "rounds": 24,
 "total_kills": 181,
 "map_name": "Dust II",
@@ -92044,7 +92044,7 @@
 },
 "127": {
 "id": 127,
-"date": "2025-10-13",
+"date": "2025-10-12",
 "rounds": 22,
 "total_kills": 168,
 "map_name": "Inferno",
@@ -92204,7 +92204,7 @@
 },
 "125": {
 "id": 125,
-"date": "2025-10-13",
+"date": "2025-10-12",
 "rounds": 19,
 "total_kills": 144,
 "map_name": "Dust II",
@@ -92361,7 +92361,7 @@
 },
 "122": {
 "id": 122,
-"date": "2025-10-12",
+"date": "2025-10-11",
 "rounds": 18,
 "total_kills": 126,
 "map_name": "Inferno",
@@ -92517,7 +92517,7 @@
 },
 "121": {
 "id": 121,
-"date": "2025-10-12",
+"date": "2025-10-11",
 "rounds": 24,
 "total_kills": 178,
 "map_name": "Dust II",
@@ -92679,7 +92679,7 @@
 },
 "119": {
 "id": 119,
-"date": "2025-10-10",
+"date": "2025-10-09",
 "rounds": 22,
 "total_kills": 165,
 "map_name": "Dust II",
@@ -92839,7 +92839,7 @@
 },
 "118": {
 "id": 118,
-"date": "2025-10-09",
+"date": "2025-10-08",
 "rounds": 23,
 "total_kills": 164,
 "map_name": "Dust II",
@@ -93321,7 +93321,7 @@
 },
 "115": {
 "id": 115,
-"date": "2025-10-08",
+"date": "2025-10-07",
 "rounds": 29,
 "total_kills": 214,
 "map_name": "Inferno",
@@ -93488,7 +93488,7 @@
 },
 "113": {
 "id": 113,
-"date": "2025-10-08",
+"date": "2025-10-07",
 "rounds": 24,
 "total_kills": 168,
 "map_name": "Dust II",
@@ -93650,7 +93650,7 @@
 },
 "112": {
 "id": 112,
-"date": "2025-10-05",
+"date": "2025-10-04",
 "rounds": 19,
 "total_kills": 135,
 "map_name": "Mirage",
@@ -93807,7 +93807,7 @@
 },
 "111": {
 "id": 111,
-"date": "2025-10-05",
+"date": "2025-10-04",
 "rounds": 15,
 "total_kills": 107,
 "map_name": "Dust II",
@@ -93960,7 +93960,7 @@
 },
 "110": {
 "id": 110,
-"date": "2025-10-04",
+"date": "2025-10-03",
 "rounds": 18,
 "total_kills": 125,
 "map_name": "Inferno",
@@ -94116,7 +94116,7 @@
 },
 "109": {
 "id": 109,
-"date": "2025-10-04",
+"date": "2025-10-03",
 "rounds": 20,
 "total_kills": 139,
 "map_name": "Dust II",
@@ -94274,7 +94274,7 @@
 },
 "105": {
 "id": 105,
-"date": "2025-10-03",
+"date": "2025-10-02",
 "rounds": 24,
 "total_kills": 172,
 "map_name": "Dust II",
@@ -94436,7 +94436,7 @@
 },
 "104": {
 "id": 104,
-"date": "2025-10-01",
+"date": "2025-09-30",
 "rounds": 19,
 "total_kills": 138,
 "map_name": "Dust II",
@@ -94593,7 +94593,7 @@
 },
 "102": {
 "id": 102,
-"date": "2025-09-30",
+"date": "2025-09-29",
 "rounds": 22,
 "total_kills": 169,
 "map_name": "Vertigo",
@@ -94753,7 +94753,7 @@
 },
 "101": {
 "id": 101,
-"date": "2025-09-30",
+"date": "2025-09-29",
 "rounds": 20,
 "total_kills": 148,
 "map_name": "Dust II",
@@ -94922,7 +94922,7 @@
 },
 "100": {
 "id": 100,
-"date": "2025-09-28",
+"date": "2025-09-27",
 "rounds": 20,
 "total_kills": 148,
 "map_name": "Dust II",
@@ -95080,7 +95080,7 @@
 },
 "99": {
 "id": 99,
-"date": "2025-09-28",
+"date": "2025-09-27",
 "rounds": 20,
 "total_kills": 136,
 "map_name": "Mirage",
@@ -95238,7 +95238,7 @@
 },
 "98": {
 "id": 98,
-"date": "2025-09-28",
+"date": "2025-09-27",
 "rounds": 21,
 "total_kills": 142,
 "map_name": "Dust II",
@@ -95397,7 +95397,7 @@
 },
 "97": {
 "id": 97,
-"date": "2025-09-27",
+"date": "2025-09-26",
 "rounds": 23,
 "total_kills": 161,
 "map_name": "Inferno",
@@ -95558,7 +95558,7 @@
 },
 "96": {
 "id": 96,
-"date": "2025-09-27",
+"date": "2025-09-26",
 "rounds": 15,
 "total_kills": 108,
 "map_name": "Dust II",
@@ -95711,7 +95711,7 @@
 },
 "95": {
 "id": 95,
-"date": "2025-09-25",
+"date": "2025-09-24",
 "rounds": 20,
 "total_kills": 154,
 "map_name": "Mirage",
@@ -95869,7 +95869,7 @@
 },
 "94": {
 "id": 94,
-"date": "2025-09-25",
+"date": "2025-09-24",
 "rounds": 29,
 "total_kills": 208,
 "map_name": "Dust II",
@@ -96036,7 +96036,7 @@
 },
 "93": {
 "id": 93,
-"date": "2025-09-24",
+"date": "2025-09-23",
 "rounds": 30,
 "total_kills": 212,
 "map_name": "Mirage",
@@ -96204,7 +96204,7 @@
 },
 "92": {
 "id": 92,
-"date": "2025-09-24",
+"date": "2025-09-23",
 "rounds": 22,
 "total_kills": 167,
 "map_name": "Inferno",
@@ -96364,7 +96364,7 @@
 },
 "90": {
 "id": 90,
-"date": "2025-09-24",
+"date": "2025-09-23",
 "rounds": 23,
 "total_kills": 164,
 "map_name": "Dust II",
@@ -96525,7 +96525,7 @@
 },
 "87": {
 "id": 87,
-"date": "2025-09-23",
+"date": "2025-09-22",
 "rounds": 20,
 "total_kills": 144,
 "map_name": "Dust II",
@@ -96683,7 +96683,7 @@
 },
 "86": {
 "id": 86,
-"date": "2025-09-22",
+"date": "2025-09-21",
 "rounds": 23,
 "total_kills": 158,
 "map_name": "Dust II",
@@ -96844,7 +96844,7 @@
 },
 "85": {
 "id": 85,
-"date": "2025-09-22",
+"date": "2025-09-21",
 "rounds": 20,
 "total_kills": 136,
 "map_name": "Ancient",
@@ -97013,7 +97013,7 @@
 },
 "83": {
 "id": 83,
-"date": "2025-09-21",
+"date": "2025-09-20",
 "rounds": 18,
 "total_kills": 135,
 "map_name": "Dust II",
@@ -97169,7 +97169,7 @@
 },
 "81": {
 "id": 81,
-"date": "2025-09-21",
+"date": "2025-09-20",
 "rounds": 22,
 "total_kills": 163,
 "map_name": "Mirage",
@@ -97329,7 +97329,7 @@
 },
 "78": {
 "id": 78,
-"date": "2025-09-21",
+"date": "2025-09-20",
 "rounds": 22,
 "total_kills": 146,
 "map_name": "Inferno",
@@ -97489,7 +97489,7 @@
 },
 "75": {
 "id": 75,
-"date": "2025-09-21",
+"date": "2025-09-20",
 "rounds": 15,
 "total_kills": 106,
 "map_name": "Dust II",
@@ -97642,7 +97642,7 @@
 },
 "73": {
 "id": 73,
-"date": "2025-09-20",
+"date": "2025-09-19",
 "rounds": 21,
 "total_kills": 152,
 "map_name": "Inferno",
@@ -97801,7 +97801,7 @@
 },
 "71": {
 "id": 71,
-"date": "2025-09-20",
+"date": "2025-09-19",
 "rounds": 16,
 "total_kills": 106,
 "map_name": "Dust II",
@@ -97955,7 +97955,7 @@
 },
 "69": {
 "id": 69,
-"date": "2025-09-16",
+"date": "2025-09-15",
 "rounds": 30,
 "total_kills": 232,
 "map_name": "Dust II",
@@ -98123,7 +98123,7 @@
 },
 "68": {
 "id": 68,
-"date": "2025-09-16",
+"date": "2025-09-15",
 "rounds": 21,
 "total_kills": 146,
 "map_name": "Inferno",
@@ -98304,7 +98304,7 @@
 },
 "67": {
 "id": 67,
-"date": "2025-09-16",
+"date": "2025-09-15",
 "rounds": 17,
 "total_kills": 116,
 "map_name": "Dust II",
@@ -98459,7 +98459,7 @@
 },
 "64": {
 "id": 64,
-"date": "2025-09-15",
+"date": "2025-09-14",
 "rounds": 17,
 "total_kills": 124,
 "map_name": "Dust II",
@@ -98614,7 +98614,7 @@
 },
 "63": {
 "id": 63,
-"date": "2025-09-14",
+"date": "2025-09-13",
 "rounds": 29,
 "total_kills": 213,
 "map_name": "Dust II",
@@ -98781,7 +98781,7 @@
 },
 "62": {
 "id": 62,
-"date": "2025-09-14",
+"date": "2025-09-13",
 "rounds": 22,
 "total_kills": 163,
 "map_name": "Inferno",
@@ -98941,7 +98941,7 @@
 },
 "61": {
 "id": 61,
-"date": "2025-09-14",
+"date": "2025-09-13",
 "rounds": 24,
 "total_kills": 164,
 "map_name": "Dust II",
@@ -99103,7 +99103,7 @@
 },
 "60": {
 "id": 60,
-"date": "2025-09-13",
+"date": "2025-09-12",
 "rounds": 22,
 "total_kills": 165,
 "map_name": "Inferno",
@@ -99263,7 +99263,7 @@
 },
 "59": {
 "id": 59,
-"date": "2025-09-13",
+"date": "2025-09-12",
 "rounds": 18,
 "total_kills": 133,
 "map_name": "Dust II",
@@ -99419,7 +99419,7 @@
 },
 "57": {
 "id": 57,
-"date": "2025-09-12",
+"date": "2025-09-11",
 "rounds": 24,
 "total_kills": 173,
 "map_name": "Dust II",
@@ -99581,7 +99581,7 @@
 },
 "55": {
 "id": 55,
-"date": "2025-09-09",
+"date": "2025-09-08",
 "rounds": 24,
 "total_kills": 172,
 "map_name": "Inferno",
@@ -99743,7 +99743,7 @@
 },
 "54": {
 "id": 54,
-"date": "2025-09-09",
+"date": "2025-09-08",
 "rounds": 22,
 "total_kills": 157,
 "map_name": "Dust II",
@@ -99903,7 +99903,7 @@
 },
 "53": {
 "id": 53,
-"date": "2025-09-08",
+"date": "2025-09-07",
 "rounds": 29,
 "total_kills": 220,
 "map_name": "Ancient",
@@ -100070,7 +100070,7 @@
 },
 "52": {
 "id": 52,
-"date": "2025-09-08",
+"date": "2025-09-07",
 "rounds": 20,
 "total_kills": 151,
 "map_name": "Dust II",
@@ -100228,7 +100228,7 @@
 },
 "51": {
 "id": 51,
-"date": "2025-09-07",
+"date": "2025-09-06",
 "rounds": 24,
 "total_kills": 173,
 "map_name": "Mirage",
@@ -100390,7 +100390,7 @@
 },
 "50": {
 "id": 50,
-"date": "2025-09-07",
+"date": "2025-09-06",
 "rounds": 20,
 "total_kills": 156,
 "map_name": "Dust II",
@@ -100548,7 +100548,7 @@
 },
 "49": {
 "id": 49,
-"date": "2025-09-07",
+"date": "2025-09-06",
 "rounds": 24,
 "total_kills": 179,
 "map_name": "Inferno",
@@ -100710,7 +100710,7 @@
 },
 "48": {
 "id": 48,
-"date": "2025-09-07",
+"date": "2025-09-06",
 "rounds": 19,
 "total_kills": 138,
 "map_name": "Dust II",
@@ -100867,7 +100867,7 @@
 },
 "47": {
 "id": 47,
-"date": "2025-09-06",
+"date": "2025-09-05",
 "rounds": 17,
 "total_kills": 129,
 "map_name": "Dust II",
@@ -101022,7 +101022,7 @@
 },
 "46": {
 "id": 46,
-"date": "2025-09-06",
+"date": "2025-09-05",
 "rounds": 18,
 "total_kills": 137,
 "map_name": "Cache",
@@ -101178,7 +101178,7 @@
 },
 "44": {
 "id": 44,
-"date": "2025-09-06",
+"date": "2025-09-05",
 "rounds": 18,
 "total_kills": 123,
 "map_name": "Nuke",
@@ -101334,7 +101334,7 @@
 },
 "43": {
 "id": 43,
-"date": "2025-09-06",
+"date": "2025-09-05",
 "rounds": 22,
 "total_kills": 161,
 "map_name": "Mirage",
@@ -101494,7 +101494,7 @@
 },
 "42": {
 "id": 42,
-"date": "2025-09-06",
+"date": "2025-09-05",
 "rounds": 23,
 "total_kills": 163,
 "map_name": "Dust II",
@@ -101655,7 +101655,7 @@
 },
 "40": {
 "id": 40,
-"date": "2025-09-04",
+"date": "2025-09-03",
 "rounds": 24,
 "total_kills": 181,
 "map_name": "Dust II",
@@ -101817,7 +101817,7 @@
 },
 "38": {
 "id": 38,
-"date": "2025-09-04",
+"date": "2025-09-03",
 "rounds": 24,
 "total_kills": 180,
 "map_name": "Vertigo",
@@ -101979,7 +101979,7 @@
 },
 "37": {
 "id": 37,
-"date": "2025-09-04",
+"date": "2025-09-03",
 "rounds": 22,
 "total_kills": 147,
 "map_name": "Mirage",
@@ -102139,7 +102139,7 @@
 },
 "36": {
 "id": 36,
-"date": "2025-09-04",
+"date": "2025-09-03",
 "rounds": 16,
 "total_kills": 114,
 "map_name": "Dust II",
@@ -102293,7 +102293,7 @@
 },
 "35": {
 "id": 35,
-"date": "2025-09-03",
+"date": "2025-09-02",
 "rounds": 28,
 "total_kills": 184,
 "map_name": "Dust II",
@@ -102448,7 +102448,7 @@
 },
 "34": {
 "id": 34,
-"date": "2025-09-03",
+"date": "2025-09-02",
 "rounds": 21,
 "total_kills": 138,
 "map_name": "Inferno",
@@ -102596,7 +102596,7 @@
 },
 "33": {
 "id": 33,
-"date": "2025-09-03",
+"date": "2025-09-02",
 "rounds": 19,
 "total_kills": 104,
 "map_name": "Dust II",
@@ -102742,7 +102742,7 @@
 },
 "32": {
 "id": 32,
-"date": "2025-09-02",
+"date": "2025-09-01",
 "rounds": 23,
 "total_kills": 145,
 "map_name": "Inferno",
@@ -102903,7 +102903,7 @@
 },
 "30": {
 "id": 30,
-"date": "2025-09-02",
+"date": "2025-09-01",
 "rounds": 23,
 "total_kills": 153,
 "map_name": "Dust II",
@@ -103053,7 +103053,7 @@
 },
 "29": {
 "id": 29,
-"date": "2025-09-01",
+"date": "2025-08-31",
 "rounds": 21,
 "total_kills": 149,
 "map_name": "Anubis",
@@ -103201,7 +103201,7 @@
 },
 "28": {
 "id": 28,
-"date": "2025-09-01",
+"date": "2025-08-31",
 "rounds": 23,
 "total_kills": 142,
 "map_name": "Inferno",
@@ -103351,7 +103351,7 @@
 },
 "27": {
 "id": 27,
-"date": "2025-09-01",
+"date": "2025-08-31",
 "rounds": 23,
 "total_kills": 133,
 "map_name": "Dust II",
@@ -103501,7 +103501,7 @@
 },
 "26": {
 "id": 26,
-"date": "2025-08-31",
+"date": "2025-08-30",
 "rounds": 18,
 "total_kills": 122,
 "map_name": "Dust II",
@@ -103646,7 +103646,7 @@
 },
 "23": {
 "id": 23,
-"date": "2025-08-31",
+"date": "2025-08-30",
 "rounds": 22,
 "total_kills": 140,
 "map_name": "Mirage",
@@ -103806,7 +103806,7 @@
 },
 "22": {
 "id": 22,
-"date": "2025-08-31",
+"date": "2025-08-30",
 "rounds": 15,
 "total_kills": 106,
 "map_name": "Inferno",
@@ -103948,7 +103948,7 @@
 },
 "20": {
 "id": 20,
-"date": "2025-08-31",
+"date": "2025-08-30",
 "rounds": 17,
 "total_kills": 109,
 "map_name": "Dust II",
@@ -104092,7 +104092,7 @@
 },
 "14": {
 "id": 14,
-"date": "2025-08-30",
+"date": "2025-08-29",
 "rounds": 18,
 "total_kills": 132,
 "map_name": "Inferno",
@@ -104248,7 +104248,7 @@
 },
 "13": {
 "id": 13,
-"date": "2025-08-30",
+"date": "2025-08-29",
 "rounds": 22,
 "total_kills": 145,
 "map_name": "Dust II",
@@ -104408,7 +104408,7 @@
 },
 "11": {
 "id": 11,
-"date": "2025-08-28",
+"date": "2025-08-27",
 "rounds": 21,
 "total_kills": 128,
 "map_name": "Dust II",
@@ -104556,7 +104556,7 @@
 },
 "9": {
 "id": 9,
-"date": "2025-08-24",
+"date": "2025-08-23",
 "rounds": 20,
 "total_kills": 127,
 "map_name": "Vertigo",
@@ -104703,7 +104703,7 @@
 },
 "7": {
 "id": 7,
-"date": "2025-08-24",
+"date": "2025-08-23",
 "rounds": 20,
 "total_kills": 123,
 "map_name": "Dust II",
@@ -104850,7 +104850,7 @@
 },
 "6": {
 "id": 6,
-"date": "2025-08-23",
+"date": "2025-08-22",
 "rounds": 23,
 "total_kills": 166,
 "map_name": "Mirage",
@@ -105011,7 +105011,7 @@
 },
 "5": {
 "id": 5,
-"date": "2025-08-23",
+"date": "2025-08-22",
 "rounds": 22,
 "total_kills": 152,
 "map_name": "Vertigo",
@@ -105171,7 +105171,7 @@
 },
 "4": {
 "id": 4,
-"date": "2025-08-23",
+"date": "2025-08-22",
 "rounds": 14,
 "total_kills": 102,
 "map_name": "Dust II",
@@ -105323,7 +105323,7 @@
 },
 "3": {
 "id": 3,
-"date": "2025-08-21",
+"date": "2025-08-20",
 "rounds": 18,
 "total_kills": 126,
 "map_name": "Dust II",

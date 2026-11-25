@@ -18,9 +18,10 @@
   <div class="meta-line">
     <span><b>{{ ov.matches|bin }}</b> maç oynandı</span><span><b>{{ ov.players }}</b> aktif oyuncu</span>
     <span><b>{{ ov.rounds|bin }}</b> round</span><span><b>{{ ov.kills|bin }}</b> toplam kill</span>
-    {% if sync_date %}<span{% if synced %} title="Son güncelleme: {{ synced[:10]|day }} {{ synced[11:] }} (TR saati)"{% endif %}>5v5stats verisi: <b>{{ sync_date|day }}</b> tarihine kadar</span>{% endif %}
+    {% if sync_date %}<span{% if synced %} title="Son güncelleme: {{ synced[:10]|day }} {{ synced[11:] }}"{% endif %}>5v5stats verisi: <b>{{ sync_date|day }}</b> tarihine kadar</span>{% endif %}
   </div>
 </section>
+{% if period == '7d' and not ov.matches %}{% set week_matches = 0 %}{% include "_empty_week.html" %}{% endif %}
 
 {% if best3 %}
 <div class="sec" style="margin-top:26px"><h2>{{ plabel }} en iyi 3</h2><small>// skor ortalamasına göre (1.00 = sunucu ortalaması) // en az {{ minm }} maç</small></div>
@@ -93,6 +94,7 @@
     <span class="lbl">En aktif // {{ plabel|lower }}</span>
     {% for r in (board|sort(attribute='total_matches', reverse=True))[:4] %}
     <div class="rowp">{{ avatar(people, r.steamid64, r.name) }}<a href="{{ url_for('player_page', steamid=r.steamid64) }}" style="text-decoration:none">{{ r.name }}</a><span class="v">{{ r.total_matches }} maç</span></div>
+    {% else %}<div class="dim small" style="margin-top:10px">Henüz maç yok.</div>
     {% endfor %}
   </div>
   <div class="box mini pulse">
@@ -106,6 +108,7 @@
     {% if top %}
     <a class="who" href="{{ url_for('player_page', steamid=top.steamid64) }}" style="text-decoration:none">{{ avatar(people, top.steamid64, top.name) }}<b>{{ top.name }}</b></a>
     <div class="dim small num" style="margin-top:8px">{{ '%.0f'|format(top.ADR) }} ADR &middot; {{ top.KPR|f2 }} KPR &middot; {{ top.total_matches }} maç</div>
+    {% else %}<div class="dim small" style="margin-top:10px">Henüz maç yok.</div>
     {% endif %}
   </div>
 </div>
@@ -152,6 +155,7 @@
 </div>
 {% endif %}
 
+{% if board %}
 <div class="sec"><h2>Sıralama</h2><small>// güç puanına göre // en az {{ minm }} maç</small></div>
 <div class="box">
   <div class="lbtools"><span class="lbl">Oyuncu ara</span><input id="q" type="text" placeholder="İsim yaz" oninput="filt(this.value)">
@@ -172,7 +176,7 @@
       <td class="r">{{ r.KAST_PROXY|pct }}</td><td class="r">{{ r.ACC_PCT|pct(1) }}</td><td class="r">{{ r.HS_PCT|pct }}</td>
       <td class="r">{{ r.CLUTCH_WR|pct }}</td><td class="r">{{ r.ENTRY_WR|pct }}</td><td class="r">{{ r.MK_per_match|f2 }}</td>
       <td class="r {{ 'pos' if r.WIN_PCT > 0.5 else 'neg' if r.WIN_PCT < 0.5 else '' }}">{{ r.WIN_PCT|pct }}</td>
-      <td class="r faint">{{ r.total_matches }}</td><td class="r faint">{{ seen.get(r.steamid64)|ago_day(ref) }}</td>
+      <td class="r faint">{{ r.total_matches }}</td><td class="r faint nowrap">{{ seen.get(r.steamid64)|shortday }}</td>
     </tr>
     {% endfor %}
     {% if rest %}
@@ -184,12 +188,13 @@
       <td class="r">{{ r.KPR|f2 }}</td><td class="r">{{ r.DPR|f2 }}</td><td class="r">{{ '%.0f'|format(r.ADR) }}</td>
       <td class="r">{{ r.KAST_PROXY|pct }}</td><td class="r">{{ r.ACC_PCT|pct(1) }}</td><td class="r">{{ r.HS_PCT|pct }}</td>
       <td class="r">{{ r.CLUTCH_WR|pct }}</td><td class="r">{{ r.ENTRY_WR|pct }}</td><td class="r">{{ r.MK_per_match|f2 }}</td>
-      <td class="r">{{ r.WIN_PCT|pct }}</td><td class="r">{{ r.total_matches }}</td><td class="r">{{ seen.get(r.steamid64)|ago_day(ref) }}</td>
+      <td class="r">{{ r.WIN_PCT|pct }}</td><td class="r">{{ r.total_matches }}</td><td class="r nowrap">{{ seen.get(r.steamid64)|shortday }}</td>
     </tr>
     {% endfor %}
     {% endif %}
     </tbody></table></div>
 </div>
+{% endif %}
 
 <div class="sec"><h2>Sunucu aktifliği</h2><small>// aylara göre</small></div>
 {% set mmax = [months|map(attribute='matches')|max, 1]|max %}

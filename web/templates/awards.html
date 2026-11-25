@@ -15,7 +15,8 @@
 </section>
 
 {% if not ranked %}
-<p class="dim" style="margin:26px 0">Bu dönemde sıralamaya girecek kadar maç oynayan oyuncu yok.</p>
+{% if period == '7d' %}{% include "_empty_week.html" %}{% else %}
+<p class="dim" style="margin:26px 0">Bu dönemde sıralamaya girecek kadar maç oynayan oyuncu yok.</p>{% endif %}
 {% else %}
 {% macro grid(cards, cls='') %}
 <div class="awgrid {{ cls }}">

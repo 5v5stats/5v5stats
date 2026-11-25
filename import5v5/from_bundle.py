@@ -13,6 +13,7 @@ the read-only stats file the website serves (the hosted database keeps only uplo
 Then commit import5v5/data/ and web/stats.db and push. Only finished matches are kept (statsdb.finished).
 """
 import argparse
+import csv
 import datetime
 import json
 import math
@@ -40,8 +41,57 @@ def load(bundle, name):
 
 
 def day(ms):
-    """The match's day as the old site showed it (in UTC), so match dates do not shift between the two imports."""
-    return datetime.datetime.fromtimestamp(ms / 1000, datetime.timezone.utc).date().isoformat() if ms else None
+    """The match's day in the players' time (US Pacific, statsdb.SITE_TZ): the evening it was played. (The old
+    site used the UTC date, which is the next day for nearly every match: they end 19:00-22:00 Pacific.)"""
+    return datetime.datetime.fromtimestamp(ms / 1000, statsdb.SITE_TZ).date().isoformat() if ms else None
+
+
+COUNTER_COLS = {  # rating.TOTALS key: MatchZy CSV column(s), summed exactly as the pipeline's aggregatePlayers
+    "total_kills": ["kills"], "total_deaths": ["deaths"], "total_assists": ["assists"], "total_damage": ["damage"],
+    "total_hs_kills": ["head_shot_kills"], "total_multi": ["enemy3ks", "enemy4ks", "enemy5ks"],
+    "total_shots_fired": ["shots_fired_total"], "total_shots_on_tgt": ["shots_on_target_total"],
+    "total_v1_count": ["v1_count"], "total_v1_wins": ["v1_wins"], "total_v2_count": ["v2_count"],
+    "total_v2_wins": ["v2_wins"], "total_entry_count": ["entry_count"], "total_entry_wins": ["entry_wins"],
+    "total_util_damage": ["utility_damage"], "total_flashes": ["enemies_flashed"],
+}
+
+
+def _num(v):
+    try:
+        return int(float(v or 0))
+    except ValueError:
+        return 0
+
+
+def exact_counters(bundle, m, sides):
+    """{steamid: totals} for one match from its raw MatchZy CSV rows: every detail counter exact (clutches,
+    opening duels, utility, accuracy...), so a week or a month is summed exactly instead of estimated from
+    all-time rates. Same rules as the pipeline: spectators (team "Spectator", or no kills, deaths, damage,
+    assists and shots) are left out, the winner's team gets the win, the round backup gives T/CT rounds."""
+    folder = os.path.join(bundle, "data", "matches", str(m["matchid"]))
+    out = {}
+    for f in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+        if not f.endswith(".csv"):
+            continue
+        with open(os.path.join(folder, f), encoding="utf-8", newline="") as fh:
+            for r in csv.DictReader(fh):
+                team = (r.get("team") or "").strip()
+                if team.lower() == "spectator" or not team or not any(
+                        _num(r.get(c)) for c in ("kills", "deaths", "damage", "assists", "shots_fired_total")):
+                    continue
+                t = out.setdefault(r["steamid64"], {k: 0 for k in ("total_matches", "estimated_rounds", "wins", "losses",
+                                                                   "t_rounds", "ct_rounds", *COUNTER_COLS)})
+                for key, cols in COUNTER_COLS.items():
+                    t[key] += sum(_num(r.get(c)) for c in cols)
+                t["total_matches"] += 1
+                t["estimated_rounds"] += m["rounds"]
+                if m.get("winner"):
+                    t["wins" if m["winner"] == team else "losses"] += 1
+                side = (sides or {}).get(team)
+                if side:
+                    t["t_rounds"] += side["tPlayed"]
+                    t["ct_rounds"] += side["ctPlayed"]
+    return out
 
 
 def team_name(team):
@@ -70,7 +120,9 @@ def convert(bundle):
                            "map": h.get("map"), "team": h.get("team"), "k": h.get("kills"), "d": h.get("deaths"),
                            "a": h.get("assists")} for h in p.get("matches", [])]
         players[rec["steamid64"]] = rec
-    matches, skipped = {}, []
+    matches, skipped, counters = {}, [], {}
+    with open(os.path.join(bundle, "data", "match-results.json"), encoding="utf-8") as f:
+        results = json.load(f)["matches"]
     for m in load(bundle, "matches"):
         if len(m.get("teams") or []) != 2:
             skipped.append((m["matchid"], "not two teams"))
@@ -92,7 +144,8 @@ def convert(bundle):
                                  "rounds": m["rounds"], "total_kills": m.get("totalKills"),
                                  "map_name": MAP_NAMES.get(m["map"], m["map"]), "map": m["map"], "teams": teams,
                                  "round_winners": round_winners(m, team_name(win["name"]), team_name(lose["name"]))}
-    return site, players, matches, skipped
+        counters[m["matchid"]] = exact_counters(bundle, m, (results.get(str(m["matchid"])) or {}).get("sides"))
+    return site, players, matches, skipped, counters
 
 
 def pull_extras(url):
@@ -134,7 +187,21 @@ def _match_game(con, gid, g):
     return None
 
 
-def build_stats_db(site, players, matches, path):
+def check_counters(con):
+    """Every player's exact per-match numbers must add up to the pipeline's all-time totals. Returns the
+    mismatches (empty = the week / month sums built from them are exact)."""
+    base = statsdb.baseline_totals(con)
+    sums = {}
+    for r in con.execute("SELECT steamid, counters FROM game_players WHERE counters IS NOT NULL"):
+        statsdb._add(sums.setdefault(r["steamid"], {}), json.loads(r["counters"]))
+    keys = ("total_matches", "estimated_rounds", "wins", "losses", "t_rounds", "ct_rounds", *COUNTER_COLS)
+    bad = [(sid, k, round(sums.get(sid, {}).get(k, 0), 3), round(t.get(k, 0), 3)) for sid, t in base.items()
+           for k in keys if abs(sums.get(sid, {}).get(k, 0) - (t.get(k, 0) or 0)) > 1e-6]
+    bad += [(sid, "no all-time totals", 0, 0) for sid in sums if sid not in base]
+    return bad
+
+
+def build_stats_db(site, players, matches, path, counters):
     """The read-only stats file the website serves (web/stats.db), built fresh, then swapped in."""
     tmp = path + ".new"
     if os.path.exists(tmp):
@@ -145,13 +212,22 @@ def build_stats_db(site, players, matches, path):
     statsdb.init(con)
     # inserted in match-number order, so a match's page address (/g/<id>) stays the same as before
     statsdb.import_5v5(con, site, players, dict(sorted(matches.items())))
-    # The pipeline's week starts on Monday; this site's week is the last 7 days. Their 30 days are the same
-    # rolling window, so only the weekly totals would be wrong if used (on a day the newest match was played).
-    totals = statsdb.get_meta(con, "period_totals", {}) or {}
-    totals.pop("7d", None)
-    statsdb.set_meta(con, "period_totals", totals)
-    extras = json.load(open(EXTRAS, encoding="utf-8")) if os.path.exists(EXTRAS) else {}
+    # Every match row carries its exact numbers from the MatchZy CSVs, so a week, a month or a map is summed
+    # exactly. The pipeline's own period totals are not used: its windows (a UTC Monday, now minus 30 days)
+    # are not this site's (Monday to Sunday and the last 30 days, in the players' time).
+    statsdb.set_meta(con, "period_totals", {})
     gid = {r["ext_id"]: r["id"] for r in con.execute("SELECT id, ext_id FROM games")}
+    con.executemany("UPDATE game_players SET counters = ? WHERE game_id = ? AND steamid = ?",
+                    [(json.dumps(t), gid[mid], sid) for mid, per in counters.items() if mid in gid
+                     for sid, t in per.items()])
+    bad = check_counters(con)
+    if bad:
+        con.close()
+        os.remove(tmp)
+        raise SystemExit(f"per-match numbers do not add up to the all-time totals ({len(bad)} differences, e.g. "
+                         f"{bad[:5]}); stats file NOT written")
+    print("per-match numbers add up exactly to every player's all-time totals")
+    extras = json.load(open(EXTRAS, encoding="utf-8")) if os.path.exists(EXTRAS) else {}
     con.executemany("INSERT INTO merges(alt, main, created_at, note) VALUES (?,?,?,'')",
                     [(m["alt"], m["main"], m["created_at"]) for m in extras.get("merges", [])])
     matched, unmatched = 0, []
@@ -183,7 +259,7 @@ def main():
     a = ap.parse_args()
     if a.pull_extras:
         pull_extras(a.pull_extras)
-    site, players, matches, skipped = convert(a.bundle)
+    site, players, matches, skipped, counters = convert(a.bundle)
     os.makedirs(OUT, exist_ok=True)
     for name, obj in (("site", site), ("players", players), ("matches", matches)):
         with open(os.path.join(OUT, name + ".json"), "w", encoding="utf-8") as f:
@@ -192,7 +268,7 @@ def main():
     print(f"{len(players)} players, {len(matches)} finished matches (newest #{newest}, {matches[newest]['date']}), "
           f"{len(skipped)} left out" + (": " + ", ".join(f"#{i} {why}" for i, why in skipped) if skipped else ""))
     import db
-    build_stats_db(site, players, matches, db.STATS_DB)
+    build_stats_db(site, players, matches, db.STATS_DB, counters)
     print("Commit import5v5/data/ and web/stats.db, then push: the site serves the new stats after the deploy.")
 
 

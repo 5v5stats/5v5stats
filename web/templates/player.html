@@ -11,7 +11,7 @@
       <div class="display l" style="margin:0 0 8px">{{ p.name }}</div>
       <div class="meta-line"><span><b>{{ p.total_matches }}</b> maç</span><span><b>{{ p.estimated_rounds|bin }}</b> round</span>
         <span>Galibiyet <b>{{ p.WIN_PCT|pct }}</b></span>
-        {% if hist %}{% set ago = hist[0].date|ago_day(ref) %}<span>Son maç <b>{{ ago }}</b>{{ '' if ago == 'bugün' else ' önce' }}</span>{% endif %}
+        {% if hist %}<span>Son maç <b>{{ hist[0].date|shortday }}</b></span>{% endif %}
         <span>{% if p.rank %}Sıra <b>#{{ p.rank }}</b> / {{ n_ranked }}{% else %}Henüz sıralamada değil (30 maçtan az){% endif %}</span>
         <a class="dim" href="https://steamcommunity.com/profiles/{{ p.steamid64 }}" target="_blank" rel="noopener">Steam</a></div>
       {% if alts %}<div class="meta-line dim" style="margin-top:6px">Diğer hesapları: {% for a in alts %}<a class="dim" href="https://steamcommunity.com/profiles/{{ a.sid }}" target="_blank" rel="noopener">{{ a.name }}</a>{{ ', ' if not loop.last }}{% endfor %} &middot; istatistikler birleşik</div>{% endif %}

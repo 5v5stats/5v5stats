@@ -23,6 +23,7 @@
 
 {% if not d %}
 <p class="dim" style="margin:26px 0 6px">{% if a and b and a == b %}İki farklı oyuncu seç.{% else %}İki oyuncu seç ya da aşağıdaki ikililerden birine tıkla.{% endif %}</p>
+{% if period == '7d' and not week_matches %}{% include "_empty_week.html" %}{% endif %}
 {% if facts %}
 {% macro pair(r) -%}
   <span class="fp-who">{{ avatar(people, r.a, names[r.a]) }}{{ avatar(people, r.b, names[r.b]) }}</span>
