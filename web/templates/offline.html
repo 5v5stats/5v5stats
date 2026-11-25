@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% set panel = request.path.startswith('/admin') or request.path.startswith('/birlestir') %}
+{% block title %}{{ 'Yönetim' if panel else 'Klipler' }} // 5v5 Turkish Server{% endblock %}
+{% block body %}
+<section class="offline">
+  <div class="offline-mark" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/>
+      <path d="M10 9.5v5l4-2.5z" fill="currentColor" stroke="none"/></svg>
+  </div>
+  <div class="eyebrow">{{ 'Yönetim' if panel else 'Klipler' }} // kısa bir ara</div>
+  {% if panel %}
+  <h1 class="display">Yönetim paneli kısa bir süreliğine kapalı.</h1>
+  <p class="dim">Klip yükleme ve maç yönetimi birkaç gün içinde geri gelecek. İstatistikler bu sürede açık ve güncel.</p>
+  {% else %}
+  <h1 class="display">Klipler kısa bir süreliğine kapalı.</h1>
+  <p class="dim">Klipler ve maç özetleri birkaç gün içinde geri gelecek. Bu sürede sıralama, ödüller, maçlar ve
+    oyuncu sayfaları açık ve güncel.</p>
+  {% endif %}
+  <div class="offline-links">
+    <a class="btn primary" href="{{ url_for('stats_home') }}">İstatistikler</a>
+    <a class="btn" href="{{ url_for('games_page') }}">Maçlar</a>
+    <a class="btn" href="{{ url_for('awards_page') }}">Ödüller</a>
+  </div>
+</section>
+{% endblock %}

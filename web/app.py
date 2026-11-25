@@ -21,8 +21,8 @@ import tempfile
 import time
 
 from markupsafe import Markup  # noqa: E402
-from flask import (Flask, abort, flash, jsonify, redirect, render_template, render_template_string, request, send_from_directory, session,
-                   url_for)
+from flask import (Flask, abort, flash, g, jsonify, redirect, render_template, render_template_string, request, send_from_directory,
+                   session, url_for)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -53,7 +53,8 @@ _db_ready = False
 
 
 def con():
-    """The tables (CREATE ... IF NOT EXISTS) are made on the first use, not at start-up: a request that needs no
+    """The uploads database (Neon on Vercel): highlight matches, clips, admins.
+    The tables (CREATE ... IF NOT EXISTS) are made on the first use, not at start-up: a request that needs no
     data (a static file, a bot probing for /wp-admin) must not wake the hosted database."""
     global _db_ready
     if not _db_ready:
@@ -62,12 +63,43 @@ def con():
     return db.connect()
 
 
+def scon():
+    """The player stats: a read-only file shipped with the site (db.STATS_DB), never the hosted database."""
+    return db.stats_connect()
+
+
+MEDIA_ERRORS = ()  # set below when the uploads database is PostgreSQL: the errors that mean "it is unreachable"
+_media_retry_at = 0.0
+
+
+def with_media(fn, default):
+    """fn(uploads connection) for the clip parts of a stats page. When that database is unreachable (Neon's free
+    plan pauses it once the month's quota is used), the stats page still works: this returns `default`, marks
+    the page so its clip area shows a short note, and skips retrying for a minute."""
+    global _media_retry_at
+    if time.time() < _media_retry_at:
+        g.media_down = True
+        return default
+    try:
+        c = con()
+        try:
+            return fn(c)
+        finally:
+            c.close()
+    except MEDIA_ERRORS:
+        _media_retry_at = time.time() + 60
+        g.media_down = True
+        return default
+
+
 # Vercel's CDN keeps public pages, so most visits, and nearly all bot traffic, never reach the database.
 # In November 2026 every page view woke Neon and the free plan's monthly compute ran out, which took the site down.
 # Admin responses are never shared: admins see unpublished matches. The CDN ignores cookies, so an admin can be
 # served the public copy of a public page (up to PAGE_CACHE old); the admin panel itself is never cached.
 PAGE_CACHE = "s-maxage=1800, stale-while-revalidate=86400, stale-if-error=604800"
 STATIC_CACHE = "s-maxage=86400, stale-while-revalidate=604800"
+# a stats page drawn while the clips were unreachable: kept briefly, so the clips come back soon after they do
+SHORT_CACHE = "s-maxage=60, stale-while-revalidate=60"
 PRIVATE_PATHS = ("/admin", "/api", "/birlestir")
 
 
@@ -76,7 +108,8 @@ def shared_cache(resp):
     if is_admin() or request.path.startswith(PRIVATE_PATHS):
         resp.headers["Cache-Control"] = "private, no-store"
     elif request.method == "GET" and resp.status_code == 200 and not session.modified:
-        resp.headers["Vercel-CDN-Cache-Control"] = STATIC_CACHE if request.path.startswith("/static/") else PAGE_CACHE
+        resp.headers["Vercel-CDN-Cache-Control"] = (STATIC_CACHE if request.path.startswith("/static/") else
+                                                    SHORT_CACHE if g.get("media_down") else PAGE_CACHE)
     return resp
 
 
@@ -94,17 +127,23 @@ app.session_interface = SessionInterface()
 
 
 def database_down(e):
+    """Pages that need the uploads database (clips, highlight pages, admin) while it is unreachable."""
+    global _media_retry_at
+    _media_retry_at = time.time() + 60
+    headers = {"Cache-Control": "no-store", "Retry-After": "600"}
     if request.path.startswith("/api/"):
-        return jsonify(error="database unavailable"), 503, {"Cache-Control": "no-store", "Retry-After": "600"}
-    return ('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
-            '<link rel="stylesheet" href="/static/site.css"><title>5v5stats</title>'
-            '<main style="max-width:560px;margin:18vh auto;padding:0 16px;text-align:center">'
-            '<h1>Kısa bir ara verdik</h1><p>Site birazdan geri gelecek.</p></main>',
-            503, {"Cache-Control": "no-store", "Retry-After": "600"})
+        return jsonify(error="database unavailable"), 503, headers
+    try:
+        return render_template("offline.html"), 503, headers
+    except Exception:  # never let the notice itself fail
+        return ('<!doctype html><meta charset="utf-8"><title>5v5stats</title>'
+                '<p style="font-family:sans-serif;text-align:center;margin-top:20vh">Klipler kısa bir süreliğine '
+                'kapalı. <a href="/">İstatistiklere git</a></p>', 503, headers)
 
 
 if db.IS_PG:  # the hosted database refused or is unreachable (Neon's free plan pauses it when the month runs out)
     import psycopg  # noqa: E402
+    MEDIA_ERRORS = (psycopg.OperationalError,)
     app.register_error_handler(psycopg.OperationalError, database_down)
 
 
@@ -163,22 +202,23 @@ def people(c):
     return {r["steamid"]: dict(r) for r in c.execute("SELECT * FROM people")}
 
 
-def top_clips(c, period, n=5, since=None):
+def top_clips(sc, period, n=5, since=None):
     """The period's best highlight clips by points (public matches; admins also see hidden ones).
-    since: a start date instead of the period's window."""
+    since: a start date instead of the period's window. sc: the stats connection (names of merged accounts);
+    the clips come from the uploads database, and are [] while it is unreachable."""
     cond, args = [], []
     if since is None and period != "all":
-        since, _ = statsdb.window(c, period)
+        since, _ = statsdb.window(sc, period)
     if since:
         cond.append("m.date >= ?")
         args.append(since)
     if not is_admin():
         cond.append("m.published = 1")
     where = ("WHERE " + " AND ".join(cond)) if cond else ""
-    rows = c.execute(f"""SELECT cl.*, m.slug, m.media_rev, m.map AS mmap, m.date AS mdate FROM clips cl
-                         JOIN matches m ON m.id = cl.match_id {where} ORDER BY cl.score DESC, m.date DESC LIMIT ?""",
-                     args + [n]).fetchall()
-    return clip_people(c, rows)
+    rows = with_media(lambda c: c.execute(f"""SELECT cl.*, m.slug, m.media_rev, m.map AS mmap, m.date AS mdate
+                                             FROM clips cl JOIN matches m ON m.id = cl.match_id {where}
+                                             ORDER BY cl.score DESC, m.date DESC LIMIT ?""", args + [n]).fetchall(), [])
+    return clip_people(sc, rows)
 
 
 def clip_people(c, rows, mm=None, ppl=None):
@@ -193,10 +233,15 @@ def clip_people(c, rows, mm=None, ppl=None):
     return out
 
 
-def highlight_links(c):
-    """match_key -> slug of public highlight pages (admins also see hidden ones)."""
-    q = "SELECT match_key, slug FROM matches" + ("" if is_admin() else " WHERE published = 1")
-    return {r["match_key"]: r["slug"] for r in c.execute(q)}
+def highlight_links(keys):
+    """match_key -> slug of public highlight pages (admins also see hidden ones), for the given match keys.
+    No keys, no database call; {} while the uploads database is unreachable (the stats page just has no links)."""
+    keys = sorted({k for k in keys if k})
+    if not keys:
+        return {}
+    q = (f"SELECT match_key, slug FROM matches WHERE match_key IN ({','.join('?' * len(keys))})"
+         + ("" if is_admin() else " AND published = 1"))
+    return with_media(lambda c: {r["match_key"]: r["slug"] for r in c.execute(q, keys)}, {})
 
 
 @app.template_global()
@@ -474,7 +519,7 @@ def awards_page():
     period = request.args.get("p", AWARD_PERIOD)
     if period not in PERIODS:
         period = AWARD_PERIOD
-    c = con()
+    c = scon()
     board = award_board(c, period)
     q = [r for r in board if r["qualified"]]
     def cards_of(lst):
@@ -504,7 +549,7 @@ def award_page(slug):
     period = request.args.get("p", AWARD_PERIOD)
     if period not in PERIODS:
         period = AWARD_PERIOD
-    c = con()
+    c = scon()
     board = award_board(c, period)
     q = sorted((r for r in board if r["qualified"] and r.get(key) is not None), key=lambda r: r[key],
                reverse=desc_order)
@@ -530,7 +575,7 @@ def stats_home():
     period = request.args.get("p", HOME_PERIOD)
     if period not in PERIODS:
         period = HOME_PERIOD
-    c = con()
+    c = scon()
     board = award_board(c, period)
     ov = statsdb.overview(c, period)
     synced = statsdb.get_meta(c, "synced_at")
@@ -554,6 +599,7 @@ def stats_home():
         best = top_clips(c, period)
     cb = None if best else statsdb.comeback(c, period)  # the comeback story only when there are no clips
     ctx = dict(board=board, period=period, periods=PERIODS, ov=ov, people=people(c), win=win, newer=newer,
+               clips_down=g.get("media_down", False),
                awards=awards(board), anti_awards=awards(board, anti=True), facts=awards(board, "fact"), min_matches=rating.MIN_MATCHES.get(period, 3), comeback=cb, best_clips=best, clip_title=clip_title, months=statsdb.activity_by_month(c),
                weeks=statsdb.weekly_counts(c), seen=statsdb.last_seen(c), ref=statsdb.latest_date(c),
                month30=statsdb.overview(c, "30d")["matches"],
@@ -596,10 +642,12 @@ def home():
                            FROM matches m""" + pub + " ORDER BY date DESC, id DESC").fetchall()
     clips = c.execute(f"""SELECT cl.*, m.slug, m.media_rev, m.map AS mmap, m.date AS mdate, m.score1, m.score2
                           FROM clips cl JOIN matches m ON m.id = cl.match_id{pub}""").fetchall()
-    mm = statsdb.merge_map(c)
-    ppl = people(c)
-    since = {k: statsdb.window(c, k)[0] for k in CLIP_PERIODS}
     c.close()
+    sc = scon()  # names and merged accounts come from the stats
+    mm = statsdb.merge_map(sc)
+    ppl = people(sc)
+    since = {k: statsdb.window(sc, k)[0] for k in CLIP_PERIODS}
+    sc.close()
     f = {k: request.args.get(k, "") for k in ("p", "m", "map", "t", "s", "o", "d")}
     if f["d"] not in CLIP_PERIODS:
         f["d"] = ""
@@ -636,7 +684,7 @@ def home():
 
 @app.route("/players/<steamid>")
 def player_page(steamid):
-    c = con()
+    c = scon()
     main = statsdb.merge_map(c).get(steamid)
     if main:  # merged account: show the person
         c.close()
@@ -677,11 +725,11 @@ def player_page(steamid):
         # Skor on this map: only with a few matches there, else one lucky game would decide it
         pts, n = mpts.get(statsdb.map_label(m["map"]), {}).get(steamid, (None, 0))
         m["points"] = pts if n >= 3 else None
-    clips = c.execute("""SELECT clips.*, matches.slug, matches.media_rev, matches.map AS mmap, matches.date AS mdate FROM clips
-                         JOIN matches ON matches.id = clips.match_id WHERE clips.steamid IN (""" + q + ")" +
-                      ("" if is_admin() else " AND matches.published = 1") + " ORDER BY clips.score DESC",
-                      ids).fetchall()
-    ppl, links = people(c), highlight_links(c)
+    clip_sql = ("""SELECT clips.*, matches.slug, matches.media_rev, matches.map AS mmap, matches.date AS mdate
+                   FROM clips JOIN matches ON matches.id = clips.match_id WHERE clips.steamid IN (""" + q + ")" +
+                ("" if is_admin() else " AND matches.published = 1") + " ORDER BY clips.score DESC")
+    clips = with_media(lambda mc: mc.execute(clip_sql, ids).fetchall(), [])
+    ppl, links = people(c), highlight_links(h["match_key"] for h in hist)
     clips = clip_people(c, clips, ppl=ppl)
     rel = statsdb.relations(c, steamid)
     duo_list = statsdb.duo_players(c)
@@ -706,13 +754,14 @@ def player_page(steamid):
     return render_template("player.html", p=me, hist=hist, maps=maplist, clips=clips, person=ppl.get(steamid, {}),
                            alts=alts,
                            links=links, n_ranked=len(qualified), rel=rel, radar=radar, ref=ref, best=best,
-                           worst=worst, people=ppl, form=list(hist[:10])[::-1], duo_list=duo_list)
+                           worst=worst, people=ppl, form=list(hist[:10])[::-1], duo_list=duo_list,
+                           clips_down=g.get("media_down", False))
 
 
 @app.route("/ikili")
 def duo_page():
     """Two players side by side: as teammates, as opponents, and who killed whom (demo games)."""
-    c = con()
+    c = scon()
     mm = statsdb.merge_map(c)
     a = mm.get(request.args.get("a", ""), request.args.get("a", ""))
     b = mm.get(request.args.get("b", ""), request.args.get("b", ""))
@@ -741,7 +790,7 @@ def duo_page():
 @app.route("/balancer")
 def balancer():
     """Takım Kur: pick 10 players, get the most even 5v5 split (all 252 splits are checked in the browser)."""
-    c = con()
+    c = scon()
     pool = statsdb.balancer_pool(c)
     maps = [r["map"] for r in c.execute("SELECT map, COUNT(*) n FROM games GROUP BY map HAVING COUNT(*) >= 5 ORDER BY n DESC")]
     c.close()
@@ -766,7 +815,7 @@ def games_page():
     wid = request.args.get("with", "").strip() if pid else ""
     page = max(1, int(request.args.get("page", 1) or 1))
     per = 40
-    c = con()
+    c = scon()
     conds, args = [], []
     if mapf:
         conds.append("g.map = ?")
@@ -806,7 +855,7 @@ def games_page():
         if r["steamid"] == k:
             names[k] = r["name"]
     players = sorted(({"steamid": k, "name": names.get(k, k), "n": n} for k, n in counts.items()), key=lambda p: -p["n"])
-    links = highlight_links(c)
+    links = highlight_links(r["match_key"] for r in rows)
     c.close()
     return render_template("games.html", games=rows, maps=maps, mapf=mapf, page=page, pid=pid, wid=wid,
                            pname=names.get(pid), wname=names.get(wid), players=players, summary=summary,
@@ -850,12 +899,12 @@ def merged_names(c, data):
 @app.route("/g/<int:gid>")
 def game_page(gid):
     """Any match: the highlight page if we have one, otherwise the same FACEIT-style page from its stats."""
-    c = con()
-    g = c.execute("SELECT * FROM games WHERE id = ?", (gid,)).fetchone()
+    c = scon()
+    g = c.execute("SELECT * FROM games WHERE id = ?", (gid,)).fetchone()  # noqa: F811 (a game row, not flask.g)
     if g is None:
         c.close()
         abort(404)
-    slug = highlight_links(c).get(g["match_key"]) if g["match_key"] else None
+    slug = highlight_links([g["match_key"]]).get(g["match_key"]) if g["match_key"] else None
     if slug:
         c.close()
         return redirect(url_for("match_page", slug=slug))
@@ -882,7 +931,7 @@ def site_nav():
 def match_page(slug):
     m = get_match(slug)
     data = json.loads(m["data_json"])
-    c = con()
+    c = scon()  # merged names and levels come from the stats
     data = merged_names(c, data)
     data["tiers"] = player_tiers(c)
     c.close()
@@ -923,13 +972,16 @@ def merge_allowed():
 def merge_page():
     if not merge_allowed():
         return redirect(url_for("login", next=request.path))
+    # The merges are saved with the uploads (c); the stats file (sc) is read-only and takes them in at the next
+    # stats update (import5v5/from_bundle.py --pull-extras), so a merge shows on the stats pages from then on.
+    sc = scon()
     c = con()
     try:
         if request.method == "POST":
             if request.form.get("csrf") != session.get("csrf"):
                 abort(400, "Form expired, go back and try again.")
             action = request.form.get("action")
-            names = {r["steamid"]: r["name"] for r in c.execute("SELECT steamid, name FROM people")}
+            names = {r["steamid"]: r["name"] for r in sc.execute("SELECT steamid, name FROM people")}
             if action == "merge":
                 main, alt = request.form.get("main", ""), request.form.get("alt", "")
                 if main not in names or alt not in names:
@@ -948,12 +1000,12 @@ def merge_page():
         ctx = {"allowed": merge_allowed(), "accounts": [], "merges": []}
         if ctx["allowed"]:
             mm = statsdb.merge_map(c)
-            n = {r[0]: r[1] for r in c.execute("SELECT steamid, COUNT(*) FROM game_players GROUP BY steamid")}
-            rows = list(c.execute("SELECT steamid, name, avatar FROM people"))
+            n = {r[0]: r[1] for r in sc.execute("SELECT steamid, COUNT(*) FROM game_players GROUP BY steamid")}
+            rows = list(sc.execute("SELECT steamid, name, avatar FROM people"))
             ppl = {r["steamid"]: r["name"] for r in rows}
             av = {r["steamid"]: r["avatar"] for r in rows if r["avatar"]}
-            last = {r[0]: r[1] for r in c.execute("""SELECT gp.steamid, MAX(g.date) FROM game_players gp
-                                                    JOIN games g ON g.id = gp.game_id GROUP BY gp.steamid""")}
+            last = {r[0]: r[1] for r in sc.execute("""SELECT gp.steamid, MAX(g.date) FROM game_players gp
+                                                     JOIN games g ON g.id = gp.game_id GROUP BY gp.steamid""")}
             ctx["accounts"] = sorted(({"sid": s, "name": nm or s, "n": n.get(s, 0), "alt_of": mm.get(s),
                                        "avatar": av.get(s), "last": day(last[s]) if last.get(s) else None}
                                       for s, nm in ppl.items()), key=lambda a: (-a["n"], (a["name"] or "").lower()))
@@ -966,6 +1018,7 @@ def merge_page():
         return render_template("merge.html", **ctx)
     finally:
         c.close()
+        sc.close()
 
 
 # ---------------------------------------------------------------- uploads ----
@@ -1011,7 +1064,7 @@ def upload_result(m, created, notes):
 def api_levels():
     """{steamid: {"tier": 1-10 or None, "points": rating}} for the title cards render.py puts in clips
     (the same levels and ratings the site shows; merged accounts get their person's)."""
-    c = con()
+    c = scon()
     try:
         return jsonify(player_tiers(c))
     finally:
@@ -1128,9 +1181,12 @@ def drop_removed_admins():
     """An admin whose account was removed is logged out on their next request."""
     name = session.get("admin_name")
     if session.get("admin") and name and name != OWNER:
-        c = con()
-        alive = c.execute("SELECT 1 FROM admins WHERE name = ?", (name,)).fetchone()
-        c.close()
+        try:
+            c = con()
+            alive = c.execute("SELECT 1 FROM admins WHERE name = ?", (name,)).fetchone()
+            c.close()
+        except MEDIA_ERRORS:  # can't check now; the admin pages themselves need the database anyway
+            return
         if not alive:
             session.clear()
 

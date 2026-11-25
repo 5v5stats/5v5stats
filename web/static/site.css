@@ -527,3 +527,15 @@ code { font-family:var(--mono); font-size:12px; color:#ffb38a; }
 .awgrid.fact .awc:hover { border-color:#7b9cff; }
 .awgrid.fact .awc li.p1 { --c:#7b9cff; }
 .podium.fact .pod.p1 { --c:#7b9cff; } .podium.fact .pod.p2 { --c:#9db4ff; } .podium.fact .pod.p3 { --c:#bccbff; }
+
+/* clips unavailable for a while (their database is paused): a calm note instead of an empty space or an error */
+.offline-box { display:flex; align-items:center; gap:16px; padding:18px 20px; background:var(--panel);
+               border:1px solid var(--line); border-left:3px solid var(--accent); }
+.offline-box b { display:block; font-weight:600; margin-bottom:2px; }
+.offline-mark { display:inline-flex; align-items:center; justify-content:center; flex:none; width:44px; height:44px;
+                color:var(--accent); background:rgba(255,90,31,.1); border:1px solid rgba(255,90,31,.25); }
+.offline { max-width:640px; margin:12vh auto 0; text-align:center; }
+.offline .offline-mark { width:64px; height:64px; margin-bottom:18px; }
+.offline .display { font-size:clamp(28px, 4.6vw, 44px); margin:10px 0 14px; }
+.offline p { margin:0 auto 24px; max-width:520px; }
+.offline-links { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }

@@ -26,6 +26,19 @@ DB_PATH = os.path.join(DATA, "site.db")
 DATABASE_URL = (os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL") or "").strip()
 IS_PG = DATABASE_URL.startswith(("postgres://", "postgresql://"))
 
+# The player stats (statsdb tables) are a read-only SQLite file shipped with the site, built from the MatchZy
+# exports by import5v5/from_bundle.py and committed. Only uploads (matches, clips) and the admin panel use the
+# database above, so the stats pages never wait on it or count against its quota.
+STATS_DB = os.path.join(HERE, "stats.db")
+
+
+def stats_connect():
+    """The stats file, read-only (immutable: Vercel's disk is read-only, so SQLite must not try to lock it)."""
+    uri = "file:" + STATS_DB.replace("\\", "/").replace("?", "%3f").replace("#", "%23") + "?mode=ro&immutable=1"
+    con = sqlite3.connect(uri, uri=True, check_same_thread=False)
+    con.row_factory = sqlite3.Row
+    return con
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS matches (
   id           INTEGER PRIMARY KEY,
